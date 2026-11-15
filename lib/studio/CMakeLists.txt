@@ -44,6 +44,21 @@ if (PR_DEVELOP)
                                                    prax::layout prax::ui prax::ui_cpp prax::color)
 endif()
 
+# Studio Kit's QuickJS binding: a tree of widgets that a script edits and each round declares.
+if (PR_JS)
+    pr_library(studio_kit_quickjs INCLUDE kit/quickjs/include
+        kit/quickjs/src/kit_quickjs.cpp
+    )
+    target_link_libraries(pr_studio_kit_quickjs PUBLIC prax::studio_kit prax::quickjs
+                                                PRIVATE prax::core_quickjs_cpp prax::ui_cpp prax::layout prax::color)
+    if (PR_DEVELOP)
+        pr_module_tests(studio_kit_quickjs
+            kit/quickjs/tests/test_kit_quickjs.cpp
+        )
+        target_link_libraries(studio_kit_quickjs_tests PRIVATE kit_fixture prax::core_quickjs_cpp prax::studio_kit)
+    endif()
+endif()
+
 # Studio's commands: an application's verbs, their key bindings, and the scopes, menu items and command palette that
 # run them.
 pr_library(studio_command INCLUDE command/include

@@ -2526,12 +2526,13 @@ def binding_layer(path):
 def check_binding_includes(report, path, text):
     """A binding reaches every module through its public API, its own module's too. It includes public headers, which
     include the language layers of core and of other modules, and its own layer's implementation, never a module's
-    implementation."""
+    implementation. Its tests include the harness's own headers besides: the tests' entry, and the fixture of the
+    libraries over Studio Kit."""
     layer = binding_layer(path)
     for match in re.finditer(r'^#include "([^"]+)"', text, re.M):
         header = match.group(1)
         if not (header.startswith("pr/") or header.startswith(layer) or header == "quickjs.h"
-                or header == "tools/harness/test.h"):
+                or header in ("tools/harness/test.h", "tools/harness/kit_fixture.h")):
             report.add(path, line_of(text, match.start()), "binding-include",
                        "a binding includes %s, which is not public API" % header)
 
