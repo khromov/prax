@@ -69,7 +69,7 @@ if (PR_JS)
     )
     target_link_libraries(pr_studio_kit_quickjs PUBLIC prax::studio_kit prax::quickjs
                                                 PRIVATE prax::core_quickjs_cpp prax::ui prax::ui_cpp prax::layout
-                                                        prax::color)
+                                                        prax::color prax::app prax::draw prax::geom prax::path)
     if (PR_DEVELOP)
         pr_module_tests(studio_kit_quickjs
             kit/quickjs/tests/test_kit_quickjs.cpp
@@ -90,7 +90,9 @@ if (PR_JS)
             kit/quickjs/tests/test_kit_timeline_quickjs.cpp
             kit/quickjs/tests/test_kit_title_bar_quickjs.cpp
         )
-        target_link_libraries(studio_kit_quickjs_tests PRIVATE kit_fixture prax::core_quickjs_cpp prax::studio_kit)
+        target_link_libraries(studio_kit_quickjs_tests PRIVATE kit_fixture prax::core_quickjs_cpp prax::studio_kit
+                                                               prax::app prax::color prax::draw prax::geom prax::path
+                                                               prax::ui)
     endif()
 endif()
 
