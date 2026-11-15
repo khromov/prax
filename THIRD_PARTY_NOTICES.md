@@ -121,6 +121,14 @@ Weather Icons under the SIL Open Font License 1.1; Font Logos under the Unlicens
 Octicons, Seti UI, Hack's extra glyphs, Powerline Symbols, Powerline Extra Symbols and the IEC power symbols under the
 MIT License.
 
+## Svelte
+
+`tools/svelte/vendor/svelte-5.57.2-def99c4.tgz` is the package of Svelte (https://github.com/sveltejs/svelte) that its
+pull request 18511, which adds custom renderers, built at commit def99c4, unchanged. The bundles that `./dev.sh svelte`
+writes hold its client runtime. Its license is in the package, as `package/LICENSE.md`.
+
+Copyright (c) 2016-2025 Svelte Contributors. Used under the MIT License (below).
+
 ---
 
 ## License texts

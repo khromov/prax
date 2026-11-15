@@ -4,6 +4,7 @@
 * text=auto eol=lf
 
 *.png binary
+*.tgz binary
 *.jpg binary
 *.jpeg binary
 *.gif binary

@@ -1,0 +1,8 @@
+{
+    "name": "prax-svelte",
+    "private": true,
+    "type": "module",
+    "dependencies": {
+        "svelte": "file:vendor/svelte-5.57.2-def99c4.tgz"
+    }
+}

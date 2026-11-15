@@ -32,6 +32,7 @@ COMMANDS = {
     "prose": "tools.lint.commands",
     "viewer": "tools.viewer.commands",
     "document": "tools.shell.commands",
+    "svelte": "tools.svelte.commands",
     "example": "tools.build.commands",
     "app": "tools.build.commands",
     "fetch": "tools.fetch.commands",
