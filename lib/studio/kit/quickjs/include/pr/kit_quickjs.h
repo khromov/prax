@@ -13,9 +13,19 @@
 //   kitTree.insert(parent, node, before)   puts a node under a parent, before a child of it, or last if `before` is 0
 //   kitTree.remove(node)                   detaches a node from its parent, with the nodes under it
 //   kitTree.set(node, name, value)         sets an attribute from a string, or resets it if `value` is null
-//   kitTree.setText(node, text)            sets the text that a label, a button, a badge or a block shows
+//   kitTree.setText(node, text)            sets the text that the node's widget shows, if its kind shows text
 //   kitTree.listen(node, type, listening)  starts or stops queuing a node's events of a type
-//   kitTree.onevent(node, type)            the script's function, which dispatching calls with each queued event
+//   kitTree.onevent(node, type, detail)    the script's function, which dispatching calls with each queued event
+//
+// A kind is one of the kit's widgets, named as an element is: `box`, `label`, `button`. Each of the kit's headers has a
+// source in this layer that defines its kinds, and says what attributes each takes and what events it queues. Every
+// kind takes the attributes of PrKitPlace besides its own: `width`, `height`, `min-width`, `min-height`, `max-width`,
+// `max-height`, `margin`, `flex`, `align-self` and `weight`. A node under another is declared under the other's widget,
+// which is how a box holds its content and a menu its items.
+//
+// An attribute's value is a string: a keyword, a number, a flag, which is present or `true` when set, or several
+// numbers separated by spaces. An event's `detail` is an object that holds what the event tells beyond its type: a
+// `value` and `values`, numbers, and a `text`, each only if the event has one.
 //
 // `set` and `listen` return false for a name, a value or a type that the node's kind does not take, and change nothing.
 // The other functions throw a TypeError for a node that does not exist, and `insert` for a move that would put a node
@@ -59,6 +69,10 @@ void prJsKitTreeBuild(PrJsKitTree* tree, PrKit* kit, PrLayoutNode parent);
 // queue. Returns true if it called the script, which may have edited the tree. The host performs a microtask checkpoint
 // afterward, as after any script. Call after a build, never during prJsKitTreeBuild.
 bool prJsKitTreeDispatch(PrJsKitTree* tree);
+
+// Returns true if the script edited the tree since it was last declared, so that another round would show something
+// different. A host that dispatched a round's events asks for a frame if so.
+bool prJsKitTreeIsChanged(const PrJsKitTree* tree);
 
 #if defined(__cplusplus)
 }

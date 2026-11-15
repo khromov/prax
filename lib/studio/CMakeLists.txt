@@ -48,12 +48,47 @@ endif()
 if (PR_JS)
     pr_library(studio_kit_quickjs INCLUDE kit/quickjs/include
         kit/quickjs/src/kit_quickjs.cpp
+        kit/quickjs/src/kit_node_quickjs.cpp
+        kit/quickjs/src/kit_block_quickjs.cpp
+        kit/quickjs/src/kit_box_quickjs.cpp
+        kit/quickjs/src/kit_button_quickjs.cpp
+        kit/quickjs/src/kit_choice_quickjs.cpp
+        kit/quickjs/src/kit_collection_quickjs.cpp
+        kit/quickjs/src/kit_color_quickjs.cpp
+        kit/quickjs/src/kit_data_quickjs.cpp
+        kit/quickjs/src/kit_dock_quickjs.cpp
+        kit/quickjs/src/kit_graph_quickjs.cpp
+        kit/quickjs/src/kit_icon_quickjs.cpp
+        kit/quickjs/src/kit_image_quickjs.cpp
+        kit/quickjs/src/kit_input_quickjs.cpp
+        kit/quickjs/src/kit_menu_quickjs.cpp
+        kit/quickjs/src/kit_panel_quickjs.cpp
+        kit/quickjs/src/kit_text_quickjs.cpp
+        kit/quickjs/src/kit_timeline_quickjs.cpp
+        kit/quickjs/src/kit_title_bar_quickjs.cpp
     )
     target_link_libraries(pr_studio_kit_quickjs PUBLIC prax::studio_kit prax::quickjs
-                                                PRIVATE prax::core_quickjs_cpp prax::ui_cpp prax::layout prax::color)
+                                                PRIVATE prax::core_quickjs_cpp prax::ui prax::ui_cpp prax::layout
+                                                        prax::color)
     if (PR_DEVELOP)
         pr_module_tests(studio_kit_quickjs
             kit/quickjs/tests/test_kit_quickjs.cpp
+            kit/quickjs/tests/test_kit_box_quickjs.cpp
+            kit/quickjs/tests/test_kit_button_quickjs.cpp
+            kit/quickjs/tests/test_kit_choice_quickjs.cpp
+            kit/quickjs/tests/test_kit_collection_quickjs.cpp
+            kit/quickjs/tests/test_kit_color_quickjs.cpp
+            kit/quickjs/tests/test_kit_data_quickjs.cpp
+            kit/quickjs/tests/test_kit_dock_quickjs.cpp
+            kit/quickjs/tests/test_kit_graph_quickjs.cpp
+            kit/quickjs/tests/test_kit_icon_quickjs.cpp
+            kit/quickjs/tests/test_kit_image_quickjs.cpp
+            kit/quickjs/tests/test_kit_input_quickjs.cpp
+            kit/quickjs/tests/test_kit_menu_quickjs.cpp
+            kit/quickjs/tests/test_kit_panel_quickjs.cpp
+            kit/quickjs/tests/test_kit_text_quickjs.cpp
+            kit/quickjs/tests/test_kit_timeline_quickjs.cpp
+            kit/quickjs/tests/test_kit_title_bar_quickjs.cpp
         )
         target_link_libraries(studio_kit_quickjs_tests PRIVATE kit_fixture prax::core_quickjs_cpp prax::studio_kit)
     endif()

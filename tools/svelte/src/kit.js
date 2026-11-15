@@ -1,12 +1,14 @@
-// The Kit backend of the Svelte renderer. A component's elements are Studio Kit's widgets: box, label, button, badge,
-// spacer, divider and block, with the attributes that the binding takes (pr/kit_quickjs.h).
+// The Kit backend of the Svelte renderer. A component's elements are Studio Kit's widgets, such as box, label and
+// button, with the attributes and the events of the binding's kinds (pr/kit_quickjs.h). This module knows none of them
+// by name: an element is a node of the kind that its name gives, its attributes are the node's, and the text nodes
+// under it are the node's text.
 //
 // Svelte builds and edits a tree of its own kinds of node, which this module keeps: fragments, comments and text
 // nodes among the elements. An element has a node in the host's tree, `kitTree`, exactly when its parent has one, and
 // the root always does, so the host's tree mirrors the elements under the root, which the host declares as widgets in
 // each round. An element that Svelte builds off to the side has none until it is put under the root, so what is never
-// shown costs the host nothing. The text of a label, a button, a badge or a block is the text nodes under it, with
-// white space collapsed as HTML collapses it.
+// shown costs the host nothing. An element's text is the text nodes under it, with white space collapsed as HTML
+// collapses it, which its widget shows if its kind shows text.
 
 import { flushSync, mount as mountComponent, unmount as unmountComponent } from 'svelte';
 import { createRenderer } from 'svelte/renderer';
@@ -15,16 +17,14 @@ const tree = globalThis.kitTree;
 if (tree === undefined)
     throw new Error('prax-svelte: this bundle is for the kit backend, and its host has no kitTree');
 
-// The elements that show the text nodes under them.
-const TEXTUAL = new Set(['label', 'button', 'badge', 'block']);
-
 // The attributes that the compiler or a component sets and no widget takes, which are dropped without a warning.
 const IGNORED = new Set(['class']);
 
-// A node of any kind. `id` is the element's node in the host's tree, or null while it has none.
+// A node of any kind. `id` is the element's node in the host's tree, or null while it has none, and `text` is the
+// text that the host's node has.
 function make(kind, name, data) {
     return {
-        kind, name, data, id: null, parent: null, first: null, last: null, previous: null, next: null,
+        kind, name, data, id: null, text: '', parent: null, first: null, last: null, previous: null, next: null,
         attributes: null, listeners: null,
     };
 }
@@ -49,7 +49,7 @@ function warn(message) {
     }
 }
 
-// Returns the text that a textual element shows.
+// Returns the text of an element: its text nodes' data, collapsed.
 function textOf(element) {
     let text = '';
     for (let child = element.first; child !== null; child = child.next) {
@@ -59,9 +59,13 @@ function textOf(element) {
     return text.replace(/[ \t\r\n]+/g, ' ').trim();
 }
 
+// Gives the host's node the element's text, if it changed. The root has no text.
 function updateText(element) {
-    if (element !== null && element.id !== null && TEXTUAL.has(element.name))
-        tree.setText(element.id, textOf(element));
+    if (element === null || element.id === null || element === root)
+        return;
+    const text = textOf(element);
+    if (text !== element.text)
+        tree.setText(element.id, (element.text = text));
 }
 
 function applyAttribute(element, name, value) {
@@ -78,6 +82,7 @@ function materialize(element) {
         element.id = tree.create('box');
     }
     elements.set(element.id, element);
+    element.text = '';
     if (element.attributes !== null) {
         for (const [name, value] of element.attributes)
             applyAttribute(element, name, value);
@@ -272,15 +277,16 @@ const renderer = createRenderer({
 
 export default renderer;
 
-// The host's events, each of which goes to the listeners of its element alone: a widget's input does not bubble. The
-// component's state is flushed before the host declares its next round, so the round shows what the event changed.
-tree.onevent = (id, type) => {
+// The host's events, each of which goes to the listeners of its element alone: a widget's input does not bubble. An
+// event has what the host's detail holds for its type: a `value`, `values` and a `text`. The component's state is
+// flushed before the host declares its next round, so the round shows what the event changed.
+tree.onevent = (id, type, detail) => {
     const target = elements.get(id);
     const handlers = target?.listeners?.get(type);
     if (handlers === undefined)
         return;
     const event = {
-        type, target, currentTarget: target, defaultPrevented: false,
+        ...detail, type, target, currentTarget: target, defaultPrevented: false,
         preventDefault() {
             event.defaultPrevented = true;
         },
