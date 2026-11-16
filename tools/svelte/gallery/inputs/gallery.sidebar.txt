@@ -1,0 +1,7 @@
+# extent 1440x900
+# The sidebar alone, since the content holds sections that are not ported yet.
+settle
+screenshot sidebar 0 0 240 900
+click 120 39
+settle
+screenshot sidebar-dark 0 0 240 900

@@ -6,7 +6,8 @@ A case is an input file under gallery/inputs, named <section>.<case>.txt, of the
 (tools/svelte/kit_host.cpp). The host runs the file twice, once declaring the example's section with the kit's own
 calls and once running the application's bundle, and each screenshot that the file takes must hold the same pixels in
 both. A file's first line may give the viewport, as `# extent 1100x900`. A section has the cases that its files give
-it, so a section with no file is not tested.
+it, so a section with no file is not tested. The cases of the section named `gallery` run the whole gallery: its sidebar
+and every section on one page.
 
 A case that cannot match yet says why in a line `# known: <reason>`, which is for what the binding cannot express, never
 for a port that is merely unfinished. Such a case is expected to fail, and fails the run once it matches, so that the
@@ -70,8 +71,12 @@ class GalleryTests(unittest.TestCase):
 
     def compare(self, case):
         section = case.name.split(".")[0]
-        native, _ = self.run_host(case, "native", "--native", "gallery:" + section)
-        ported, _ = self.run_host(case, "svelte", "--arg", "section=" + section, self.script)
+        if section == "gallery":
+            native, _ = self.run_host(case, "native", "--native", "gallery")
+            ported, _ = self.run_host(case, "svelte", self.script)
+        else:
+            native, _ = self.run_host(case, "native", "--native", "gallery:" + section)
+            ported, _ = self.run_host(case, "svelte", "--arg", "section=" + section, self.script)
         names = sorted(path.name for path in native.glob("*.png"))
         self.assertTrue(names, "%s takes no screenshot" % case.name)
         self.assertEqual(names, sorted(path.name for path in ported.glob("*.png")))
