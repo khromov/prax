@@ -3,7 +3,8 @@
 // Kit's widgets are declared again in every round, while a script changes what it shows only now and then. The binding
 // therefore keeps what the script made as a tree of nodes, which the host declares as Kit's widgets in each round that
 // it builds. No script runs to declare a round. A widget's input reaches the script as events, which the host
-// dispatches between rounds.
+// dispatches between rounds. A script that follows the rounds' clock hears of each round as an event too, before the
+// round is declared.
 //
 // A script edits the tree through the object `kitTree` of its realm. A node is a number, and 0 is the tree's root,
 // whose children the host declares under a node of its own:
@@ -51,6 +52,19 @@
 // drops on a node that takes its kind, such as an `asset-field` or a `drop-zone`, and a `drag-ghost` under the source
 // shows beside the pointer while the payload is in flight.
 //
+// A script follows the rounds' clock through an event, `round`, and asks for the frames that it needs through an
+// attribute, `motion`. A program that declares its own widgets does the same with prUiCurrentRound and
+// prUiRequestMotion.
+//
+// A node of any kind queues `round` in every round, while the script listens for it and the node is under the root. It
+// tells the round that is about to be declared, as `values` of its time and its delta, in seconds, and its index in the
+// frame (PrUiRound). The host dispatches it before it declares the round, so the round declares what the script changes
+// in answer.
+//
+// Hearing rounds asks for no frames. A node that takes `reveal` also takes `motion`, a flag, which asks for another
+// frame in each round that declares the node, if its widget is shown (prUiRequestMotion). A script sets it while
+// something moves, and a widget that is scrolled or clipped out of view asks for nothing.
+//
 // An attribute's value is a string: a keyword, a number, a flag, which is present or `true` when set, or several
 // numbers separated by spaces. An event's `detail` is an object that holds what the event tells beyond its type: a
 // `value` and `values`, numbers, and a `text`, each only if the event has one.
@@ -87,6 +101,13 @@ void prJsKitTreeDestroy(PrJsKitTree* PR_NULLABLE tree);
 // Defines `kitTree` on the global object of `ctx`, which edits the tree and hears its events. A tree is bound to one
 // realm.
 void prJsKitTreeBind(PrJsKitTree* tree, JSContext* ctx);
+
+// Calls the script's `kitTree.onevent` with `round` for each node that queues it in the open round of the kit's
+// context. Returns true if it called the script, which may have edited the tree. The host performs a microtask
+// checkpoint afterward, as after any script. It runs no script while none listens for `round`, and a script hears no
+// `round` from a host that does not call it. Call during a build, before prJsKitTreeBuild, which declares what the
+// script changed.
+bool prJsKitTreeDispatchRound(PrJsKitTree* tree, const PrKit* kit);
 
 // Declares the tree's widgets under `parent` in the open round of the kit's context, in the tree's order, and queues
 // the events of the round that the script listens for. Each node keeps its identity from round to round, wherever the

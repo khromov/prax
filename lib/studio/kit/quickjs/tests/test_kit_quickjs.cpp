@@ -1,11 +1,14 @@
 // Studio Kit's QuickJS binding: the tree that a script edits declares what the same calls to the kit declare, and a
-// widget's input reaches the script between rounds.
+// widget's input and each round's clock reach the script between rounds.
 
 #include "pr/format.h"
 #include "pr/kit_box.h"
 #include "pr/kit_button.h"
+#include "pr/kit_choice.h"
 #include "pr/kit_input.h"
 #include "pr/kit_text.h"
+#include "pr/kit_timeline.h"
+#include "pr/ui.h"
 
 #include "studio/kit/quickjs/tests/kit_scripted_quickjs.h"
 
@@ -591,4 +594,214 @@ TEST_CASE("a script's request for another round is told to the host once") {
     scripted.run("kitTree.requestRound(); kitTree.requestRound();");
     CHECK(prJsKitTreeTakeRoundRequest(scripted.tree));
     CHECK(!prJsKitTreeTakeRoundRequest(scripted.tree));
+}
+
+TEST_CASE("a script that hears each round shows what a program that reads each round shows, in a frame of two rounds too") {
+    // The first bar shows the time of the round that declares it, as the bar of a program does that reads the round
+    // before it declares the bar. The second shows the time of the round before, as the bar of a program does that
+    // reads the round once it has declared the bar.
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var page = make('box', 0, {align: 'start', gap: '8', padding: '16'});
+        var now = make('progress', page, {width: '400'});
+        var before = make('progress', page, {width: '400'});
+        var button = make('button', page, {}, 'Press');
+        var heard = [];
+        var last = null;
+        function fraction(time) {
+            const turns = time * 0.25;
+            return String(Math.fround(turns - Math.trunc(turns)));
+        }
+        kitTree.listen(now, 'round', true);
+        kitTree.onevent = function (node, type, detail) {
+            if (node !== now || type !== 'round' || detail.values.length !== 3 || detail.value !== detail.values[0])
+                throw new Error('an event that is not a round of the bar');
+            heard.push(detail.values);
+            kitTree.set(now, 'value', fraction(detail.value));
+            if (last !== null)
+                kitTree.set(before, 'value', fraction(last));
+            last = detail.value;
+        };
+    )JS");
+    KitFixture direct;
+    PrLayoutNode button = kPrLayoutNodeNone;
+    float shown = 0;
+    direct.build = [&](PrLayoutNode root) {
+        double turns = prUiCurrentRound(direct.ui)->time * 0.25;
+        float fraction = float(turns - double(int64_t(turns)));
+        PrLayoutNode page =
+            prKitBox(direct.kit, root, {}, {.align = PrKitAlign_Start, .gap = 8, .padding = prKitEdgesAll(16)});
+        prKitPlace(direct.kit, prKitProgress(direct.kit, page, {.value = fraction}), {.width = prKitPx(400)});
+        prKitPlace(direct.kit, prKitProgress(direct.kit, page, {.value = shown}), {.width = prKitPx(400)});
+        button = prKitButton(direct.kit, page, {.text = "Press"}, {});
+        shown = fraction;
+    };
+    uint32_t rounds = 0;
+    for (uint32_t i = 0; i < 4; ++i) {
+        rounds += scripted.fixture.frame(0.3);
+        direct.frame(0.3);
+        CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    }
+    CHECK(scripted.number("heard.length") == rounds);
+    CHECK(scripted.number("heard[heard.length - 1][0]") == direct.time);
+    CHECK(scripted.number("heard[heard.length - 1][1]") == 0.3);
+
+    // A frame that routes a press runs a second round, whose delta is zero. Its second bar shows the frame's own time,
+    // which a script that heard of the frame once would show a frame later.
+    PrAppEvent press{.kind = PrAppEventKind_PointerDown, .pointer = {.position = direct.center(button), .clicks = 1}};
+    scripted.fixture.push(press);
+    direct.push(press);
+    uint32_t pressed = scripted.fixture.frame(0.3);
+    CHECK(pressed == 2);
+    CHECK(direct.frame(0.3) == pressed);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(scripted.number("heard.length") == rounds + pressed);
+    CHECK(scripted.number("heard[heard.length - 2][0]") == direct.time);
+    CHECK(scripted.number("heard[heard.length - 2][1]") == 0.3);
+    CHECK(scripted.number("heard[heard.length - 2][2]") == 0);
+    CHECK(scripted.number("heard[heard.length - 1][0]") == direct.time);
+    CHECK(scripted.number("heard[heard.length - 1][1]") == 0);
+    CHECK(scripted.number("heard[heard.length - 1][2]") == 1);
+    for (uint32_t i = 0; i < 3; ++i) {
+        scripted.fixture.frame(0.3);
+        direct.frame(0.3);
+        CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    }
+    CHECK(kitVerified(scripted.fixture.tree));
+}
+
+TEST_CASE("a round is told to the nodes under the root that a script listens for it on, and to no script otherwise") {
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var label = make('label', 0, {}, 'A label');
+        var clip = make('timeline', 0, {});
+        var block = make('timeline-block', make('timeline-track', clip, {}, 'Track'), {});
+        var calls = 0;
+        var rounds = {};
+        kitTree.onevent = function (node, type) {
+            calls += 1;
+            if (type === 'round')
+                rounds[node] = (rounds[node] || 0) + 1;
+        };
+    )JS");
+    bool toldRound = false;
+    bool toldInput = false;
+    scripted.fixture.build = [&](PrLayoutNode root) {
+        toldRound = prJsKitTreeDispatchRound(scripted.tree, scripted.fixture.kit);
+        prJsKitTreeBuild(scripted.tree, scripted.fixture.kit, root);
+        toldInput = prJsKitTreeDispatch(scripted.tree);
+    };
+
+    // No script runs for a round that none listens for.
+    for (uint32_t i = 0; i < 3; ++i) {
+        scripted.fixture.frame();
+        CHECK(!toldRound);
+        CHECK(!toldInput);
+    }
+    CHECK(scripted.number("calls") == 0);
+
+    // A node of any kind hears each round, a block that its timeline reads as much as a label that the tree declares.
+    // Hearing rounds queues nothing else, and asks for no frame.
+    scripted.run("kitTree.listen(label, 'round', true); kitTree.listen(block, 'round', true);");
+    uint32_t ran = scripted.fixture.frame();
+    ran += scripted.fixture.frame();
+    CHECK(toldRound);
+    CHECK(!toldInput);
+    CHECK(scripted.number("rounds[label]") == ran);
+    CHECK(scripted.number("rounds[block]") == ran);
+    CHECK(scripted.number("calls") == 2 * ran);
+    CHECK(!prUiOutput(scripted.fixture.ui).wantsFrame);
+
+    // A node that the script took from the tree hears nothing until it is put back, and neither does a node under it.
+    scripted.run("kitTree.remove(label); kitTree.remove(clip); calls = 0;");
+    scripted.fixture.frame();
+    CHECK(!toldRound);
+    CHECK(scripted.number("calls") == 0);
+    scripted.run("kitTree.insert(0, label, 0);");
+    ran = scripted.fixture.frame();
+    CHECK(toldRound);
+    CHECK(scripted.number("calls") == ran);
+
+    // A script that stops listening hears no more, and a node that is destroyed hears nothing.
+    scripted.run("kitTree.insert(0, clip, 0); kitTree.listen(label, 'round', false); kitTree.destroy(clip); calls = 0;");
+    scripted.fixture.frame();
+    CHECK(!toldRound);
+    CHECK(scripted.number("calls") == 0);
+}
+
+TEST_CASE("a node in motion asks for frames while its widget is shown, as a widget that asks for motion does") {
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var column = make('box', 0, {overflow: 'scroll-y', height: '200', gap: '8'});
+        var rows = [];
+        for (var i = 0; i < 40; ++i)
+            rows.push(make('label', column, {}, 'row ' + i));
+        var clip = make('timeline', column, {});
+        make('timeline-track', clip, {}, 'Track');
+        var taken = kitTree.set(rows[0], 'motion', 'true') && kitTree.set(rows[0], 'motion', null);
+        var refused = kitTree.set(rows[0], 'motion', 'fast');
+    )JS");
+    CHECK(scripted.number("taken ? 1 : 0") == 1);
+    CHECK(scripted.number("refused ? 1 : 0") == 0);
+    KitFixture direct;
+    const PrKitTimelineTrack track{"Track"};
+    PrKitTimeSpan view{0, 10};
+    uint32_t moving = 40;                   // the row that is in motion, or 40 for the timeline, if `motion` is true
+    bool motion = false;
+    bool reveal = false;
+    direct.build = [&](PrLayoutNode root) {
+        PrKitBoxStyle style{.overflow = PrKitOverflow_ScrollY, .gap = 8};
+        style.place.height = prKitPx(200);
+        PrLayoutNode column = prKitBox(direct.kit, root, {}, style);
+        char text[16];
+        for (uint32_t i = 0; i < 40; ++i) {
+            PrLayoutNode row = prKitLabel(direct.kit, column, {.text = formatToBuffer(Span(text), "row {}", i)}, {});
+            if (motion && moving == i)
+                prUiRequestMotion(direct.ui, row);
+        }
+        PrLayoutNode clip = prKitTimeline(direct.kit, column, {.tracks = &track, .trackCount = 1, .view = &view}, {});
+        if (reveal)
+            prUiReveal(direct.ui, clip);
+        reveal = false;
+        if (motion && moving == 40)
+            prUiRequestMotion(direct.ui, clip);
+    };
+    // Runs frames on both, and returns true if both ask for another frame, having checked that they agree.
+    auto asks = [&](uint32_t frames) {
+        for (uint32_t i = 0; i < frames; ++i) {
+            scripted.fixture.frame();
+            direct.frame();
+        }
+        bool wanted = prUiOutput(direct.ui).wantsFrame;
+        CHECK(prUiOutput(scripted.fixture.ui).wantsFrame == wanted);
+        return wanted;
+    };
+    CHECK(!asks(3));
+
+    // A row in view asks for frames while it is in motion, and a row that is scrolled out of view asks for none.
+    scripted.run("kitTree.set(rows[0], 'motion', '');");
+    motion = true;
+    moving = 0;
+    CHECK(asks(2));
+    scripted.run("kitTree.set(rows[0], 'motion', null); kitTree.set(rows[39], 'motion', '');");
+    moving = 39;
+    CHECK(!asks(2));
+    scripted.run("kitTree.set(rows[39], 'motion', 'false');");
+
+    // A timeline, whose kind declares the nodes under it itself, takes what every widget takes: it asks for no frame
+    // below the view, and asks once it is brought into view.
+    scripted.run("kitTree.set(clip, 'motion', '');");
+    moving = 40;
+    CHECK(!asks(2));
+    scripted.run("kitTree.set(clip, 'reveal', '1');");
+    reveal = true;
+    CHECK(asks(30));
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    scripted.run("kitTree.set(clip, 'motion', null);");
+    motion = false;
+    CHECK(!asks(2));
+    CHECK(kitVerified(scripted.fixture.tree));
 }

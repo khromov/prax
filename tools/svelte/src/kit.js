@@ -305,6 +305,8 @@ tree.onevent = (id, type, detail) => {
 // Asks the host to declare the widgets again before it shows the frame. An event's handler calls it when other widgets
 // are to show what it changes in the frame of the event, as two controls that share one value do during a drag.
 // Without it, what a handler changes shows in the next frame, or in the same one after a press, a release or a key.
+// The handler of `round` needs none: the host tells it of a round before it declares the round, which shows what the
+// handler changes.
 export function sameFrame() {
     tree.requestRound();
 }

@@ -1,10 +1,8 @@
 <!-- The gallery's sectionProgress (examples/studio_gallery/section_feedback.cpp).
 
-     The example moves its bake with the time of the round, which a script cannot read: a script has timers, and
-     `performance.now()` is coarsened to a tenth of a millisecond. The bake here follows a clock of the section's own
-     instead, which a timer moves a sixtieth of a second at a time. A host that runs sixty frames a second runs the
-     timer once before each, so the clock keeps the frames' time. A frame that runs a second round, as one that
-     routes a press does, shows the example's bake a frame ahead of this one, since the timer ran once for it. -->
+     The example moves its bake with the time of each round, which the bake's bar hears here (`round`). The section
+     asks for no frames of its own: the bake moves in the frames that the moving widgets beside it ask for, as the
+     example's does. -->
 <script>
     import CaptionRow from '../parts/CaptionRow.svelte';
     import DemoPanel from '../parts/DemoPanel.svelte';
@@ -20,28 +18,20 @@
     const fractions = [0, 0.25, 0.5, 0.75, 1];
     const sizes = [12, 16, 24, 32];
 
-    // The time between two ticks of the section's clock, in seconds and in the whole milliseconds of a timer.
-    const tick = 1 / 60;
-    const tickMilliseconds = 16;
+    // The time of the last round that the bar heard of, in seconds, or null before the first.
+    let last = null;
 
-    // The section's clock, in seconds: the time of the last tick, which is 0 before the first.
-    let time = 0;
-
-    // The example moves the bake after it has declared the bar, so each of its frames shows the bake of the frame
-    // before, and its first shows the bake that the model starts with. A tick therefore shows the time of the tick
-    // before it.
-    function advance() {
-        if (progress.running && time > 0) {
-            const turns = time * 0.25;
+    // The example moves the bake after it has declared the bar, so each of its rounds shows the time of the round
+    // before, and its first shows the bake that the model starts with. A script hears of a round before the round is
+    // declared, so the bake takes the time of the round before here too. A frame's second round, which a frame that
+    // routes a press runs, then shows the frame's own time.
+    function follow(event) {
+        if (progress.running && last !== null) {
+            const turns = last * 0.25;
             progress.bake = Math.fround(turns - Math.trunc(turns));
         }
-        time += tick;
+        last = event.value;
     }
-
-    $effect(() => {
-        const timer = setInterval(advance, tickMilliseconds);
-        return () => clearInterval(timer);
-    });
 
     // Returns the whole number nearest `value`, which is not negative, and the even one of two that are as near,
     // which is how the example's format writes a number with no decimals.
@@ -62,7 +52,7 @@
 <SectionFrame number="15" title="Progress" lede="Work in flight, and a reading against a budget." {description}>
   <DemoPanel title="PROGRESS" tags="DETERMINATE . INDETERMINATE">
     <CaptionRow caption="BAKE" labelWidth={92}>
-      <progress value={progress.bake} flex="fill"></progress>
+      <progress value={progress.bake} flex="fill" onround={follow}></progress>
       <label {...text.monoMuted}>{percent}</label>
     </CaptionRow>
     <CaptionRow caption="SCANNING" labelWidth={92}>

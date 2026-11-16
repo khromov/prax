@@ -354,7 +354,7 @@ PrLayoutNode timelineDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLay
         if (removed && edited.selected)
             jsKitEventPush(round, source, BlockEvent_Remove, nullptr);
     }
-    return kPrLayoutNodeNone;
+    return made;
 }
 
 constexpr JsKitKind kKinds[TimelineKind_Count] = {
@@ -363,7 +363,7 @@ constexpr JsKitKind kKinds[TimelineKind_Count] = {
         .dataSize = sizeof(TimelineData),
         .events = kTimelineEvents,
         .eventCount = 4,
-        .flags = JsKitKindFlag_PlacesItself,
+        .flags = JsKitKindFlag_PlacesItself | JsKitKindFlag_DeclaresChildren,
         .create = timelineCreate,
         .destroy = timelineDestroy,
         .set = timelineSet,

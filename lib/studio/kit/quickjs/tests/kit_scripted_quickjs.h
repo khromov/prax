@@ -19,8 +19,9 @@ namespace pr_impl {
 using namespace harness;
 using namespace pr;
 
-// A realm with a tree bound to it, and a kit whose rounds declare the tree and then dispatch its events, as a host's
-// do. A test declares the same widgets with the kit's own calls in a second fixture, and compares the two.
+// A realm with a tree bound to it, and a kit whose rounds tell the script of themselves, declare the tree and then
+// dispatch its events, as a host's do. A test declares the same widgets with the kit's own calls in a second fixture,
+// and compares the two.
 struct JsKitScripted {
     KitFixture fixture;
     JSRuntime* runtime = jsRuntimeCreate();
@@ -30,6 +31,7 @@ struct JsKitScripted {
     JsKitScripted() {
         prJsKitTreeBind(tree, ctx);
         fixture.build = [this](PrLayoutNode root) {
+            prJsKitTreeDispatchRound(tree, fixture.kit);
             prJsKitTreeBuild(tree, fixture.kit, root);
             prJsKitTreeDispatch(tree);
         };

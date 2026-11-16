@@ -1,8 +1,8 @@
 # extent 1100x500
-# known: a frame that routes a press runs two rounds, and the binding tells a script neither that nor the round's time
-# The bake's row in the frame of a press. The example's second round declares the bar with the bake that its first
-# round took from that frame's time. A script's timer runs once before the frame, so its bake is still the time of the
-# frame before, a frame behind, and the bar's end differs by that much. The frame after matches (progress.input).
+# The bake's row in the frame of a press, which runs two rounds. The example's second round declares the bar with the
+# bake that its first round took from that frame's time. The script hears of each round before the round is declared,
+# and gives the bar in the second round the time that the first told. The whole section in such a frame is in
+# progress.input.
 frame 20
 click 600 300
 screenshot bake 0 172 1100 20

@@ -218,6 +218,10 @@ void prJsKitTreeBind(PrJsKitTree* tree, JSContext* ctx) {
     JS_FreeValue(ctx, global);
 }
 
+bool prJsKitTreeDispatchRound(PrJsKitTree* tree, const PrKit* kit) {
+    return jsKitTreeQueueRound(tree->tree, kit) && prJsKitTreeDispatch(tree);
+}
+
 void prJsKitTreeBuild(PrJsKitTree* tree, PrKit* kit, PrLayoutNode parent) {
     jsKitTreeDeclare(tree->tree, kit, parent);
 }

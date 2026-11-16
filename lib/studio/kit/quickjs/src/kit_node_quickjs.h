@@ -187,6 +187,10 @@ enum {
     // The kind's declare applies the node's place itself, as a box does, whose style holds one. The tree places the
     // widget of any other kind with prKitPlace once it is declared, if the script placed the node.
     JsKitKindFlag_PlacesItself = 1u << 0,
+
+    // The kind's declare reads the nodes under its node itself, as a timeline reads its tracks, so the tree declares
+    // none of them under the widget that the declare returns.
+    JsKitKindFlag_DeclaresChildren = 1u << 1,
 };
 typedef uint8_t JsKitKindFlags;
 
@@ -212,9 +216,11 @@ struct JsKitKind {
     // no such attribute or the value does not suit it. Null for a kind with no attributes of its own.
     bool (*PR_NULLABLE set)(void* data, PrStringView name, PrStringView value, bool reset);
 
-    // Declares the node's widget under `parent` in the round, and queues its events. Returns the widget's node, which
-    // the tree places and declares the node's children under. A kind that declares its node's children itself, or
-    // declares none, returns kPrLayoutNodeNone.
+    // Declares the node's widget under `parent` in the round, and queues its events. Returns the widget's node. The
+    // tree places it, applies what a node of any kind takes, and declares the node's children under it, unless the
+    // kind's flags leave the placing or the children to the declare. A kind that declares no widget returns
+    // kPrLayoutNodeNone, and the tree does nothing more for the node. So does a kind that declares its node's children
+    // itself without JsKitKindFlag_DeclaresChildren, whose widget the tree then applies nothing to.
     PrLayoutNode (*PR_NONNULL declare)(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
 };
 
@@ -271,6 +277,11 @@ void jsKitNodeSetText(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView tex
 
 // Starts or stops queuing a node's events of `type`. Returns false if the node's kind queues none of that type.
 bool jsKitNodeListen(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView type, bool listening);
+
+// Queues `round` for each node under the root that the script listens for it on, with the time, the delta and the index
+// of the open round of the kit's context, and returns true if it queued any. It first forgets the events that an
+// earlier round queued and no one dispatched. It does nothing while the script listens for `round` on no node.
+bool jsKitTreeQueueRound(JsKitNodeTree* tree, const PrKit* kit);
 
 // Declares the tree's nodes under `parent` in the kit's open round, after forgetting the events that an earlier round
 // queued and no one dispatched.

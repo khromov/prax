@@ -19,11 +19,12 @@ screenshot before-end
 frame 10
 screenshot wrapped
 
-# A scrub holds it while it plays, and it runs on from there. The script hears of the scrub a frame after the kit, so
-# the screenshot of the held playhead is of the timeline that is scrubbed alone.
+# A scrub holds it while it plays, in both timelines, and it runs on from there. The script hears of the scrub after
+# the round that the kit scrubbed in, and has the frame declared again, so that the read-only timeline and the tally
+# show the scrub in its frame.
 down 800 288
 frame 2
-screenshot scrubbing 25 278 1050 140
+screenshot scrubbing
 up 800 288
 frame 20
 screenshot scrubbed

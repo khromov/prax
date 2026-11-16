@@ -1,17 +1,18 @@
 <!-- The gallery's sectionTimeline (examples/studio_gallery/section_data.cpp).
 
-     The example does two things below the kit. The binding gives a script no way to do the first, which is done here
-     as nearly as a script can do it, and gives it events for the second.
+     The example does two things below the kit, and the binding offers a script both.
 
-     Playback. The example advances the playhead by the delta of each frame's first round. A script cannot read that
-     delta: it has timers, and the page's clock, which tells time in steps of a tenth of a millisecond. The playhead
-     here advances on a timer that runs once before each frame, by the time that passed since it last ran. A time that
-     is a sixtieth of a second to within the clock's step counts as a sixtieth, which is the delta of the host's frames.
+     Playback. The example advances the playhead by each round's delta before it declares the round's widgets, and
+     asks for a frame in each round while the clip plays. The clip's timeline here hears of each round before the
+     round is declared (`round`), and advances the playhead by the delta that the round tells. Each timeline asks for
+     the frames while the clip plays (`motion`), and for none while it is out of view, where the example asks in
+     every round.
 
      Undo. The example records its Undo from the edit sink of the panel (prUiSetEditSink), which hears each gesture
      begin, change and commit. The body of the panel here is a box, which hears the same phases as `editbegin`,
      `editchange` and `editcommit`, and the section records them as the example's sink does. -->
 <script>
+    import { sameFrame } from 'prax-svelte';
     import DemoPanel from '../parts/DemoPanel.svelte';
     import SectionFrame from '../parts/SectionFrame.svelte';
     import { seedTimeline } from '../state/timeline.js';
@@ -25,10 +26,6 @@
         'of other blocks, the markers and the playhead as the toolbar enables them, and a line marks a snap to ' +
         'any of those. The wheel pans the view and Cmd with the wheel zooms it. Every gesture reports to the ' +
         'edit sink, which is what Undo steps back.';
-
-    // The seconds between the host's frames, and the step of the page's clock, in milliseconds.
-    const frameDelta = 1 / 60;
-    const clockStep = 0.1;
 
     // The timeline section's clip: its tracks, blocks and markers, the view, the playhead and the loop, the snapping
     // that the toolbar turns on, and the undo state. A gesture copies the blocks that it opens on, and one that changed
@@ -70,23 +67,16 @@
         { label: 'COMMIT', value: commits },
     ]);
 
-    // The playhead runs through the loop while the clip plays.
-    $effect(() => {
+    // The playhead runs through the loop while the clip plays, by the delta of each round, which is zero in every
+    // round of a frame but the first.
+    function advance(event) {
+        const [, delta] = event.values;
         if (!playing)
-            return undefined;
-        let last = performance.now();
-        let timer = setTimeout(function advance() {
-            const now = performance.now();
-            const elapsed = now - last;
-            const delta = Math.abs(elapsed - frameDelta * 1000) <= clockStep ? frameDelta : elapsed / 1000;
-            playhead = Math.fround(playhead + Math.fround(delta));
-            if (playhead >= loop[1])
-                playhead = loop[0];
-            last = now;
-            timer = setTimeout(advance, 1);
-        }, 1);
-        return () => clearTimeout(timer);
-    });
+            return;
+        playhead = Math.fround(playhead + Math.fround(delta));
+        if (playhead >= loop[1])
+            playhead = loop[0];
+    }
 
     // Records a phase of a gesture for the timeline's Undo, as the example's edit sink does (timelineEdit). The box
     // tells of a gesture's begin before the round's events of the timeline and its blocks, and of a change or a commit
@@ -122,8 +112,10 @@
         }
     }
 
+    // The example gives both timelines one playhead, so the read-only one shows a scrub in the frame that made it.
     function scrub(event) {
         playhead = event.value;
+        sameFrame();
     }
 
     function move(block, event) {
@@ -184,7 +176,7 @@
       oneditchange={timelineEdit} oneditcommit={timelineEdit}>
     <timeline {view} {playhead} {loop} snap-step={snapping ? 0.25 : 0} snap-edges={snapEdges}
         snap-markers={snapMarkers} snap-playhead={snapPlayhead} track-height={30} onchange={scrub}
-        onview={(event) => (view = event.values)} onadd={add} onremove={remove}>
+        onview={(event) => (view = event.values)} onadd={add} onremove={remove} motion={playing} onround={advance}>
       {@render lanes(true)}
     </timeline>
     <panel rules="top" direction="row" gap={space[4]} padding={space[4]}>
@@ -197,7 +189,7 @@
   <!-- The same model again, shown and not edited, with its own view. -->
   <DemoPanel title="STATE INSPECTOR" tags="READ-ONLY" bare>
     <timeline view={inspectorView} {playhead} {loop} snap-step={snapping ? 0.25 : 0} snap-edges={snapEdges}
-        snap-markers={snapMarkers} snap-playhead={snapPlayhead} read-only track-height={22}
+        snap-markers={snapMarkers} snap-playhead={snapPlayhead} read-only track-height={22} motion={playing}
         onview={(event) => (inspectorView = event.values)}>
       {@render lanes(false)}
     </timeline>

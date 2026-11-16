@@ -56,7 +56,9 @@ struct JsKitNode {
     bool placed;                    // the script set an attribute of `place`
     bool revealPending;             // the script set `reveal`, and no round has brought the widget into view since
     bool focusPending;              // the script set `focus`, and no round has asked for the widget's focus since
+    bool motion;                    // the script set `motion`
     bool listensBounds;             // the script listens for `bounds`
+    bool listensRound;              // the script listens for `round`, so the node is among the tree's `hearing`
     uint32_t listens;               // a bit for each of the kind's events, by its index, that the script listens for
     PrRect bounds;                  // what the last `bounds` event told, in px of the viewport
 
@@ -81,6 +83,7 @@ struct JsKitNodeTree {
     RawArray<JsKitNodeIndex> free;      // the freed nodes
     RawArray<JsKitStoredEvent> events;
     RawArray<char> eventText;           // the texts of the events' details, one after another
+    RawArray<JsKitNodeIndex> hearing;   // the nodes that the script listens for `round` on
     bool changed;
     uint64_t version;                   // the number of edits that set `changed` so far
 };
@@ -284,6 +287,9 @@ constexpr FamilyFn kFamilies[] = {
 // The event that a node of any kind queues when its widget's box moves or changes size.
 constexpr PrStringView kBoundsEvent = "bounds";
 
+// The event that tells a node of any kind the round that is about to be declared.
+constexpr PrStringView kRoundEvent = "round";
+
 // Queues an event of `type`, which outlives the tree, for the script, with what `detail` tells, if it is not null.
 void queueEvent(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView type, const JsKitDetail* PR_NULLABLE detail) {
     JsKitStoredEvent stored{};
@@ -331,6 +337,8 @@ void freeNode(JsKitNodeTree* tree, JsKitNodeIndex index) {
     prMemoryFree(node.data);
     prRawStringReset(&node.text);
     prRawStringReset(&node.key);
+    if (node.listensRound)
+        tree->hearing.removeFirst(index);
     node = JsKitNode{};
     tree->free.push(index);
 }
@@ -701,6 +709,8 @@ void jsKitDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode par
         prUiRequestFrame(round.kit->ui);
         declared.focusPending = false;
     }
+    if (declared.motion)
+        prUiRequestMotion(round.kit->ui, made);
     if (declared.listensBounds) {
         // The geometry of the last layout, which is what a program that declares its own widgets reads in a round.
         PrRect bounds = prLayoutRectToPx(prLayoutNodeBounds(round.kit->tree, made, PrLayoutCoordinates_Viewport));
@@ -713,7 +723,8 @@ void jsKitDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode par
             queueEvent(round.tree, node, kBoundsEvent, &detail);
         }
     }
-    jsKitDeclareChildren(round, node, made);
+    if ((kind->flags & JsKitKindFlag_DeclaresChildren) == 0)
+        jsKitDeclareChildren(round, node, made);
 }
 
 void jsKitDeclareChildren(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
@@ -758,6 +769,7 @@ void jsKitTreeDestroy(JsKitNodeTree* tree) {
     tree->free.reset();
     tree->events.reset();
     tree->eventText.reset();
+    tree->hearing.reset();
     prMemoryFree(tree);
 }
 
@@ -864,6 +876,13 @@ bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, P
         ++tree->version;
         return true;
     }
+    if (name == "motion") {
+        if (!jsKitSetFlag(value, reset, &changed.motion))
+            return false;
+        tree->changed = true;
+        ++tree->version;
+        return true;
+    }
     if (setDragSource(changed, name, value, reset)) {
         tree->changed = true;
         ++tree->version;
@@ -898,6 +917,14 @@ bool jsKitNodeListen(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView type
         heard.bounds = PrRect{};
         return true;
     }
+    if (type == kRoundEvent) {
+        if (listening && !heard.listensRound)
+            tree->hearing.push(node);
+        else if (!listening && heard.listensRound)
+            tree->hearing.removeFirst(node);
+        heard.listensRound = listening;
+        return true;
+    }
     for (uint32_t event = 0; event < heard.kind->eventCount; ++event) {
         if (heard.kind->events[event] != type)
             continue;
@@ -908,6 +935,19 @@ bool jsKitNodeListen(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView type
         return true;
     }
     return false;
+}
+
+bool jsKitTreeQueueRound(JsKitNodeTree* tree, const PrKit* kit) {
+    if (tree->hearing.count == 0)
+        return false;
+    jsKitTreeClearEvents(tree);
+    const PrUiRound* round = prUiCurrentRound(kit->ui);
+    JsKitDetail detail{.values = {round->time, round->delta, double(round->index)}, .valueCount = 3};
+    for (uint32_t i = 0; i < tree->hearing.count; ++i) {
+        if (jsKitNodeIsWithin(tree, tree->hearing.data[i], 0))
+            queueEvent(tree, tree->hearing.data[i], kRoundEvent, &detail);
+    }
+    return tree->events.count > 0;
 }
 
 void jsKitTreeDeclare(JsKitNodeTree* tree, PrKit* kit, PrLayoutNode parent) {

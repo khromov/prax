@@ -164,10 +164,13 @@ void scriptPump(ScriptHost& script) {
     }
 }
 
-// Declares the script's widgets under `root`, then tells the script of the round's input. What the script changes in
-// answer is declared by the next round, which the context runs after a round that routed a press or a release, or by
-// the frame that this asks for.
+// Tells the script of the round, if it follows the rounds, and declares its widgets under `root`, with what it changed
+// in answer. Then tells the script of the round's input. What the script changes in answer to that is declared by the
+// next round, which the context runs after a round that routed a press or a release, or by the frame that this asks
+// for.
 void scriptBuild(ScriptHost& script, PrKit* kit, PrLayoutNode root) {
+    if (prJsKitTreeDispatchRound(script.tree, kit))
+        prJsHtmlEngineCheckpoint(script.engine);
     prJsKitTreeBuild(script.tree, kit, root);
     if (prJsKitTreeDispatch(script.tree))
         prJsHtmlEngineCheckpoint(script.engine);
