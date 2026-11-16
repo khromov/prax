@@ -1,0 +1,78 @@
+# extent 1100x1700
+# The numeric fields: a scrub of the scalar past the top of its range and back past the bottom, which the F32 cell and
+# the strength slider follow, a scrub with Shift held, the keys on the fields with units, and the whole number's steps.
+down 195 985
+frame
+move 205 985
+frame
+move 215 985
+frame
+settle
+screenshot scalar-scrubbing
+move 300 985
+frame
+settle
+screenshot scalar-top
+up 300 985
+settle
+screenshot scalar-released
+down 195 985
+frame
+move 150 985
+frame
+move 60 985
+frame
+up 60 985
+settle
+screenshot scalar-bottom
+key ArrowUp
+key ArrowUp
+key ArrowUp shift
+settle
+screenshot scalar-keys
+down 195 1016
+frame
+move 215 1016
+frame
+move 236 1016
+frame
+up 236 1016
+settle
+screenshot mass
+key ArrowDown
+key ArrowDown shift
+settle
+screenshot mass-keys
+down 323 1016
+frame
+move 340 1016
+frame
+move 349 1016
+frame
+up 349 1016
+key ArrowUp
+settle
+screenshot shutter
+down 451 1016
+frame
+move 440 1016
+frame
+move 400 1016
+frame
+up 400 1016
+settle
+screenshot seed
+key ArrowUp
+key ArrowUp shift
+key ArrowUp shift
+settle
+screenshot seed-keys
+down 195 1016
+frame
+move 100 1016
+frame
+move 10 1016
+frame
+up 10 1016
+settle
+screenshot mass-bottom

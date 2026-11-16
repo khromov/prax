@@ -1,0 +1,35 @@
+# extent 1100x1700
+# The suggest fields: the list that opens with focus, the arrow keys and Enter, which stay with the field, typed text,
+# Escape, Tab to the second field, which selects its text and opens its own list, a suggestion under the pointer and
+# clicked, and a press outside the fields.
+click 600 357
+settle
+screenshot open
+key ArrowDown
+key ArrowDown
+settle
+screenshot walked
+key Enter
+settle
+screenshot chosen
+text /src
+settle
+screenshot typed
+key Escape
+settle
+screenshot escaped
+key Tab
+settle
+screenshot revision
+move 600 478
+settle
+screenshot hover
+click 600 478
+settle
+screenshot clicked
+key ArrowUp
+settle
+screenshot up
+click 300 420
+settle
+screenshot outside

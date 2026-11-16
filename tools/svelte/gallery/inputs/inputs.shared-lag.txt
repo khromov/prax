@@ -1,0 +1,12 @@
+# extent 1100x1700
+# known: a script hears a round's change after the round, so a control that shares the value follows a frame later
+# A slider is dragged, and the screenshots are taken in the frame that routed the move, with no frame after it. The
+# example's field beside the slider reads the value that the slider wrote earlier in the same round, and the port's
+# field is given it once the round's events are heard. The slider itself matches, which the first screenshot holds it
+# to, and so does the whole row a frame later, as the other cases show.
+down 500 1256
+frame
+move 620 1256
+frame
+screenshot slider 30 1240 940 32
+screenshot row 30 1240 1040 32

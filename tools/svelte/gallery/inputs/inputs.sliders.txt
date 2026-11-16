@@ -1,0 +1,114 @@
+# extent 1100x1700
+# The sliders: one under the pointer, a press on its track, a drag across frames and past its end, the arrow keys on
+# the focused slider, the whole steps of the integer's, the ratio tracks, and a scrub of the field beside a slider,
+# which moves the slider.
+move 500 1256
+settle
+screenshot hover
+down 500 1256
+settle
+screenshot pressed
+move 520 1256
+frame
+move 620 1262
+frame
+settle
+screenshot dragging
+move 1000 1256
+frame
+up 1000 1256
+settle
+screenshot top
+key ArrowLeft
+key ArrowLeft
+settle
+screenshot left
+key ArrowRight
+key Home
+settle
+screenshot home
+key End
+key ArrowDown
+settle
+screenshot end
+down 300 1288
+frame
+move 250 1288
+frame
+move 50 1288
+frame
+up 50 1288
+settle
+screenshot mass-bottom
+click 700 1288
+settle
+screenshot mass-clicked
+down 380 1320
+frame
+move 420 1320
+frame
+move 640 1320
+frame
+settle
+screenshot steps-dragging
+up 640 1320
+key ArrowRight
+settle
+screenshot steps
+down 500 1352
+frame
+move 600 1352
+frame
+move 800 1352
+frame
+up 800 1352
+settle
+screenshot frequency
+key ArrowLeft
+key ArrowLeft
+key ArrowLeft
+settle
+screenshot frequency-keys
+click 130 1384
+settle
+screenshot shutter-low
+down 130 1384
+frame
+move 400 1384
+frame
+move 960 1384
+frame
+up 960 1384
+settle
+screenshot shutter-high
+down 1021 1256
+frame
+move 1011 1256
+frame
+move 991 1256
+frame
+up 991 1256
+settle
+screenshot field-scrubbed
+down 1021 1352
+frame
+move 1031 1352
+frame
+move 1071 1352
+frame
+up 1071 1352
+key ArrowUp
+settle
+screenshot frequency-field
+down 1021 1320
+frame
+move 1031 1320
+frame
+move 1090 1320
+frame
+up 1090 1320
+settle
+screenshot steps-field
+move 600 1420
+settle
+screenshot away

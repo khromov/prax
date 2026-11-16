@@ -1,0 +1,50 @@
+# extent 1100x1700
+# The styled text area without its toolbar's actions: a toolbar button under the pointer, a press that places the
+# caret, typing, Return, a selection made with the keys and one made with a drag, typing over a selection, and the
+# toolbar alone while one of its buttons is pressed and once it is released. What the buttons do is in
+# inputs.styled-toolbar.txt.
+move 118 683
+settle
+screenshot button-hover
+move 550 748
+settle
+screenshot hover
+click 300 715
+settle
+screenshot caret
+text styled
+settle
+screenshot typed
+key ArrowDown super
+key Enter
+text A second line.
+settle
+screenshot second-line
+key ArrowLeft shift
+key ArrowLeft shift
+key ArrowLeft shift
+key ArrowUp shift
+settle
+screenshot selected
+down 100 715
+frame
+move 160 715
+frame
+move 260 717
+frame
+up 260 717
+settle
+screenshot dragged
+text Pick
+settle
+screenshot replaced
+key Tab
+settle
+screenshot tab
+move 304 683
+down 304 683
+settle
+screenshot toolbar-down 30 668 1040 31
+up 304 683
+settle
+screenshot toolbar-up 30 668 1040 31

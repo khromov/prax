@@ -1,0 +1,19 @@
+# extent 1100x560
+# The pointer at rest on each button that has a tooltip, away from them, and a click on one whose tooltip shows.
+move 72 423
+settle
+screenshot undo
+move 127 423
+settle
+screenshot redo
+move 159 423
+settle
+screenshot trash
+move 600 500
+settle
+screenshot away
+move 72 423
+settle
+click 72 423
+settle
+screenshot undo-clicked

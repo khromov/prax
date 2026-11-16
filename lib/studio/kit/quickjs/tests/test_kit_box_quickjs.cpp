@@ -3,8 +3,12 @@
 #include "pr/geom.h"
 #include "pr/kit_box.h"
 #include "pr/kit_button.h"
+#include "pr/kit_choice.h"
+#include "pr/kit_input.h"
 #include "pr/kit_panel.h"
 #include "pr/kit_text.h"
+#include "pr/string.h"
+#include "pr/ui.h"
 
 #include "studio/kit/quickjs/tests/kit_scripted_quickjs.h"
 
@@ -34,6 +38,24 @@ void defineMatrix(JsKitScripted& scripted, const char* name, const PrMatrix4& ma
     JSValue global = JS_GetGlobalObject(ctx);
     JS_SetPropertyStr(ctx, global, name, terms);
     JS_FreeValue(ctx, global);
+}
+
+// Appends the name of each phase that an edit sink is told of to the sink's context, a string.
+void recordPhase(void* context, PrLayoutNode, PrUiEditPhase phase) {
+    const char* const names[] = {"begin ", "change ", "commit "}; // by PrUiEditPhase
+    static_cast<String*>(context)->append(names[phase]);
+}
+
+// Returns the string that the script's expression `source` evaluates to.
+String textOf(JsKitScripted& scripted, const char* source) {
+    JSValue result = JS_Eval(scripted.ctx, source, PrStringView(source).size, "kit", JS_EVAL_TYPE_GLOBAL);
+    size_t size = 0;
+    const char* chars = JS_ToCStringLen(scripted.ctx, &size, result);
+    REQUIRE(chars != nullptr);
+    String copy(PrStringView{chars, size});
+    JS_FreeCString(scripted.ctx, chars);
+    JS_FreeValue(scripted.ctx, result);
+    return copy;
 }
 
 } // namespace
@@ -249,9 +271,112 @@ TEST_CASE("a plane's level orders it, a plane that hides its back shows nothing 
     CHECK(kitVerified(scripted.fixture.tree));
 }
 
-TEST_CASE("the kinds of boxes take only their own attributes, and no events") {
+TEST_CASE("a box hears the gestures of the controls under it, each phase on its side of the control's change") {
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var names = {};
+        var heard = [];
+        kitTree.onevent = function (node, type) {
+            heard.push(names[node] + '.' + type);
+        };
+        function hear(name, node, types) {
+            names[node] = name;
+            for (const type of types) {
+                if (!kitTree.listen(node, type, true))
+                    throw new Error('no ' + type + ' event');
+            }
+        }
+        var outer = make('box', 0, {align: 'start'});
+        var row = make('box', outer, {direction: 'row', align: 'center', gap: '8'});
+        var slider = make('slider', row, {value: '0.25', width: '200', flex: 'fixed'});
+        var toggle = make('toggle', row, {});
+        var apart = make('toggle', outer, {});
+        hear('outer', outer, ['editcommit']);
+        hear('row', row, ['editbegin', 'editchange', 'editcommit']);
+        hear('slider', slider, ['change']);
+        hear('toggle', toggle, ['change']);
+        hear('apart', apart, ['change']);
+    )JS");
+    KitFixture direct;
+    String phases;
+    float value = 0.25f;
+    bool on = false;
+    bool other = false;
+    PrLayoutNode slider = kPrLayoutNodeNone;
+    PrLayoutNode toggle = kPrLayoutNodeNone;
+    PrLayoutNode apart = kPrLayoutNodeNone;
+    direct.build = [&](PrLayoutNode root) {
+        PrKit* kit = direct.kit;
+        PrLayoutNode outer = prKitBox(kit, root, {}, {.align = PrKitAlign_Start});
+        PrLayoutNode row = prKitBox(kit, outer, {}, {
+            .direction = PrKitDirection_Row,
+            .align = PrKitAlign_Center,
+            .gap = 8,
+        });
+        prUiSetEditSink(kit->ui, row, recordPhase, &phases);
+        slider = prKitSlider(kit, row, {.value = prKitScalarF32(&value)}, {});
+        prKitPlace(kit, slider, {.width = prKitPx(200), .flex = PrKitFlex_Fixed});
+        toggle = prKitToggle(kit, row, {.value = &on}, {});
+        apart = prKitToggle(kit, outer, {.value = &other}, {});
+    };
+    auto push = [&](PrAppEvent event) {
+        scripted.fixture.push(event);
+        direct.push(event);
+    };
+    auto click = [&](PrLayoutNode node) {
+        scripted.fixture.click(direct.center(node));
+        direct.click(direct.center(node));
+        frames(scripted, direct);
+    };
+    frames(scripted, direct, 2);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+
+    // A drag is one gesture. Its begin comes before the change of its first write, and each later phase comes after the
+    // change of the round that reported the phase.
+    PrVec2 at = direct.center(slider);
+    push(PrAppEvent{.kind = PrAppEventKind_PointerDown, .pointer = {.position = at}});
+    frames(scripted, direct);
+    at.x += 40;
+    push(PrAppEvent{.kind = PrAppEventKind_PointerMove, .pointer = {.position = at}});
+    frames(scripted, direct);
+    push(PrAppEvent{.kind = PrAppEventKind_PointerUp, .pointer = {.position = at}});
+    frames(scripted, direct);
+    CHECK(phases == "begin change change commit ");
+    CHECK(textOf(scripted, "heard.join(' ')") ==
+        "row.editbegin slider.change row.editchange slider.change row.editchange row.editcommit");
+
+    // A toggle's gesture is whole in one round, around the toggle's change.
+    scripted.run("heard = [];");
+    phases.clear();
+    click(toggle);
+    CHECK(on);
+    CHECK(phases == "begin change commit ");
+    CHECK(textOf(scripted, "heard.join(' ')") == "row.editbegin toggle.change row.editchange row.editcommit");
+
+    // A gesture reaches the nearest box that listens, and that box hears only the phases that it listens for.
+    scripted.run("heard = [];");
+    click(apart);
+    CHECK(other);
+    CHECK(textOf(scripted, "heard.join(' ')") == "apart.change outer.editcommit");
+    frames(scripted, direct, 30);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(kitVerified(scripted.fixture.tree));
+
+    // A box that the script no longer listens on leaves the gestures to the box above it.
+    scripted.run(R"JS(
+        heard = [];
+        for (const type of ['editbegin', 'editchange', 'editcommit'])
+            kitTree.listen(row, type, false);
+    )JS");
+    click(toggle);
+    CHECK(textOf(scripted, "heard.join(' ')") == "toggle.change outer.editcommit");
+}
+
+TEST_CASE("the kinds of boxes take only their own attributes, and a box alone takes events") {
     JsKitScripted scripted;
     scripted.run(R"JS(
+        var box = kitTree.create('box');
         var plane = kitTree.create('plane');
         var stack = kitTree.create('stack');
         var layer = kitTree.create('layer');
@@ -266,6 +391,8 @@ TEST_CASE("the kinds of boxes take only their own attributes, and no events") {
             kitTree.set(plane, 'backface-hidden', 'false'), kitTree.set(plane, 'gap', '4'),
             kitTree.set(stack, 'justify', 'space-evenly'), kitTree.set(layer, 'overflow', 'scroll'),
             kitTree.set(layer, 'disabled', ''), kitTree.set(spacer, 'weight', '2'),
+            kitTree.listen(box, 'editbegin', true), kitTree.listen(box, 'editchange', true),
+            kitTree.listen(box, 'editcommit', true),
         ].filter(Boolean).length;
         var refused = [
             kitTree.set(plane, 'transform', '1 0 0 0 0 1 0 0 0 0 1 0 0 0 0'),
@@ -278,9 +405,11 @@ TEST_CASE("the kinds of boxes take only their own attributes, and no events") {
             kitTree.set(plane, 'direction', 'diagonal'), kitTree.set(stack, 'transform', identity),
             kitTree.set(layer, 'z-index', '1'), kitTree.set(spacer, 'gap', '4'),
             kitTree.set(divider, 'direction', 'row'), kitTree.listen(plane, 'click', true),
-            kitTree.listen(stack, 'click', true),
+            kitTree.listen(stack, 'click', true), kitTree.listen(box, 'click', true),
+            kitTree.listen(stack, 'editbegin', true), kitTree.listen(layer, 'editcommit', true),
+            kitTree.listen(plane, 'editchange', true),
         ].filter(Boolean).length;
     )JS");
-    CHECK(scripted.number("taken") == 13);
+    CHECK(scripted.number("taken") == 16);
     CHECK(scripted.number("refused") == 0);
 }

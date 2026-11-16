@@ -1,11 +1,23 @@
 // The kinds of Studio Kit's boxes (pr/kit_box.h): `box`, `stack`, `layer`, `plane`, `spacer` and `divider`.
 //
-// No kind of this family shows its node's text or queues an event. Each but the spacer and the divider is a container:
-// the nodes under it are declared in it, in the tree's order.
+// No kind of this family shows its node's text, and none but the box queues an event. Each but the spacer and the
+// divider is a container: the nodes under it are declared in it, in the tree's order.
 //
 // A `box` (prKitBox) takes the fields of PrKitBoxStyle: `direction`, `justify`, `align` and `overflow`, each a keyword
 // of its field's enumeration, `wrap`, a flag, `gap`, in px, and `padding`, one to four lengths in px. Its style's place
 // is the node's placement. It also takes `disabled`, a flag, which disables the widgets under it.
+//
+// A box queues the edit gestures of the controls under it (prUiSetEditSink), while the script listens for any of their
+// three events on it. Each event is a phase of a gesture, with no detail: `editbegin` before the gesture's first write,
+// `editchange` after each write, and `editcommit` once the gesture ends. A gesture reaches the nearest listening box
+// above its control, and no box above that one.
+//
+// A control queues the `change` that carries its new value after the kit has reported the phases of the round's writes.
+// The box therefore queues `editbegin` at once, ahead of that `change`, and holds `editchange` and `editcommit` until
+// the nodes under it are declared, or until the next `editbegin`. A script that keeps the controls' values then has the
+// values from before the gesture when it hears `editbegin`, and the values that the gesture wrote when it hears
+// `editcommit`. Two gestures of one control in one round are the exception: the control queues one `change`, after
+// both.
 //
 // A `stack` (prKitStack) and a `layer` (prKitLayer) take a box's attributes. A layer covers the nearest stack or plane
 // above it.
@@ -25,10 +37,12 @@
 
 #include "studio/kit/quickjs/src/kit_box_quickjs.h"
 
+#include "pr/count_of.h"
 #include "pr/float.h"
 #include "pr/float_convert.h"
 #include "pr/geom.h"
 #include "pr/kit_box.h"
+#include "pr/raw_array.h"
 
 namespace pr_impl {
 
@@ -52,10 +66,19 @@ constexpr JsKitKeyword kOverflows[] = {
     {"scroll-y", PrKitOverflow_ScrollY},
 };
 
+// The events of a box, by PrUiEditPhase.
+constexpr PrStringView kBoxEvents[] = {"editbegin", "editchange", "editcommit"};
+
 // What a box, a stack or a layer is declared from. The style's place is the node's.
 struct BoxData {
     PrKitBoxStyle style;
     bool disabled;
+
+    // What the edit sink of a box reads: the round that the box is declared in, the box's node, and the phases that the
+    // box has yet to queue, in the order that the kit reported them.
+    JsKitRound round;
+    JsKitNodeIndex node;
+    RawArray<PrUiEditPhase> held;
 };
 
 // What a plane is declared from. The place of the style's box is the node's.
@@ -121,9 +144,44 @@ PrKitBoxStyle placed(const JsKitRound& round, JsKitNodeIndex node, PrKitBoxStyle
     return style;
 }
 
+void boxDestroy(void* data) {
+    static_cast<BoxData*>(data)->held.reset();
+}
+
+// Queues the phases that a box holds.
+void boxFlush(BoxData& box) {
+    for (uint32_t i = 0; i < box.held.count; ++i)
+        jsKitEventPush(box.round, box.node, box.held.data[i], nullptr);
+    box.held.clear();
+}
+
+// Takes a phase of a gesture of a control under a box. The control's node queues its `change` after the kit's call that
+// reports the phase returns. A begin is therefore queued at once, and a phase that follows a write is held.
+void boxEdit(void* context, PrLayoutNode, PrUiEditPhase phase) {
+    BoxData& box = *static_cast<BoxData*>(context);
+    if (phase != PrUiEditPhase_Begin) {
+        box.held.push(phase);
+        return;
+    }
+    boxFlush(box);
+    jsKitEventPush(box.round, box.node, phase, nullptr);
+}
+
 PrLayoutNode boxDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const BoxData& box = jsKitData<BoxData>(round, node);
-    return prKitBox(round.kit, parent, boxOf(round, node, box.disabled), placed(round, node, box.style));
+    BoxData& box = jsKitData<BoxData>(round, node);
+    PrLayoutNode made = prKitBox(round.kit, parent, boxOf(round, node, box.disabled), placed(round, node, box.style));
+    bool listens = false;
+    for (uint32_t event = 0; event < countOf(kBoxEvents); ++event)
+        listens = listens || jsKitNodeListens(round.tree, node, event);
+    if (!listens)
+        return made;
+    // The box declares the nodes under it here, so that it queues the phases that it holds once they are declared.
+    box.round = round;
+    box.node = node;
+    prUiSetEditSink(round.kit->ui, made, boxEdit, &box);
+    jsKitDeclareChildren(round, node, made);
+    boxFlush(box);
+    return kPrLayoutNodeNone;
 }
 
 PrLayoutNode stackDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
@@ -178,7 +236,10 @@ constexpr JsKitKind kKinds[] = {
     {
         .name = "box",
         .dataSize = sizeof(BoxData),
+        .events = kBoxEvents,
+        .eventCount = 3,
         .flags = JsKitKindFlag_PlacesItself,
+        .destroy = boxDestroy,
         .set = boxSet,
         .declare = boxDeclare,
     },

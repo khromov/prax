@@ -1,0 +1,26 @@
+# extent 1100x560
+# The buttons of the two groups under the pointer, pressed and clicked.
+move 49 501
+settle
+screenshot first
+move 103 501
+settle
+screenshot third
+down 103 501
+settle
+screenshot third-down
+up 103 501
+settle
+screenshot third-up
+move 178 501
+settle
+screenshot local
+click 178 501
+settle
+screenshot local-clicked
+move 224 501
+settle
+screenshot world
+click 224 501
+settle
+screenshot world-clicked

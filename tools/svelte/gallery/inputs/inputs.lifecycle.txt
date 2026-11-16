@@ -1,0 +1,80 @@
+# extent 1100x1700
+# The edit lifecycle: the toggle's gesture, a slider's drag across frames, which is one state however many changes it
+# makes, a press that changes nothing, the keys on the slider and on the field, a scrub of the field, Undo back to the
+# first state, Redo, and an edit after an undo, which drops the states that the undo left ahead.
+click 742 1477
+settle
+screenshot toggled
+down 100 1477
+frame
+move 150 1477
+frame
+move 250 1480
+frame
+settle
+screenshot dragging
+up 250 1480
+settle
+screenshot dragged
+down 250 1477
+frame
+up 250 1477
+settle
+screenshot pressed
+key ArrowRight
+frame
+key ArrowLeft shift
+settle
+screenshot slider-keys
+click 550 1477
+settle
+screenshot field-focused
+key ArrowUp
+frame
+key ArrowDown shift
+settle
+screenshot field-keys
+down 550 1477
+frame
+move 560 1477
+frame
+move 570 1477
+frame
+move 580 1479
+frame
+up 580 1479
+settle
+screenshot scrubbed
+move 300 1510
+settle
+screenshot undo-hover
+click 300 1510
+settle
+screenshot undone
+click 300 1510
+settle
+click 300 1510
+settle
+screenshot undone-twice
+click 389 1510
+settle
+screenshot redone
+click 742 1477
+settle
+screenshot forked
+click 300 1510
+settle
+click 300 1510
+settle
+click 300 1510
+settle
+click 300 1510
+settle
+click 300 1510
+settle
+click 300 1510
+settle
+screenshot first
+click 389 1510
+settle
+screenshot second

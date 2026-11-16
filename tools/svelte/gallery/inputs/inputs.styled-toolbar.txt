@@ -1,0 +1,44 @@
+# extent 1100x1700
+# known: the toolbar styles the area's selection, steps the buffer's history and refocuses the area, below the kit
+# The example reads the selection through the area's view and styles it (prUiTextEditView, prTextEditViewSetStyle),
+# undoes and redoes a step of the buffer's history (prTextEditHistoryUndo, prTextEditHistoryRedo), and returns focus to
+# the area (prUiSetFocus). A script has none of these, so the port's buttons give all of the text the style, step a
+# history of its own, and leave focus on the button.
+down 100 715
+frame
+move 160 715
+frame
+move 260 717
+frame
+up 260 717
+settle
+click 118 683
+settle
+screenshot strong
+key ArrowRight
+text typed after
+settle
+screenshot typed
+click 304 683
+settle
+screenshot heading
+click 368 683
+settle
+screenshot undone
+click 368 683
+settle
+screenshot undone-twice
+click 425 683
+settle
+screenshot redone
+click 300 715
+settle
+click 234 683
+settle
+screenshot accent-at-caret
+text  styled
+settle
+screenshot accent-typed
+click 59 683
+settle
+screenshot plain

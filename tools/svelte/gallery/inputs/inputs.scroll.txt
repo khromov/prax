@@ -1,0 +1,35 @@
+# extent 1100x700
+# The section in a viewport shorter than it is: the page scrolled by the wheel, a text area filled past its rows where
+# the scroll left it, which scrolls to keep the caret in view, the wheel over that area, and the page's two ends.
+settle
+screenshot top
+scroll 550 400 0 420
+settle
+screenshot scrolled
+click 290 160
+settle
+text one
+key Enter
+text two
+key Enter
+text three
+key Enter
+text four
+key Enter
+text five
+key Enter
+text six
+settle
+screenshot filled
+scroll 290 160 0 -40
+settle
+screenshot wheel-back
+scroll 290 160 0 20
+settle
+screenshot wheel-on
+scroll 800 400 0 5000
+settle
+screenshot bottom
+scroll 800 400 0 -5000
+settle
+screenshot back

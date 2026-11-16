@@ -1,0 +1,130 @@
+# extent 1100x1700
+# The typed scalars: scrubs of the 8-bit integers past the tops of their ranges and back, a scrub and a key's step of
+# each of the other types, and the fields elsewhere in the section that show the values that three of them share.
+down 134 1110
+frame
+move 200 1110
+frame
+move 530 1110
+frame
+up 530 1110
+settle
+screenshot i8-top
+key ArrowDown
+key ArrowDown shift
+settle
+screenshot i8-keys
+down 134 1110
+frame
+move 60 1110
+frame
+move 5 1110
+frame
+move 5 1300
+frame
+up 5 1300
+settle
+screenshot i8-scrubbed
+down 342 1110
+frame
+move 400 1110
+frame
+move 500 1110
+frame
+up 500 1110
+settle
+screenshot u8-top
+down 342 1110
+frame
+move 200 1110
+frame
+move 2 1110
+frame
+move 2 1500
+frame
+up 2 1500
+settle
+screenshot u8-scrubbed
+down 550 1110
+frame
+move 500 1110
+frame
+move 300 1110
+frame
+up 300 1110
+key ArrowUp
+settle
+screenshot i16
+down 757 1110
+frame
+move 800 1110
+frame
+move 1090 1110
+frame
+up 1090 1110
+key ArrowUp shift
+settle
+screenshot u16
+down 965 1110
+frame
+move 975 1110
+frame
+move 985 1112
+frame
+up 985 1112
+key ArrowDown shift
+settle
+screenshot f32
+down 134 1157
+frame
+move 144 1157
+frame
+move 151 1157
+frame
+up 151 1157
+key ArrowUp
+settle
+screenshot i32
+down 342 1157
+frame
+move 300 1157
+frame
+move 20 1157
+frame
+up 20 1157
+key ArrowDown shift
+settle
+screenshot u32
+down 550 1157
+frame
+move 560 1157
+frame
+move 900 1157
+frame
+up 900 1157
+key ArrowDown
+settle
+screenshot i64
+down 757 1157
+frame
+move 700 1157
+frame
+move 400 1157
+frame
+up 400 1157
+key ArrowUp shift
+settle
+screenshot u64
+down 965 1157
+frame
+move 975 1157
+frame
+move 1000 1157
+frame
+up 1000 1157
+key ArrowUp shift
+settle
+screenshot f64
+move 600 1200
+settle
+screenshot away

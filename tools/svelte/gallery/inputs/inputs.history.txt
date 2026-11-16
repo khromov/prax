@@ -1,0 +1,45 @@
+# extent 1100x1700
+# The command line: a typed line that Enter submits, Up and Down recalling the submitted lines, an edited recall
+# submitted again, and Enter on the empty line, which submits nothing.
+click 561 281
+settle
+screenshot focused
+text bench draw
+settle
+screenshot typed
+key Enter
+settle
+screenshot submitted
+key ArrowUp
+settle
+screenshot recalled
+key ArrowUp
+key ArrowUp
+settle
+screenshot older
+key ArrowDown
+settle
+screenshot newer
+text  --verify
+key Enter
+settle
+screenshot resubmitted
+key Enter
+settle
+screenshot empty
+key ArrowUp
+key ArrowUp
+key ArrowUp
+key ArrowUp
+key ArrowUp
+key ArrowUp
+settle
+screenshot oldest
+key ArrowDown
+key ArrowDown
+key ArrowDown
+key ArrowDown
+key ArrowDown
+key ArrowDown
+settle
+screenshot back

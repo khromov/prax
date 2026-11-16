@@ -1,0 +1,48 @@
+# extent 1100x1700
+# The text fields: the pointer over one, a press that places the caret, typing, the keys that move and select, Tab into
+# the field that selects on focus, its clear control, and the disabled field, which takes nothing.
+move 203 203
+settle
+screenshot hover
+click 203 203
+settle
+screenshot caret
+text  Rig
+settle
+screenshot typed
+key Backspace
+key ArrowLeft
+key ArrowLeft shift
+key ArrowLeft shift
+settle
+screenshot selected
+text 01
+settle
+screenshot replaced
+key Home
+key ArrowRight shift
+key Delete
+settle
+screenshot deleted
+key Tab
+settle
+screenshot select-on-focus
+text atlas
+settle
+screenshot search-typed
+move 705 203
+settle
+screenshot clear-hover
+click 705 203
+settle
+screenshot cleared
+text shadow
+settle
+screenshot search-again
+click 891 203
+settle
+screenshot disabled
+text x
+key Tab
+settle
+screenshot tab-on

@@ -1,0 +1,35 @@
+# extent 1100x560
+# The pointer over a button of each variant, a disabled one, each size, and an icon button with and without a label.
+move 82 188
+settle
+screenshot primary
+move 165 188
+settle
+screenshot default
+move 253 188
+settle
+screenshot ghost
+move 359 188
+settle
+screenshot danger
+move 447 188
+settle
+screenshot disabled
+move 50 267
+settle
+screenshot xs
+move 91 267
+settle
+screenshot sm
+move 141 267
+settle
+screenshot md
+move 218 267
+settle
+screenshot lg
+move 80 346
+settle
+screenshot icon
+move 213 346
+settle
+screenshot labelled

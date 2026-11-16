@@ -1,0 +1,58 @@
+# extent 1100x1700
+# The text areas: a press that places the caret in the wrapped paragraph, typing, Return, the keys that move by line and
+# to the ends, Shift extending the selection, a drag that selects, and the same in the monospaced area.
+move 290 574
+settle
+screenshot hover
+click 290 574
+settle
+screenshot caret
+text Kit
+key Enter
+text second line
+settle
+screenshot typed
+key ArrowUp
+key ArrowUp shift
+key ArrowLeft shift
+settle
+screenshot selected-up
+key ArrowLeft super
+key ArrowRight super shift
+settle
+screenshot line
+key ArrowUp super
+key ArrowDown super shift
+settle
+screenshot everything
+key Backspace
+settle
+screenshot emptied
+text Notes again
+settle
+screenshot retyped
+down 600 541
+frame
+move 700 541
+frame
+move 760 555
+frame
+settle
+screenshot dragging
+up 760 555
+settle
+screenshot dragged
+text vec4
+settle
+screenshot snippet-typed
+key End
+key Enter
+text // done
+key ArrowUp
+key Home
+key ArrowDown shift
+settle
+screenshot snippet-selected
+key Tab
+settle
+screenshot tab

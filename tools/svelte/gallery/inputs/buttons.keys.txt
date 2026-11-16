@@ -1,0 +1,47 @@
+# extent 1100x560
+# Tab moves focus through the buttons with a ring, past the disabled one, and Enter activates the focused one.
+key Tab
+settle
+screenshot first
+key Tab
+key Tab
+settle
+screenshot third
+key Tab
+settle
+screenshot fourth
+key Tab
+settle
+screenshot sizes
+key Enter
+settle
+screenshot enter
+key Tab shift
+settle
+screenshot back
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+settle
+screenshot tooltips
+key Tab
+key Tab
+key Tab
+key Tab
+settle
+screenshot group
+key Tab
+key Tab
+key Tab
+key Tab
+key Tab
+settle
+screenshot around

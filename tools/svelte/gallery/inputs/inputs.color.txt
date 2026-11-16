@@ -1,0 +1,82 @@
+# extent 1100x2100
+# The color field: under the pointer, its picker raised by a click, drags on the picker's plane, its hue and its alpha,
+# its other planes, a scrubbed channel, a typed hex value, and the field once Escape has closed the picker.
+move 121 1588
+settle
+screenshot hover
+click 121 1588
+settle
+screenshot open
+down 130 1680
+frame
+move 150 1700
+frame
+move 200 1660
+frame
+settle
+screenshot plane-dragging
+up 200 1660
+settle
+screenshot plane
+down 255 1760
+frame
+move 255 1720
+frame
+move 257 1680
+frame
+up 257 1680
+settle
+screenshot hue
+down 281 1640
+frame
+move 281 1700
+frame
+move 283 1740
+frame
+up 283 1740
+settle
+screenshot alpha
+click 160 1618
+settle
+screenshot oklch
+down 100 1700
+frame
+move 120 1720
+frame
+move 180 1760
+frame
+up 180 1760
+settle
+screenshot oklch-dragged
+click 241 1618
+settle
+screenshot ramp
+click 78 1618
+settle
+screenshot hsv
+down 65 1920
+frame
+move 75 1920
+frame
+move 105 1920
+frame
+up 105 1920
+settle
+screenshot red
+click 175 1889
+settle
+screenshot hex-focused
+key a super
+text 20c080
+key Enter
+settle
+screenshot hex
+key Escape
+settle
+screenshot closed
+click 121 1588
+settle
+screenshot reopened
+click 700 1800
+settle
+screenshot outside

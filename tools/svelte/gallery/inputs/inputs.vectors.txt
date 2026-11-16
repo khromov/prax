@@ -1,0 +1,65 @@
+# extent 1100x1700
+# The vector fields: a component under the pointer, a scrub across frames and its release, Up and Down with and without
+# Shift on the focused component, Tab to the next component, and a scrub in each of the other vectors.
+move 368 857
+settle
+screenshot hover
+down 368 857
+frame
+move 380 857
+frame
+move 420 860
+frame
+settle
+screenshot scrubbing
+up 420 860
+settle
+screenshot scrubbed
+key ArrowUp
+settle
+screenshot up
+key ArrowDown shift
+key ArrowDown shift
+key ArrowDown shift
+settle
+screenshot fine-down
+key Tab
+settle
+screenshot tab
+key ArrowDown
+key ArrowDown
+settle
+screenshot second-down
+down 913 889
+frame
+move 880 889
+frame
+move 840 895
+frame
+up 840 895
+settle
+screenshot position
+down 600 921
+frame
+move 610 921
+frame
+move 655 921
+frame
+move 700 921
+frame
+up 700 921
+settle
+screenshot rotation
+down 950 953
+frame
+move 940 953
+frame
+move 900 953
+frame
+up 900 953
+key ArrowUp shift
+settle
+screenshot orientation
+move 600 800
+settle
+screenshot away

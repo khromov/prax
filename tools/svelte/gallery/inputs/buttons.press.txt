@@ -1,0 +1,46 @@
+# extent 1100x560
+# A press held on a button of each variant and its release, a press on a disabled button, which takes none, and clicks.
+move 82 188
+down 82 188
+settle
+screenshot primary-down
+up 82 188
+settle
+screenshot primary-up
+move 165 188
+down 165 188
+settle
+screenshot default-down
+up 165 188
+settle
+screenshot default-up
+move 253 188
+down 253 188
+settle
+screenshot ghost-down
+up 253 188
+settle
+screenshot ghost-up
+move 359 188
+down 359 188
+settle
+screenshot danger-down
+up 359 188
+settle
+screenshot danger-up
+move 447 188
+down 447 188
+settle
+screenshot disabled-down
+up 447 188
+settle
+screenshot disabled-up
+click 218 267
+settle
+screenshot lg-clicked
+click 144 346
+settle
+screenshot icon-clicked
+move 600 500
+settle
+screenshot away
