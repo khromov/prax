@@ -23,6 +23,12 @@
 // `max-height`, `margin`, `flex`, `align-self` and `weight`. A node under another is declared under the other's widget,
 // which is how a box holds its content and a menu its items.
 //
+// A node of any kind but one whose kind declares no widget of its own, as an overlay's does not, also takes `reveal`,
+// and queues `bounds`. Setting `reveal`, to any value, scrolls the containers around the widget in the next round by
+// the least that brings it into view (prUiReveal), once; setting it to another value does so again. `bounds` tells where
+// the last layout put the widget's box, as `values` of its left, top, right and bottom in px of the viewport, in the
+// first round that the script listens and whenever they change.
+//
 // An attribute's value is a string: a keyword, a number, a flag, which is present or `true` when set, or several
 // numbers separated by spaces. An event's `detail` is an object that holds what the event tells beyond its type: a
 // `value` and `values`, numbers, and a `text`, each only if the event has one.

@@ -2,6 +2,7 @@
 // widget's input reaches the script between rounds.
 
 #include "pr/kit_box.h"
+#include "pr/format.h"
 #include "pr/kit_button.h"
 #include "pr/kit_text.h"
 
@@ -161,4 +162,98 @@ TEST_CASE("an attribute takes only the values of its kind, and a value that does
     )JS");
     CHECK(scripted.number("taken") == 9);
     CHECK(scripted.number("refused") == 0);
+}
+
+TEST_CASE("a node tells where its widget was laid out, and is brought into view when the script asks") {
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var column = make('box', 0, {overflow: 'scroll-y', height: '200', gap: '8'});
+        var rows = [];
+        for (var i = 0; i < 40; ++i)
+            rows.push(make('label', column, {}, 'row ' + i));
+        var told = {};
+        var count = 0;
+        kitTree.listen(rows[0], 'bounds', true);
+        kitTree.listen(rows[39], 'bounds', true);
+        kitTree.onevent = function (node, type, detail) {
+            if (type !== 'bounds' || detail.values.length !== 4)
+                throw new Error('an event that is not a box');
+            told[node] = detail.values;
+            count += 1;
+        };
+    )JS");
+    KitFixture direct;
+    PrLayoutNode first = kPrLayoutNodeNone;
+    PrLayoutNode last = kPrLayoutNodeNone;
+    bool reveal = false;
+    direct.build = [&](PrLayoutNode root) {
+        PrKitBoxStyle style{.overflow = PrKitOverflow_ScrollY, .gap = 8};
+        style.place.height = prKitPx(200);
+        PrLayoutNode column = prKitBox(direct.kit, root, {}, style);
+        char text[16];
+        for (uint32_t i = 0; i < 40; ++i) {
+            PrLayoutNode row = prKitLabel(direct.kit, column, {.text = formatToBuffer(Span(text), "row {}", i)}, {});
+            if (i == 0)
+                first = row;
+            if (i == 39)
+                last = row;
+        }
+        if (reveal)
+            prUiReveal(direct.kit->ui, last);
+        reveal = false;
+    };
+    for (uint32_t i = 0; i < 3; ++i) {
+        scripted.fixture.frame();
+        direct.frame();
+    }
+    // Each row told its box once it was laid out, and nothing more while it stayed where it was.
+    PrRect firstBox = direct.bounds(first);
+    PrRect lastBox = direct.bounds(last);
+    CHECK(scripted.number("count") == 2);
+    CHECK(scripted.number("told[rows[0]][1]") == doctest::Approx(double(firstBox.top)));
+    CHECK(scripted.number("told[rows[0]][3]") == doctest::Approx(double(firstBox.bottom)));
+    CHECK(scripted.number("told[rows[39]][1]") == doctest::Approx(double(lastBox.top)));
+    CHECK(lastBox.top > 200);
+
+    // The last row is out of view until it is revealed, which moves every row, and each tells its new box.
+    scripted.run("kitTree.set(rows[39], 'reveal', '1');");
+    reveal = true;
+    for (uint32_t i = 0; i < 30; ++i) {
+        scripted.fixture.frame();
+        direct.frame();
+    }
+    lastBox = direct.bounds(last);
+    CHECK(lastBox.bottom <= 200.5f);
+    CHECK(scripted.number("told[rows[39]][3]") == doctest::Approx(double(lastBox.bottom)));
+    CHECK(scripted.number("told[rows[0]][1]") == doctest::Approx(double(direct.bounds(first).top)));
+    CHECK(scripted.number("told[rows[0]][1]") < 0);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+
+    // The same value reveals nothing more, and a script that stops listening hears nothing more.
+    double heard = scripted.number("count");
+    scripted.run("kitTree.listen(rows[0], 'bounds', false); kitTree.set(rows[0], 'reveal', '1');");
+    reveal = false;
+    direct.build = [&](PrLayoutNode root) {
+        PrKitBoxStyle style{.overflow = PrKitOverflow_ScrollY, .gap = 8};
+        style.place.height = prKitPx(200);
+        PrLayoutNode column = prKitBox(direct.kit, root, {}, style);
+        char text[16];
+        for (uint32_t i = 0; i < 40; ++i) {
+            PrLayoutNode row = prKitLabel(direct.kit, column, {.text = formatToBuffer(Span(text), "row {}", i)}, {});
+            if (i == 0 && reveal)
+                prUiReveal(direct.kit->ui, row);
+            if (i == 0)
+                first = row;
+        }
+        reveal = false;
+    };
+    reveal = true;
+    for (uint32_t i = 0; i < 30; ++i) {
+        scripted.fixture.frame();
+        direct.frame();
+    }
+    CHECK(direct.bounds(first).top >= 0);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(scripted.number("count") == heard + 1);
 }
