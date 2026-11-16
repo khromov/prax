@@ -311,6 +311,13 @@ export function sameFrame() {
     tree.requestRound();
 }
 
+// Asks the host to show the widgets in a theme: 'dark', 'light', or 'system', the theme of the color scheme that the
+// user prefers, which is what a host shows until it is asked. The host changes the kit's theme from its next frame on.
+export function setTheme(name) {
+    if (!tree.set(0, 'theme', name))
+        warn('there is no theme named ' + name);
+}
+
 // A component's styles have nothing to apply to: a widget takes its looks from the kit's theme and its attributes.
 export function defineStyles(scope) {
     warn('the styles of a component (' + scope + ') are not applied by the kit backend');

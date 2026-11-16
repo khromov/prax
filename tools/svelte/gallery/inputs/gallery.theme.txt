@@ -1,0 +1,23 @@
+# extent 1440x900
+# The sidebar's theme control: the light theme, the dark one, and the system's again, with the whole window compared in
+# each, and the light theme again further down the page.
+settle
+click 193 39
+settle
+screenshot light
+click 120 39
+settle
+screenshot dark
+click 46 39
+settle
+screenshot system
+click 193 39
+click 60 237
+settle
+screenshot light-buttons
+click 60 441
+settle
+screenshot light-tables
+click 60 629
+settle
+screenshot light-collections

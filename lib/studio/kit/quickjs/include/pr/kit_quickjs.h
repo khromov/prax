@@ -65,6 +65,9 @@
 // frame in each round that declares the node, if its widget is shown (prUiRequestMotion). A script sets it while
 // something moves, and a widget that is scrolled or clipped out of view asks for nothing.
 //
+// The root takes one attribute, `theme`: `system`, which is the theme of the color scheme that the user prefers, `dark`
+// or `light`. The host gives the kit that theme from its next frame on.
+//
 // An attribute's value is a string: a keyword, a number, a flag, which is present or `true` when set, or several
 // numbers separated by spaces. An event's `detail` is an object that holds what the event tells beyond its type: a
 // `value` and `values`, numbers, and a `text`, each only if the event has one.
@@ -122,6 +125,19 @@ bool prJsKitTreeDispatch(PrJsKitTree* tree);
 // Returns true if the script edited the tree since it was last declared, so that another round would show something
 // different. A host that dispatched a round's events asks for a frame if so.
 bool prJsKitTreeIsChanged(const PrJsKitTree* tree);
+
+// The theme that a script asks its host for.
+enum {
+    PrJsKitTheme_System,            // the theme of the color scheme that the user prefers
+    PrJsKitTheme_Dark,
+    PrJsKitTheme_Light,
+};
+typedef uint8_t PrJsKitTheme;
+
+// Returns the theme that the script set as the root's `theme`, or System if it set none. The binding only keeps it: a
+// kit's theme is its host's to set, between rounds (prKitSetTheme), so the host reads this before each frame and gives
+// the kit the palette that it names.
+PrJsKitTheme prJsKitTreeTheme(const PrJsKitTree* tree);
 
 // Returns true if the script called `kitTree.requestRound` since the last call, and forgets that it did. A script calls
 // it as it answers an event whose change other widgets are to show in the frame of the event, as a program that

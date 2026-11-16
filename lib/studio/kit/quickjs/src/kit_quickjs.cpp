@@ -266,6 +266,10 @@ bool prJsKitTreeIsChanged(const PrJsKitTree* tree) {
     return jsKitTreeIsChanged(tree->tree);
 }
 
+PrJsKitTheme prJsKitTreeTheme(const PrJsKitTree* tree) {
+    return jsKitTreeTheme(tree->tree);
+}
+
 bool prJsKitTreeTakeRoundRequest(PrJsKitTree* tree) {
     bool requested = tree->roundRequested;
     tree->roundRequested = false;

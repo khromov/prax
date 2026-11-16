@@ -343,6 +343,24 @@ void contentBuild(Content& content, PrKit* kit, PrLayoutNode root) {
     }
 }
 
+// Returns the theme that the content asks for: the script's, or the one that the gallery's model holds, as the example
+// gives its window's kit the palette of the theme that its sidebar chose.
+PrJsKitTheme contentTheme(const Content& content) {
+    switch (content.native) {
+        case Native_None:
+            return prJsKitTreeTheme(content.script.tree);
+        case Native_Gallery:
+        case Native_GallerySection:
+            if (content.gallery.theme == gallery::GalleryTheme_Dark)
+                return PrJsKitTheme_Dark;
+            if (content.gallery.theme == gallery::GalleryTheme_Light)
+                return PrJsKitTheme_Light;
+            return PrJsKitTheme_System;
+        default:
+            return PrJsKitTheme_System;
+    }
+}
+
 // Reads the program that --native names into the content. Returns false if there is none of that name.
 bool nativeFrom(PrStringView name, Content& content) {
     constexpr PrStringView kSectionPrefix = "gallery:";
@@ -381,6 +399,7 @@ struct Headless {
     PrKit* kit;
     PrUVec2 extent;
     double time = 0;
+    PrKitThemeVariant shown = PrKitThemeVariant_Dark;   // the variant of the kit's theme
 };
 
 // Installs the fonts that Studio's applications set text in. Returns null, saying why on stderr, if they are missing.
@@ -425,6 +444,17 @@ void headlessFrame(Headless& headless, Content& content) {
     if (content.native == Native_None) {
         content.script.virtualNow = headless.time * 1000;
         scriptPump(content.script);
+    }
+
+    // The theme that the content asked for by the end of the last frame, as a window's kit takes its palette at the
+    // start of each frame. A headless run has no user, whose preferred scheme is taken to be the dark one.
+    PrKitThemeVariant wanted = PrKitThemeVariant_Dark;
+    if (contentTheme(content) == PrJsKitTheme_Light)
+        wanted = PrKitThemeVariant_Light;
+    if (wanted != headless.shown) {
+        PrKitTheme theme = prKitThemeStudio(wanted, headless.fonts);
+        prKitSetTheme(headless.kit, &theme);
+        headless.shown = wanted;
     }
     PrUiFrameDesc desc{
         .time = headless.time,
@@ -810,6 +840,20 @@ void windowBuild(void* context, PrStudioWindow* window, PrLayoutNode root, PrVec
     contentBuild(*static_cast<Windowed*>(context)->content, prStudioWindowKit(window), root);
 }
 
+// Gives the kit the palette of the theme that the content asks for, or keeps the user's preferred scheme's.
+void windowPalette(void* context, PrStudioWindow*, const PrAppUserPreferences*, PrKitPalette* palette) {
+    switch (contentTheme(*static_cast<Windowed*>(context)->content)) {
+        case PrJsKitTheme_Dark:
+            *palette = prKitPaletteStudio(PrKitThemeVariant_Dark);
+            break;
+        case PrJsKitTheme_Light:
+            *palette = prKitPaletteStudio(PrKitThemeVariant_Light);
+            break;
+        default:
+            break;
+    }
+}
+
 // Asks for the frame that the script's next task is due in, so that a timer runs with no input to wake the window.
 bool windowLaidOut(void* context, PrStudioWindow* window) {
     Windowed* windowed = static_cast<Windowed*>(context);
@@ -831,6 +875,7 @@ int runWindow(Content& content, PrUVec2 extent) {
     PrStudioWindowDesc desc{
         .title = "Svelte",
         .extent = extent,
+        .palette = windowPalette,
         .beginFrame = windowBeginFrame,
         .build = windowBuild,
         .laidOut = windowLaidOut,

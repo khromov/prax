@@ -805,3 +805,21 @@ TEST_CASE("a node in motion asks for frames while its widget is shown, as a widg
     CHECK(!asks(2));
     CHECK(kitVerified(scripted.fixture.tree));
 }
+
+TEST_CASE("the root takes the theme that a script asks its host for, and no other attribute") {
+    JsKitScripted scripted;
+    CHECK(prJsKitTreeTheme(scripted.tree) == PrJsKitTheme_System);
+    scripted.run(R"JS(
+        var taken = [kitTree.set(0, 'theme', 'light')].filter(Boolean).length;
+        var refused = [kitTree.set(0, 'theme', 'sepia'), kitTree.set(0, 'theme', ''), kitTree.set(0, 'width', '4')]
+            .filter(Boolean).length;
+    )JS");
+    CHECK(scripted.number("taken") == 1);
+    CHECK(scripted.number("refused") == 0);
+    CHECK(prJsKitTreeTheme(scripted.tree) == PrJsKitTheme_Light);
+    CHECK(prJsKitTreeIsChanged(scripted.tree));
+    scripted.run("kitTree.set(0, 'theme', 'dark');");
+    CHECK(prJsKitTreeTheme(scripted.tree) == PrJsKitTheme_Dark);
+    scripted.run("kitTree.set(0, 'theme', null);");
+    CHECK(prJsKitTreeTheme(scripted.tree) == PrJsKitTheme_System);
+}

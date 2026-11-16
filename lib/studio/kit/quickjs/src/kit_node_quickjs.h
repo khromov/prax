@@ -13,6 +13,7 @@
 #include "pr/kit.h"
 #include "pr/kit_icon.h"
 #include "pr/kit_icon_kind.h"
+#include "pr/kit_quickjs.h"
 #include "pr/kit_theme.h"
 #include "pr/raw_string.h"
 #include "pr/span.h"
@@ -249,6 +250,10 @@ bool jsKitTreeHas(const JsKitNodeTree* tree, JsKitNodeIndex node);
 
 // Returns true once a node was created, destroyed, moved or changed since the tree was last declared.
 bool jsKitTreeIsChanged(const JsKitNodeTree* tree);
+
+// Returns the theme that the script asked for with the root's `theme`, which is the only attribute that the root takes.
+// It is the system's until the script asks.
+PrJsKitTheme jsKitTreeTheme(const JsKitNodeTree* tree);
 
 // Returns a number that grows each time the script creates, destroys, moves or changes a node. A kind that keeps what
 // it read from the nodes under its own compares the number with the one that it read them at, and reads them again if

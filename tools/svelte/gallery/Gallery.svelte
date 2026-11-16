@@ -3,6 +3,7 @@
      last whose top is near enough to the content's top, and brings a section into view when its row is activated. A
      widget tells where it was laid out with its bounds event, which is what the example reads from the tree. -->
 <script>
+    import { setTheme } from 'prax-svelte';
     import { sections } from './sections/index.js';
     import { height, space, text } from './tokens.js';
 
@@ -41,8 +42,11 @@
         { group: 'DIAGNOSTICS', label: 'Duplicate Keys', number: '23', name: 'keys' },
     ];
 
+    // The theme that the gallery shows the kit in, which the host gives the kit as the example's window gives its kit
+    // the palette that the sidebar chose.
     const themes = ['System', 'Dark', 'Light'];
     let theme = $state(0);
+    $effect(() => setTheme(themes[theme].toLowerCase()));
 
     // The top of the content's view and each section's box at the last layout, and how many times each section's row
     // was activated, which is the value that brings the section into view again.

@@ -84,6 +84,7 @@ struct JsKitNodeTree {
     RawArray<JsKitStoredEvent> events;
     RawArray<char> eventText;           // the texts of the events' details, one after another
     RawArray<JsKitNodeIndex> hearing;   // the nodes that the script listens for `round` on
+    PrJsKitTheme theme;                 // what the script set the root's `theme` to
     bool changed;
     uint64_t version;                   // the number of edits that set `changed` so far
 };
@@ -143,6 +144,12 @@ constexpr JsKitKeyword kControlSizes[] = {
     {"sm", PrKitControlSize_Sm},
     {"xs", PrKitControlSize_Xs},
     {"lg", PrKitControlSize_Lg},
+};
+
+constexpr JsKitKeyword kThemes[] = {
+    {"system", PrJsKitTheme_System},
+    {"dark", PrJsKitTheme_Dark},
+    {"light", PrJsKitTheme_Light},
 };
 
 constexpr JsKitKeyword kFlexes[] = {
@@ -781,6 +788,10 @@ bool jsKitTreeIsChanged(const JsKitNodeTree* tree) {
     return tree->changed;
 }
 
+PrJsKitTheme jsKitTreeTheme(const JsKitNodeTree* tree) {
+    return tree->theme;
+}
+
 uint64_t jsKitTreeVersion(const JsKitNodeTree* tree) {
     return tree->version;
 }
@@ -856,8 +867,14 @@ void jsKitNodeRemove(JsKitNodeTree* tree, JsKitNodeIndex node) {
 
 bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, PrStringView value, bool reset) {
     JsKitNode& changed = tree->nodes.data[node];
-    if (node == 0)
-        return false;
+    if (node == 0) {
+        // The root declares no widget, and takes the one attribute that is the whole tree's.
+        if (name != "theme" || !jsKitSetKeyword(kThemes, value, reset, &tree->theme))
+            return false;
+        tree->changed = true;
+        ++tree->version;
+        return true;
+    }
     if (name == "key") {
         jsKitSetString(value, reset, &changed.key);
         tree->changed = true;
