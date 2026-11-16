@@ -8,6 +8,7 @@
 #include "pr/kit_collection.h"
 #include "pr/kit_text.h"
 #include "pr/layout_tree.h"
+#include "pr/layout_unit.h"
 #include "pr/string.h"
 #include "pr/ui.h"
 
@@ -654,6 +655,86 @@ TEST_CASE("a list of ten thousand rows declares the rows of its window alone, be
     pair.requireAlike("with every row selected");
     CHECK(declaredRows(pair.scripted.fixture, pair.scriptedView()) < 20);
     CHECK(pair.scripted.number("events.length") == 0);
+}
+
+TEST_CASE("a view that takes the key of the view before it is that view's scroll container, whatever its kind") {
+    Pair pair;
+    pair.scripted.run(R"JS(
+        var view = null;
+        function show(kind, rowKind, count, key) {
+            if (view !== null)
+                kitTree.destroy(view);
+            view = make(kind, 0, {'row-height': '22', height: '220', flex: 'fixed'});
+            if (key !== null)
+                kitTree.set(view, 'key', key);
+            for (var i = 0; i < count; i++)
+                make('row-label', make(rowKind, view, {}), {tone: 'primary'}, 'Row ' + i);
+        }
+        show('list-view', 'list-row', 200, 'shared');
+    )JS");
+
+    // The kit's own calls declare whichever view shows at one place with no key, so layout continues the list's node as
+    // the tree's. A tree with a key is another node.
+    enum { Shown_List, Shown_Tree, Shown_TreeApart };
+    uint32_t shown = Shown_List;
+    PrLayoutNode view = kPrLayoutNodeNone;
+    Array<PrKitTreeItem> items;
+    items.resize(100);
+    KitFixture& direct = pair.direct;
+    direct.build = [&](PrLayoutNode root) {
+        PrKitListViewStyle style{
+            .rowHeight = kRowHeight,
+            .place = {.height = prKitPx(kViewHeight), .flex = PrKitFlex_Fixed},
+        };
+        if (shown == Shown_List) {
+            view = prKitListView(direct.kit, root, {.count = 200}, style);
+        } else {
+            PrUiKey key = shown == Shown_TreeApart ? prUiKey(direct.ui, root, "apart") : 0;
+            view = prKitTreeView(direct.kit, root, {.key = key, .count = 100, .items = items.data()}, style);
+        }
+        PrKitWindow window = prKitListWindow(direct.kit, view);
+        for (uint32_t index = window.first; index < window.first + window.count; ++index) {
+            char label[32];
+            PrKitRow row{.index = index, .item = index};
+            PrLayoutNode node = kPrLayoutNodeNone;
+            if (shown == Shown_List)
+                node = prKitListRow(direct.kit, view, row);
+            else
+                node = prKitTreeRow(direct.kit, view, row);
+            prKitRowLabel(direct.kit, node, {.text = formatToBuffer(Span(label), "Row {}", index)}, PrKitTone_Primary);
+        }
+    };
+    // Returns how far down a view is scrolled, in px.
+    auto scrolled = [](KitFixture& f, PrLayoutNode node) {
+        return prLayoutUnitToPx(prLayoutNodeScroll(f.tree, node).y);
+    };
+    pair.frame(2);
+    pair.requireAlike("the list at rest");
+
+    PrVec2 at = direct.center(view);
+    pair.move(at);
+    pair.push(PrAppEvent{
+        .kind = PrAppEventKind_Scroll,
+        .scroll = {.position = at, .delta = PrVec2{0, 40 * kRowHeight}},
+    });
+    pair.requireAlike("the list after the wheel");
+    PrLayoutNode list = pair.scriptedView();
+    CHECK(scrolled(pair.scripted.fixture, list) == 40 * kRowHeight);
+
+    // The tree's node is another node of another kind. It has the list's key, so its widget is the list's.
+    pair.scripted.run("show('tree-view', 'tree-row', 100, 'shared');");
+    shown = Shown_Tree;
+    pair.requireAlike("a tree with the list's key");
+    CHECK(pair.scriptedView() == list);
+    CHECK(scrolled(pair.scripted.fixture, pair.scriptedView()) == 40 * kRowHeight);
+    CHECK(scrolled(direct, view) == 40 * kRowHeight);
+
+    // A tree with no key of that name is a widget of its own, which starts at its first row.
+    pair.scripted.run("show('tree-view', 'tree-row', 100, null);");
+    shown = Shown_TreeApart;
+    pair.requireAlike("a tree with a key of its own");
+    CHECK(scrolled(pair.scripted.fixture, pair.scriptedView()) == 0);
+    CHECK(scrolled(direct, view) == 0);
 }
 
 TEST_CASE("a view tells a script that listens of each edit of its selection, and the script applies it") {

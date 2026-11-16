@@ -25,9 +25,12 @@
 // which is how a box holds its content and a menu its items.
 //
 // Every node has a key of its own, which keeps its widget's state wherever the script moves it. A node of any kind
-// takes `key`, a name, which gives it the key of that name in the tree instead (prUiKey). Two nodes that are declared
-// with one name share a key, which is a script's error, as it is a caller's: layout makes the second without the key,
-// and lib/ui outlines both.
+// takes `key`, a name, which gives it the key of that name in the tree instead (prUiKey). A widget stays the same
+// widget from round to round by its key (pr/layout_frame.h), whichever node declares it. A node that takes the name
+// that another node had in the round before therefore continues that node's widget, and the two may be of different
+// kinds: a `tree-view` that replaces a `list-view` of the same name is the same scroll container, and shows where the
+// list was scrolled to. Two nodes that one round declares with one name share a key, which is a script's error, as it
+// is a caller's: layout makes the second without the key, and lib/ui outlines both.
 //
 // A node of any kind but one whose kind declares no widget of its own, as an overlay's does not, also takes `reveal`,
 // and queues `bounds`. Setting `reveal`, to any value, scrolls the containers around the widget in the next round by

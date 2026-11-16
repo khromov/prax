@@ -1,7 +1,7 @@
 <!-- The gallery's sectionTimeline (examples/studio_gallery/section_data.cpp).
 
-     The example does two things below the kit that the binding does not offer, which are done here as nearly as a
-     script can do them.
+     The example does two things below the kit. The binding gives a script no way to do the first, which is done here
+     as nearly as a script can do it, and gives it events for the second.
 
      Playback. The example advances the playhead by the delta of each frame's first round. A script cannot read that
      delta: it has timers, and the page's clock, which tells time in steps of a tenth of a millisecond. The playhead
@@ -9,14 +9,9 @@
      is a sixtieth of a second to within the clock's step counts as a sixtieth, which is the delta of the host's frames.
 
      Undo. The example records its Undo from the edit sink of the panel (prUiSetEditSink), which hears each gesture
-     begin, change and commit. A script hears what a gesture changed, in the events of the timeline and of its blocks,
-     and not where the gesture begins or ends. A drag's gesture here begins with its first change and commits once no
-     change has come for `gesturePause`. The script therefore misses a gesture that changes nothing, begins a gesture
-     later than the example if the drag's first moves change nothing, and commits it later than the release. It also
-     cannot tell a marquee's selection, which is a gesture's change, from a press's, which is not, so no selection is a
-     change here. -->
+     begin, change and commit. The body of the panel here is a box, which hears the same phases as `editbegin`,
+     `editchange` and `editcommit`, and the section records them as the example's sink does. -->
 <script>
-    import { onDestroy } from 'svelte';
     import DemoPanel from '../parts/DemoPanel.svelte';
     import SectionFrame from '../parts/SectionFrame.svelte';
     import { seedTimeline } from '../state/timeline.js';
@@ -34,9 +29,6 @@
     // The seconds between the host's frames, and the step of the page's clock, in milliseconds.
     const frameDelta = 1 / 60;
     const clockStep = 0.1;
-
-    // The longest time between two changes of one drag's gesture, in milliseconds.
-    const gesturePause = 250;
 
     // The timeline section's clip: its tracks, blocks and markers, the view, the playhead and the loop, the snapping
     // that the toolbar turns on, and the undo state. A gesture copies the blocks that it opens on, and one that changed
@@ -62,6 +54,7 @@
     let snapPlayhead = $state(true);
     let hasUndo = $state(false);
     let wrote = false; // the open gesture changed the blocks
+    let moved = false; // the open gesture moved or resized a block
 
     const snaps = [
         { label: 'Grid 0.25s', value: () => snapping, set: (on) => (snapping = on) },
@@ -95,94 +88,60 @@
         return () => clearTimeout(timer);
     });
 
-    // Records a phase of a gesture for the timeline's Undo, as the example's edit sink does.
-    function timelineEdit(phase) {
-        if (phase === 'begin') {
-            opened = $state.snapshot(blocks);
-            wrote = false;
-            ++begins;
-        } else if (phase === 'change') {
-            wrote = true;
-            ++changes;
-        } else {
-            if (wrote) {
-                undo = opened;
-                hasUndo = true;
-            }
-            ++commits;
+    // Records a phase of a gesture for the timeline's Undo, as the example's edit sink does (timelineEdit). The box
+    // tells of a gesture's begin before the round's events of the timeline and its blocks, and of a change or a commit
+    // after them. A gesture's copy of the blocks is therefore made before the script hears of what the gesture wrote.
+    function timelineEdit(event) {
+        switch (event.type) {
+            case 'editbegin':
+                opened = $state.snapshot(blocks);
+                wrote = false;
+                moved = false;
+                ++begins;
+                break;
+            case 'editchange':
+                // A press on a block selects it before the drag's gesture begins. If one round routes the press and
+                // the drag's first move, the script hears of that selection after the begin, when the copy is made.
+                // A drag of blocks selects nothing after its press, so the copy takes the blocks' selection as the
+                // gesture's first change finds it.
+                if (!wrote && moved) {
+                    const held = new Set(blocks.filter((block) => block.selected).map((block) => block.id));
+                    for (const block of opened)
+                        block.selected = held.has(block.id);
+                }
+                wrote = true;
+                ++changes;
+                break;
+            default:
+                if (wrote) {
+                    undo = opened;
+                    hasUndo = true;
+                }
+                ++commits;
+                break;
         }
-    }
-
-    // Whether a drag's gesture is open, and the timer that commits it once its changes pause.
-    let live = false;
-    let pause = 0;
-    onDestroy(() => clearTimeout(pause));
-
-    function gestureCommit() {
-        if (!live)
-            return;
-        clearTimeout(pause);
-        live = false;
-        timelineEdit('commit');
-    }
-
-    // Records a gesture that makes one write, as the kit reports a request for a block or for a removal.
-    function gestureOnce() {
-        gestureCommit();
-        timelineEdit('begin');
-        timelineEdit('change');
-        timelineEdit('commit');
-    }
-
-    // The moves and resizes that the open round's events tell, each a block with its new start and duration, or null
-    // if the round has told no change of a drag.
-    let moves = null;
-
-    // Returns the open round's moves, after noting that the round holds a change of a drag: a scrub, or the moves and
-    // resizes of blocks. A round is one change of its gesture, however many blocks it moved. All of a round's events
-    // are heard before the script yields, so the blocks are moved once they are. A gesture that the round begins then
-    // copies the blocks as the round selected them and before it moved them, which is what the example's sink copies.
-    function dragged() {
-        if (moves !== null)
-            return moves;
-        moves = [];
-        queueMicrotask(() => {
-            if (!live)
-                timelineEdit('begin');
-            live = true;
-            for (const { block, start, duration } of moves)
-                Object.assign(block, { start, duration });
-            moves = null;
-            timelineEdit('change');
-            clearTimeout(pause);
-            pause = setTimeout(gestureCommit, gesturePause);
-        });
-        return moves;
     }
 
     function scrub(event) {
         playhead = event.value;
-        dragged();
     }
 
     function move(block, event) {
         const [start, duration] = event.values;
-        dragged().push({ block, start, duration });
+        Object.assign(block, { start, duration });
+        moved = true;
     }
 
     function add(event) {
         const [track, start] = event.values;
-        gestureOnce();
         blocks.push({ id: nextId++, track, start, duration: 1, color: '0.47 0.7 0.47', label: 'New', selected: false });
     }
 
     function remove() {
-        gestureOnce();
         blocks = blocks.filter((block) => !block.selected);
     }
 
     function undoStep() {
-        gestureCommit();
         blocks = undo.map((block) => ({ ...block }));
         hasUndo = false;
     }
@@ -221,7 +180,8 @@
     <label {...text.monoMuted}>{selected} selected</label>
   </panel>
 
-  <DemoPanel title="ANIMATION CLIP" tags="EDITABLE . UNDO SINK" bare>
+  <DemoPanel title="ANIMATION CLIP" tags="EDITABLE . UNDO SINK" bare oneditbegin={timelineEdit}
+      oneditchange={timelineEdit} oneditcommit={timelineEdit}>
     <timeline {view} {playhead} {loop} snap-step={snapping ? 0.25 : 0} snap-edges={snapEdges}
         snap-markers={snapMarkers} snap-playhead={snapPlayhead} track-height={30} onchange={scrub}
         onview={(event) => (view = event.values)} onadd={add} onremove={remove}>

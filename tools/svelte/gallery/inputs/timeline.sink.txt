@@ -1,36 +1,112 @@
 # extent 1100x900
-# known: the binding has no edit sink (prUiSetEditSink), so a script hears what a gesture changed, not its begin or end
 settle
 
 # The example's Undo and its tally of BEGIN, CHANGE and COMMIT come from the edit sink of the panel, which hears every
-# gesture on the timeline. The script's come from the events of the timeline and its blocks, so they differ wherever a
-# gesture is more than its changes.
+# gesture on the timeline. The section's come from the box that is the panel's body, which hears the same phases. The
+# script hears of a move a frame after the kit makes it, so each screenshot of a drag is two frames after its move. A
+# release shows in its own frame.
 
-# A gesture that changes nothing: a drag of a block by less than the grid's step begins and commits in the example.
+# A gesture that changes nothing: a drag of a block by less than the grid's step begins, and commits at its release
+# with nothing for Undo to step back.
 down 650 313
 frame 2
+screenshot pressed
 move 656 313
 frame 2
 screenshot began
 up 656 313
-settle
+frame
 screenshot nothing
 
-# A gesture's end: the example commits at the release, and the script once no change has come for a quarter of a second.
+# A drag whose first move changes nothing begins at that move, and the moves after it are its changes.
 down 650 313
 frame 2
+move 656 313
+frame 2
+screenshot first-move
 move 700 313
 frame 2
-up 700 313
-frame 2
-screenshot released
+screenshot changed
 
-# A marquee: its selection is a gesture's change in the example, and the script cannot tell it from a press's.
+# A drag that is held still for a second stays one gesture, which its next move changes again.
 settle
-down 850 320
+screenshot held
+move 760 313
 frame 2
+screenshot moved-on
+
+# The release commits the gesture in its own frame, and Undo steps back all of it.
+up 760 313
+frame
+screenshot released
+click 959 234
+frame
+screenshot undone
+
+# A marquee begins at its first move, and each change of what it selects is a change of its gesture. A move that
+# selects the same blocks is none.
+click 280 343
+settle
+down 900 320
+frame 2
+screenshot marquee-pressed
+move 880 325
+frame 2
+screenshot marquee-began
 move 450 380
 frame 2
-up 450 380
-settle
-screenshot marquee
+screenshot marquee-reached
+move 460 382
+frame 2
+screenshot marquee-same
+up 460 382
+frame
+screenshot marquee-released
+
+# With Shift, a marquee that touches no block changes nothing. It begins and commits, and Undo still steps back the
+# marquee before it, to the selection that that marquee opened on.
+down 900 400 shift
+frame 2
+move 950 410
+frame 2
+screenshot marquee-empty
+up 950 410 shift
+frame
+screenshot marquee-nothing
+click 959 234
+frame
+screenshot marquee-undone
+
+# One frame routes a press on a block that is not selected and the drag's first move. The press selects before the
+# gesture begins, so Undo puts the block back and leaves it selected.
+down 650 313
+move 700 313
+frame
+screenshot press-and-move
+up 700 313
+frame
+click 959 234
+frame
+screenshot press-undone
+
+# A scrub is a gesture, which begins and changes at its press, and Undo is there for it though no block changed.
+down 700 288
+frame
+screenshot scrub-pressed
+move 760 288
+frame 2
+up 760 288
+frame
+screenshot scrubbed
+
+# A double press on an empty part of a track and Delete are each a whole gesture in one round.
+click 950 373
+click 950 373 double
+screenshot added
+click 650 313
+key Delete
+frame
+screenshot deleted
+click 959 234
+frame
+screenshot restored

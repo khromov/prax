@@ -1,11 +1,56 @@
 # extent 1100x900
-# known: the list and the tree are nodes of two kinds, so they are not one widget that keeps its scroll offset
 settle
 
-# The example's three views are one scroll container, so the tree shows where the list was scrolled to. The script's
-# tree is a node of its own, which starts at its first row.
+# The example's three views are one scroll container, so each shows where the view before it was scrolled to. The
+# section's list and tree are two nodes of one key, which makes them one widget.
+
+# The tree shows where the list was scrolled to.
 scroll 500 400 0 500
 settle
 click 141 226
 settle
-screenshot tree 25 240 1050 360
+screenshot tree
+
+# The list shows where the tree was then scrolled to, and so does the grid after it, whose rows are taller.
+scroll 500 400 0 -200
+settle
+screenshot tree-back
+click 56 226
+settle
+screenshot list
+click 99 226
+settle
+screenshot grid
+
+# The tree is shorter than where the grid is scrolled to, so it shows its end. The offset stands meanwhile, and the
+# list after the tree shows where the grid was.
+scroll 500 400 0 20000
+settle
+screenshot grid-far
+click 141 226
+settle
+screenshot tree-end
+click 56 226
+settle
+screenshot list-far
+
+# The wheel scrolls the tree from the end that it shows, and the list then shows where the wheel left the tree.
+click 141 226
+settle
+scroll 500 400 0 -100
+settle
+screenshot tree-up
+click 56 226
+settle
+screenshot list-up
+
+# A group that opens lengthens the tree, and the grid shows where the longer tree was scrolled to.
+click 141 226
+settle
+click 40 337
+scroll 500 400 0 1000
+settle
+screenshot tree-opened
+click 99 226
+settle
+screenshot grid-from-tree
