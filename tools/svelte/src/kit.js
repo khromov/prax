@@ -7,8 +7,9 @@
 // nodes among the elements. An element has a node in the host's tree, `kitTree`, exactly when its parent has one, and
 // the root always does, so the host's tree mirrors the elements under the root, which the host declares as widgets in
 // each round. An element that Svelte builds off to the side has none until it is put under the root, so what is never
-// shown costs the host nothing. An element's text is the text nodes under it, with white space collapsed as HTML
-// collapses it, which its widget shows if its kind shows text.
+// shown costs the host nothing. An element's text is the text nodes under it, as they are, which its widget shows if
+// its kind shows text. The kit collapses white space as it lays text out, as CSS does, so nothing is collapsed here,
+// and an element that preserves white space is given it whole.
 
 import { flushSync, mount as mountComponent, unmount as unmountComponent } from 'svelte';
 import { createRenderer } from 'svelte/renderer';
@@ -49,14 +50,14 @@ function warn(message) {
     }
 }
 
-// Returns the text of an element: its text nodes' data, collapsed.
+// Returns the text of an element: its text nodes' data, one after another.
 function textOf(element) {
     let text = '';
     for (let child = element.first; child !== null; child = child.next) {
         if (child.kind === 'text')
             text += child.data;
     }
-    return text.replace(/[ \t\r\n]+/g, ' ').trim();
+    return text;
 }
 
 // Gives the host's node the element's text, if it changed. The root has no text.
@@ -223,7 +224,8 @@ const renderer = createRenderer({
             renderer.removeAttribute(element, key);
             return;
         }
-        const text = value === true ? '' : String(value);
+        // A list is its items separated by spaces, which is how an attribute of several numbers is written.
+        const text = value === true ? '' : Array.isArray(value) ? value.join(' ') : String(value);
         element.attributes ??= new Map();
         element.attributes.set(key, text);
         if (element.id !== null)
