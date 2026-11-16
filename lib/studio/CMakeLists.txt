@@ -91,8 +91,8 @@ if (PR_JS)
             kit/quickjs/tests/test_kit_title_bar_quickjs.cpp
         )
         target_link_libraries(studio_kit_quickjs_tests PRIVATE kit_fixture prax::core_quickjs_cpp prax::studio_kit
-                                                               prax::app prax::color prax::draw prax::geom prax::path
-                                                               prax::ui)
+                                                               prax::app prax::color prax::draw prax::geom prax::layout
+                                                               prax::path prax::ui)
     endif()
 endif()
 

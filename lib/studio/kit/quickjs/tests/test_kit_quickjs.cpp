@@ -135,7 +135,7 @@ TEST_CASE("a node that a script moves, removes or destroys is declared where the
         try { kitTree.setText(labels[0], 'gone'); } catch (error) { threw += error instanceof TypeError ? 1 : 0; }
         try { kitTree.insert(labels[2], column, 0); } catch (error) { threw += error instanceof TypeError ? 1 : 0; }
         try { kitTree.destroy(0); } catch (error) { threw += error instanceof TypeError ? 1 : 0; }
-        try { kitTree.create('table'); } catch (error) { threw += error instanceof TypeError ? 1 : 0; }
+        try { kitTree.create('no-such-kind'); } catch (error) { threw += error instanceof TypeError ? 1 : 0; }
     )JS");
     CHECK(scripted.number("threw") == 4);
 }

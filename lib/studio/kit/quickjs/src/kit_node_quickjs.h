@@ -235,6 +235,11 @@ bool jsKitTreeHas(const JsKitNodeTree* tree, JsKitNodeIndex node);
 // Returns true once a node was created, destroyed, moved or changed since the tree was last declared.
 bool jsKitTreeIsChanged(const JsKitNodeTree* tree);
 
+// Returns a number that grows each time the script creates, destroys, moves or changes a node. A kind that keeps what
+// it read from the nodes under its own compares the number with the one that it read them at, and reads them again if
+// the two differ.
+uint64_t jsKitTreeVersion(const JsKitNodeTree* tree);
+
 // Creates a detached node of `kind`, or frees a node, which is first detached, and the nodes under it. A freed node's
 // index names nothing until every queued event is dispatched, so that an event never reaches a node made after it.
 JsKitNodeIndex jsKitNodeCreate(JsKitNodeTree* tree, const JsKitKind* kind);

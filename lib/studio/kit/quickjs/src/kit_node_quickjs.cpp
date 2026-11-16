@@ -65,6 +65,7 @@ struct JsKitNodeTree {
     RawArray<JsKitStoredEvent> events;
     RawArray<char> eventText;           // the texts of the events' details, one after another
     bool changed;
+    uint64_t version;                   // the number of edits that set `changed` so far
 };
 
 namespace {
@@ -654,6 +655,10 @@ bool jsKitTreeIsChanged(const JsKitNodeTree* tree) {
     return tree->changed;
 }
 
+uint64_t jsKitTreeVersion(const JsKitNodeTree* tree) {
+    return tree->version;
+}
+
 JsKitNodeIndex jsKitNodeCreate(JsKitNodeTree* tree, const JsKitKind* kind) {
     JsKitNodeIndex index = tree->nodes.count;
     if (tree->free.count > 0 && tree->events.count == 0) {
@@ -676,6 +681,7 @@ JsKitNodeIndex jsKitNodeCreate(JsKitNodeTree* tree, const JsKitKind* kind) {
     }
     tree->nodes.data[index] = node;
     tree->changed = true;
+    ++tree->version;
     return index;
 }
 
@@ -683,6 +689,7 @@ void jsKitNodeDestroy(JsKitNodeTree* tree, JsKitNodeIndex node) {
     unlink(tree, node);
     freeNode(tree, node);
     tree->changed = true;
+    ++tree->version;
 }
 
 bool jsKitNodeIsWithin(const JsKitNodeTree* tree, JsKitNodeIndex node, JsKitNodeIndex ancestor) {
@@ -711,11 +718,13 @@ void jsKitNodeInsert(JsKitNodeTree* tree, JsKitNodeIndex parent, JsKitNodeIndex 
     else
         above.firstChild = node;
     tree->changed = true;
+    ++tree->version;
 }
 
 void jsKitNodeRemove(JsKitNodeTree* tree, JsKitNodeIndex node) {
     unlink(tree, node);
     tree->changed = true;
+    ++tree->version;
 }
 
 bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, PrStringView value, bool reset) {
@@ -727,17 +736,20 @@ bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, P
         changed.place = place;
         changed.placed = true;
         tree->changed = true;
+        ++tree->version;
         return true;
     }
     if (changed.kind->set == nullptr || !changed.kind->set(changed.data, name, value, reset))
         return false;
     tree->changed = true;
+    ++tree->version;
     return true;
 }
 
 void jsKitNodeSetText(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView text) {
     prRawStringReplace(&tree->nodes.data[node].text, text);
     tree->changed = true;
+    ++tree->version;
 }
 
 bool jsKitNodeListen(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView type, bool listening) {
