@@ -64,15 +64,38 @@
 //     runs           the styles of the text's ranges: pairs of whole numbers separated by spaces, each the position
 //                    at which a run starts and the run's style. A run reaches to the next run's start. A position
 //                    counts the UTF-16 code units before it, as a script's string does, and the starts ascend.
+//     style-selection
+//                    a style, which is a whole number, and optionally a second number, which the area does not read.
+//                    Setting it gives the text that the area's selection holds the style, once, in the next round,
+//                    as one step of the history (prTextEditViewSetStyle). If the selection holds no text, the text
+//                    that the user types next at the caret takes the style instead. Setting it to another value does
+//                    so again, and the second number makes another value of the same style.
+//     undo, redo     any value. Setting one reverts or repeats the last step of the history, once, in the next round,
+//                    and selects what was selected before or after that step (prTextEditHistoryUndo). Setting it to
+//                    another value does so again.
 //   Children
 //     text-area-style, one for each style that a run names, in order, with style zero first
 //   Events
-//     change         an edit, with the new text as `text`
+//     change         an edit, or an undone or redone step that changed the text, with the new text as `text`
+//     runs           the styles of the text's ranges changed, other than by the script's setting `runs` or `value`:
+//                    an edit moved them, or `style-selection`, `undo` or `redo` changed them. `text` is the new value
+//                    of `runs`. Its first run starts at zero, so it is never empty.
+//     steps          `values` are two numbers, each 1 or 0: whether the history has a step to undo, and whether it
+//                    has one to redo. It is queued when the script first listens, and whenever either changes.
 //   It takes no `bare`, which the kit ignores for an area. While the area has runs, a buffer of the node's holds its
-//   text (PrTextEditBuffer), and moves the runs with each edit: typed text takes the style of the text before it. A
-//   `change` gives the text alone. A script that styles what the text holds, as a highlighter does, sets `runs` again
-//   for the new text. A `value` that the script sets later is styled by the runs that the script gave last, counted
-//   from the start of the new text.
+//   text (PrTextEditBuffer), and moves the runs with each edit: typed text takes the style of the text before it. The
+//   node keeps the runs as it keeps the text. A script that sets `runs` to what an event gave it changes nothing. A
+//   script that sets other runs, as a highlighter does for the new text, styles the whole text again, outside the
+//   history. A `value` that the script sets later is styled by the runs that the script gave last, counted from the
+//   start of the new text, and empties the history.
+//
+//   The buffer has a history (PrTextEditHistory), whose steps are the user's edits and the styles that
+//   `style-selection` gave. An area with no runs has no buffer and no history, and does nothing for `style-selection`,
+//   `undo` and `redo`. Runs of `0 0` give a buffer to an area whose text has no styles. Each of the three acts after
+//   the round's edit, through the view that the edit selects with, as a toolbar does that a caller of the kit declares
+//   beside an area. The round after it is the first to show what it did, and the area asks for a frame to run it
+//   (prUiRequestFrame). Resetting one of the three before the next round withdraws what it asked for. A toolbar's
+//   button takes focus from the area as it is pressed, and the script gives it back with `focus`.
 //
 // text-area-style (PrKitTextAreaStyle), which its text area reads, and which declares nothing itself
 //   Attributes
@@ -143,6 +166,7 @@
 #include "pr/mem.h"
 #include "pr/raw_array.h"
 #include "pr/raw_string.h"
+#include "pr/ui_text_edit.h"
 
 namespace pr_impl {
 
@@ -673,6 +697,10 @@ PrLayoutNode suggestDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayo
     return made;
 }
 
+// The events of a text area, by their index.
+enum { AreaEvent_Change, AreaEvent_Runs, AreaEvent_Steps };
+constexpr PrStringView kAreaEvents[] = {"change", "runs", "steps"};
+
 // What a text area takes. Its text is a value, as a text field's is, until the script styles ranges of it. From then on
 // a buffer holds the text, because the styles of a text's ranges are a buffer's.
 struct AreaData {
@@ -682,23 +710,80 @@ struct AreaData {
     uint32_t rows;
     bool disabled;
 
-    PrTextEditBuffer* PR_NULLABLE buffer;   // the text and the styles of its ranges, owned
+    // The text and the styles of its ranges, and the steps of its edits. Both are owned, and the history exists while
+    // the buffer does.
+    PrTextEditBuffer* PR_NULLABLE buffer;
+    PrTextEditHistory* PR_NULLABLE history;
+
     RawArray<PrTextEditStyleRun> runs;      // as the script gave them, each start in UTF-16 code units
     RawArray<PrKitTextAreaStyle> styles;    // by PrTextEditStyle, from the node's children in each round
+
+    // The buffer's runs as the script knows them, each start in UTF-16 code units: as its last `runs` or `value` left
+    // them, or as the last `runs` event told them. They were read at the buffer's version `knownVersion`.
+    RawArray<PrTextEditStyleRun> known;
+    uint64_t knownVersion;
+
+    // What the script asked for since the last round that declared the area, which the next one does.
+    PrTextEditStyle selectionStyle;         // the style that `style-selection` gave, if `stylePending`
+    bool stylePending;
+    bool undoPending;
+    bool redoPending;
+
+    // What the last `steps` event told, if `stepsTold`: whether the history had a step to undo, and one to redo.
+    bool stepsTold;
+    bool canUndo;
+    bool canRedo;
 };
 
 void areaDestroy(void* data) {
     AreaData& area = *static_cast<AreaData*>(data);
     prRawStringReset(&area.value);
     prRawStringReset(&area.placeholder);
+    prTextEditHistoryDestroy(area.history);
     prTextEditBufferDestroy(area.buffer);
     area.runs.reset();
     area.styles.reset();
+    area.known.reset();
 }
 
-// Gives the ranges of the buffer's text the styles of the script's runs. A script counts a position in a string in
-// UTF-16 code units, and the buffer in bytes of UTF-8. A start inside a code point, or past the text, is the nearest
-// position before it.
+// Writes the buffer's runs to `out`, each start in UTF-16 code units. A buffer whose text is all of style zero has no
+// runs, and gives one run of style zero, so that what is written names a style for all of the text.
+void areaReadRuns(AreaData& area, RawArray<PrTextEditStyleRun>& out) {
+    out.clear();
+    uint32_t count = prTextEditBufferStyleRunCount(area.buffer);
+    if (count == 0) {
+        out.push(PrTextEditStyleRun{});
+        return;
+    }
+    PrStringView text = prTextEditBufferText(area.buffer);
+    const PrTextEditStyleRun* runs = prTextEditBufferStyleRuns(area.buffer);
+    uint32_t at = 0;
+    uint32_t units = 0;
+    for (uint32_t i = 0; i < count; ++i) {
+        // Each code point counts where it begins: two code units if it has four bytes, and one otherwise.
+        for (; at < runs[i].start; ++at) {
+            uint8_t byte = uint8_t(text.data[at]);
+            if ((byte & 0xC0) != 0x80)
+                units += byte >= 0xF0 ? 2 : 1;
+        }
+        out.push(PrTextEditStyleRun{.start = units, .style = runs[i].style});
+    }
+}
+
+// Returns true if `runs` are the buffer's runs as the script knows them.
+bool areaKnowsRuns(const AreaData& area, const RawArray<PrTextEditStyleRun>& runs) {
+    if (runs.count != area.known.count)
+        return false;
+    for (uint32_t i = 0; i < runs.count; ++i) {
+        if (runs.data[i].start != area.known.data[i].start || runs.data[i].style != area.known.data[i].style)
+            return false;
+    }
+    return true;
+}
+
+// Gives the ranges of the buffer's text the styles of the script's runs, which are then the runs that the script knows.
+// A script counts a position in a string in UTF-16 code units, and the buffer in bytes of UTF-8. A start inside a code
+// point, or past the text, is the nearest position before it.
 void areaStyleRuns(AreaData& area) {
     PrStringView text = prTextEditBufferText(area.buffer);
     uint32_t size = uint32_t(text.size);
@@ -718,6 +803,8 @@ void areaStyleRuns(AreaData& area) {
         // The style holds up to the next run's start, where the next run replaces it.
         prTextEditBufferSetStyle(area.buffer, at, size, area.runs.data[i].style);
     }
+    areaReadRuns(area, area.known);
+    area.knownVersion = prTextEditBufferVersion(area.buffer);
 }
 
 // Replaces the buffer's text with `text` by the one change that turns the old text into the new, so that a caret
@@ -744,7 +831,8 @@ void areaReplaceText(AreaData& area, PrStringView text) {
     prTextEditBufferApply(area.buffer, &change, 1, PrTextEditOrigin_Program);
 }
 
-// Sets the text. The script's runs style the new text, since they count from its start.
+// Sets the text. The script's runs style the new text, since they count from its start. A text that differs from the
+// buffer's is a program's change of the buffer, which empties the history.
 bool areaSetValue(AreaData& area, PrStringView value, bool reset) {
     if (area.buffer == nullptr)
         return setText(value, reset, &area.value);
@@ -759,7 +847,8 @@ bool areaSetValue(AreaData& area, PrStringView value, bool reset) {
 }
 
 // Sets the styles of the text's ranges: pairs of whole numbers separated by spaces, each the position at which a run
-// starts and the run's style, with the starts ascending. The text moves into a buffer while it has any runs.
+// starts and the run's style, with the starts ascending. The text moves into a buffer, which has a history, while it
+// has any runs.
 bool areaSetRuns(AreaData& area, PrStringView value, bool reset) {
     RawArray<PrTextEditStyleRun> runs;
     uint32_t numbers = 0;
@@ -795,15 +884,44 @@ bool areaSetRuns(AreaData& area, PrStringView value, bool reset) {
     if (runs.count == 0) {
         if (area.buffer != nullptr)
             prRawStringReplace(&area.value, prTextEditBufferText(area.buffer));
+        prTextEditHistoryDestroy(area.history);
         prTextEditBufferDestroy(area.buffer);
+        area.history = nullptr;
         area.buffer = nullptr;
         return true;
     }
     if (area.buffer == nullptr) {
         area.buffer = prTextEditBufferCreate(valueText(area.value));
+        area.history = prTextEditHistoryCreate(area.buffer);
         prRawStringReset(&area.value);
+    } else if (areaKnowsRuns(area, area.runs)) {
+        // The buffer has these runs already, as it does when the script sets what a `runs` event told it.
+        return true;
     }
     areaStyleRuns(area);
+    return true;
+}
+
+// Reads the style that the selection is to take: a whole number, and optionally a second number, which is not read.
+// With `reset`, the selection takes none.
+bool areaSetSelectionStyle(AreaData& area, PrStringView value, bool reset) {
+    if (reset) {
+        area.stylePending = false;
+        return true;
+    }
+    size_t end = 0;
+    while (end < value.size && value.data[end] != ' ')
+        ++end;
+    size_t next = end;
+    while (next < value.size && value.data[next] == ' ')
+        ++next;
+    uint32_t style = 0;
+    double unread = 0;
+    if (!jsKitSetUint(PrStringView{value.data, end}, false, &style) ||
+            (next < value.size && !numberFrom(PrStringView{value.data + next, value.size - next}, &unread)))
+        return false;
+    area.selectionStyle = style;
+    area.stylePending = true;
     return true;
 }
 
@@ -813,6 +931,17 @@ bool areaSet(void* data, PrStringView name, PrStringView value, bool reset) {
         return areaSetValue(area, value, reset);
     if (name == "runs")
         return areaSetRuns(area, value, reset);
+    if (name == "style-selection")
+        return areaSetSelectionStyle(area, value, reset);
+    // Neither value is read. A script sets another value to step again.
+    if (name == "undo") {
+        area.undoPending = !reset;
+        return true;
+    }
+    if (name == "redo") {
+        area.redoPending = !reset;
+        return true;
+    }
     if (name == "placeholder")
         return jsKitSetString(value, reset, &area.placeholder);
     if (name == "rows")
@@ -836,6 +965,69 @@ PrLayoutNode areaStyleDeclare(const JsKitRound&, JsKitNodeIndex, PrLayoutNode) {
     return kPrLayoutNodeNone;
 }
 
+// Does what the script asked of the area since the last round: the selection's style, then an undo, then a redo. Each
+// acts through the view that the kit's edit of `made` selects with, so that it reads and leaves the selection as an
+// edit does. Returns true if any of them ran, which may have changed the styles of the buffer's ranges. The round's
+// edit has declared the text by then, so a later round shows what they did, which this asks a frame for.
+bool areaAct(const JsKitRound& round, PrLayoutNode made, const AreaData& area) {
+    PrTextEditView* view = prUiTextEditView(round.kit->ui, made);
+    if (view == nullptr || !(area.stylePending || area.undoPending || area.redoPending))
+        return false;
+    if (area.stylePending)
+        prTextEditViewSetStyle(view, area.selectionStyle);
+    if (area.undoPending)
+        prTextEditHistoryUndo(area.history, view);
+    if (area.redoPending)
+        prTextEditHistoryRedo(area.history, view);
+    prUiRequestFrame(round.kit->ui);
+    return true;
+}
+
+// Queues `runs` with the buffer's runs, in the form that the attribute takes, if they are no longer the runs that the
+// script knows. Reading them costs a pass over the text, so they are read only after a change of the text, or if
+// `restyled` is true, which says that the round may have changed the styles alone.
+void areaReportRuns(const JsKitRound& round, JsKitNodeIndex node, AreaData& area, bool restyled) {
+    uint64_t version = prTextEditBufferVersion(area.buffer);
+    if (!restyled && version == area.knownVersion)
+        return;
+    RawArray<PrTextEditStyleRun> runs;
+    areaReadRuns(area, runs);
+    area.knownVersion = version;
+    if (areaKnowsRuns(area, runs)) {
+        runs.reset();
+        return;
+    }
+    area.known.reset();
+    area.known = runs;
+    RawArray<char> text;
+    char digits[kPrU64TextMaxBytes];
+    for (uint32_t i = 0; i < runs.count; ++i) {
+        if (i != 0)
+            text.push(' ');
+        text.append(digits, uint32_t(prU64Format(runs.data[i].start, digits, 10)));
+        text.push(' ');
+        text.append(digits, uint32_t(prU64Format(runs.data[i].style, digits, 10)));
+    }
+    JsKitDetail detail{.hasText = true, .text = {text.data, text.count}};
+    jsKitEventPush(round, node, AreaEvent_Runs, &detail);
+    text.reset();
+}
+
+// Queues `steps` with whether the area's history has a step to undo and one to redo, in the first round that the script
+// listens and whenever either changes. An area with no history has neither.
+void areaReportSteps(const JsKitRound& round, JsKitNodeIndex node, AreaData& area) {
+    bool canUndo = area.history != nullptr && prTextEditHistoryCanUndo(area.history);
+    bool canRedo = area.history != nullptr && prTextEditHistoryCanRedo(area.history);
+    bool listens = jsKitNodeListens(round.tree, node, AreaEvent_Steps);
+    if (listens && (!area.stepsTold || canUndo != area.canUndo || canRedo != area.canRedo)) {
+        JsKitDetail detail{.values = {canUndo ? 1.0 : 0.0, canRedo ? 1.0 : 0.0}, .valueCount = 2};
+        jsKitEventPush(round, node, AreaEvent_Steps, &detail);
+    }
+    area.stepsTold = listens;
+    area.canUndo = canUndo;
+    area.canRedo = canRedo;
+}
+
 PrLayoutNode areaDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
     AreaData& area = jsKitData<AreaData>(round, node);
     area.styles.clear();
@@ -856,15 +1048,24 @@ PrLayoutNode areaDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutN
     };
     PrLayoutNode made = prKitTextArea(round.kit, parent, content, area.style);
     if (area.buffer == nullptr) {
-        textReport(round, node, made, area.value, ValueEvent_Change);
-        return made;
+        textReport(round, node, made, area.value, AreaEvent_Change);
+    } else {
+        // The kit's edit changed the buffer itself, so the node has the new text already. An undone or redone step may
+        // change the text too, which the buffer's version tells.
+        PrStringView edited = {};
+        bool changed = prKitTextChanged(round.kit, made, &edited);
+        uint64_t version = prTextEditBufferVersion(area.buffer);
+        bool acted = areaAct(round, made, area);
+        if (changed || prTextEditBufferVersion(area.buffer) != version) {
+            JsKitDetail detail{.hasText = true, .text = prTextEditBufferText(area.buffer)};
+            jsKitEventPush(round, node, AreaEvent_Change, &detail);
+        }
+        areaReportRuns(round, node, area, acted);
     }
-    // The kit's edit changed the buffer itself, so the node has the new text already.
-    PrStringView changed = {};
-    if (prKitTextChanged(round.kit, made, &changed)) {
-        JsKitDetail detail{.hasText = true, .text = changed};
-        jsKitEventPush(round, node, ValueEvent_Change, &detail);
-    }
+    area.stylePending = false;
+    area.undoPending = false;
+    area.redoPending = false;
+    areaReportSteps(round, node, area);
     return made;
 }
 
@@ -1086,8 +1287,8 @@ constexpr JsKitKind kKinds[] = {
     {
         .name = "text-area",
         .dataSize = sizeof(AreaData),
-        .events = kValueEvents,
-        .eventCount = 1,
+        .events = kAreaEvents,
+        .eventCount = 3,
         .destroy = areaDestroy,
         .set = areaSet,
         .declare = areaDeclare,

@@ -7,8 +7,7 @@
     import Grid from '../parts/Grid.svelte';
     import SectionFrame from '../parts/SectionFrame.svelte';
     import {
-        areas, inputs, redoAvailable, revisions, styledRecord, styledStep, submitCommand, undoAvailable, undoBegin,
-        undoCommit, undoStep,
+        areas, inputs, redoAvailable, revisions, submitCommand, undoAvailable, undoBegin, undoCommit, undoStep,
     } from '../state/inputs.svelte.js';
     import { space, text } from '../tokens.js';
 
@@ -123,23 +122,22 @@
         }
     }
 
-    // Gives all of the styled area's text a style, as a step of the area's history. The example styles what the area's
-    // selection holds (prTextEditViewSetStyle), steps the history of the area's buffer (prTextEditHistoryUndo) and
-    // returns focus to the area (prUiSetFocus). The binding gives a script none of the three, so the toolbar here is
-    // the nearest thing: a style for the whole text, a history that the script keeps, and focus left on the button.
-    function styledApply(style) {
-        if (inputs.styled.style === style)
-            return;
-        const before = { ...inputs.styled };
-        inputs.styled.style = style;
-        styledRecord(before);
-    }
+    // What the toolbar of the styled area has asked of the area, as the values of the area's `style-selection`, `undo`,
+    // `redo` and `focus`. The area does what one of them names once, each time its value changes, so each value holds
+    // the number of the ask that set it. `count` is the number of the last ask, which is the area's `focus`. `style`
+    // is the style that the selection takes, with the number of the ask. `undo` and `redo` are zero before their
+    // first ask.
+    const styledAsks = $state({ count: 0, style: null, undo: 0, redo: 0 });
 
-    // Takes an edit of the styled area's text as a step of the area's history.
-    function styledEdit(event) {
-        const before = { ...inputs.styled };
-        inputs.styled.text = event.text;
-        styledRecord(before);
+    // Asks the styled area to give what its selection holds a style, or to undo or redo a step of its history, which
+    // the example's toolbar does through the area's view (prTextEditViewSetStyle, prTextEditHistoryUndo). A button
+    // takes focus from the area as it is pressed, and every ask gives it back, with the area's selection as it stood.
+    // The area does what it is asked in the round after the click, and has focus in the round after that, so this
+    // asks for the frame of the click to show both, as the example's frame does.
+    function styledAsk(name, style) {
+        const count = ++styledAsks.count;
+        styledAsks[name] = name === 'style' ? [style, count] : count;
+        sameFrame();
     }
 
     // Sets a value that several controls show. The example gives them one variable, so each shows another's edit in
@@ -210,12 +208,16 @@
   <DemoPanel title="STYLED TEXT" tags="STYLE RUNS IN ONE BUFFER">
     <box direction="row" gap={space[2]}>
       {#each styledNames as name, style (name)}
-        <button onclick={() => styledApply(style)}>{name}</button>
+        <button onclick={() => styledAsk('style', style)}>{name}</button>
       {/each}
-      <button onclick={() => styledStep(false)}>Undo</button>
-      <button onclick={() => styledStep(true)}>Redo</button>
+      <button onclick={() => styledAsk('undo')}>Undo</button>
+      <button onclick={() => styledAsk('redo')}>Redo</button>
     </box>
-    <text-area value={inputs.styled.text} rows={5} runs={[0, inputs.styled.style]} onchange={styledEdit}>
+    <!-- The area holds the text and its runs, and tells each as an edit, a style or a step of the history changes
+         it. Giving the area what it told changes nothing, so the caret and the selection stay where they are. -->
+    <text-area value={inputs.styled.text} runs={inputs.styled.runs} rows={5} style-selection={styledAsks.style}
+        undo={styledAsks.undo || null} redo={styledAsks.redo || null} focus={styledAsks.count || null}
+        onchange={(event) => (inputs.styled.text = event.text)} onruns={(event) => (inputs.styled.runs = event.text)}>
       {#each styledLooks as look}
         <text-area-style role={look.role} tone={look.tone}></text-area-style>
       {/each}

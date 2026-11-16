@@ -1,9 +1,12 @@
 # extent 1100x1700
-# known: the toolbar styles the area's selection, steps the buffer's history and refocuses the area, below the kit
-# The example reads the selection through the area's view and styles it (prUiTextEditView, prTextEditViewSetStyle),
-# undoes and redoes a step of the buffer's history (prTextEditHistoryUndo, prTextEditHistoryRedo), and returns focus to
-# the area (prUiSetFocus). A script has none of these, so the port's buttons give all of the text the style, step a
-# history of its own, and leave focus on the button.
+# The toolbar of the styled text area. A style button gives what the area's selection holds its style, or with nothing
+# selected, the style of what is typed next at the caret. Undo and Redo step the history of the area's buffer. Each
+# button returns focus to the area, with its selection as it stood, so that typing goes on. The example does these
+# through the area's view (prUiTextEditView, prTextEditViewSetStyle, prTextEditHistoryUndo, prUiSetFocus), and the port
+# asks the area's node for them with `style-selection`, `undo`, `redo` and `focus`.
+#
+# A selection made with a drag takes a style. Right ends the selection, and the text typed there takes the style of the
+# text before it.
 down 100 715
 frame
 move 160 715
@@ -19,6 +22,8 @@ key ArrowRight
 text typed after
 settle
 screenshot typed
+# A style given at a caret changes none of the text. The first undo takes back the typing, the second the style of the
+# selection, which the redo gives again.
 click 304 683
 settle
 screenshot heading
@@ -31,6 +36,7 @@ screenshot undone-twice
 click 425 683
 settle
 screenshot redone
+# The style that a button gives at a caret is the style of what is typed there next, whatever the text before it has.
 click 300 715
 settle
 click 234 683
@@ -42,3 +48,58 @@ screenshot accent-typed
 click 59 683
 settle
 screenshot plain
+text plain
+settle
+screenshot plain-typed
+# A selection made with the keys, from the caret to the start of the text, crosses every run. It takes one style, and
+# then another, which sets its line taller.
+key ArrowUp shift super
+settle
+click 176 683
+settle
+screenshot italic
+click 304 683
+settle
+screenshot heading-selection
+# The keys go to the area after a button, which has focus again: Right ends the selection, and the text typed there
+# takes the style of the text before it.
+key ArrowRight
+text and more
+settle
+screenshot heading-typed
+# Each undo takes back one step, with the selection as it stood before the step: the typing, the two styles of the
+# selection, and both insertions at the caret, which are one step. The undo after those reaches the step of the first
+# style, which the redo above put back. The text had no styles when that step was redone, and the history kept none to
+# restore for it, so its undo returns the step's selection alone. A further undo finds no step.
+click 368 683
+settle
+screenshot undone-typing
+click 368 683
+settle
+screenshot undone-heading
+click 368 683
+settle
+screenshot undone-italic
+click 368 683
+settle
+screenshot undone-insertions
+click 368 683
+settle
+screenshot undone-first
+click 368 683
+settle
+screenshot undone-none
+# The first redo repeats that step, which changes neither the text nor its selection, and the second repeats the
+# insertions. Typing after them drops the steps that are still undone, so a further redo finds none.
+click 425 683
+settle
+screenshot redone-first
+click 425 683
+settle
+screenshot redone-second
+text forked
+settle
+screenshot forked
+click 425 683
+settle
+screenshot redone-none

@@ -7,6 +7,8 @@
 #include "pr/kit_text.h"
 #include "pr/span.h"
 #include "pr/string.h"
+#include "pr/ui.h"
+#include "pr/ui_text_edit.h"
 
 #include "studio/kit/quickjs/tests/kit_scripted_quickjs.h"
 
@@ -831,6 +833,206 @@ TEST_CASE("a text area shows the script's runs in its styles as the kit shows a 
     prTextEditBufferDestroy(wide);
 }
 
+TEST_CASE("a script styles a text area's selection and steps its history as a toolbar of the kit's caller does") {
+    Pair pair;
+    pair.scripted.run(kHear);
+    pair.scripted.run(R"JS(
+        var column = make('box', 0, {width: '320', gap: '8', padding: '8'});
+        var tools = make('box', column, {direction: 'row', gap: '4'});
+        var buttons = ['Strong', 'Code', 'Undo', 'Redo'].map(function (name) {
+            const button = make('button', tools, {}, name);
+            kitTree.listen(button, 'click', true);
+            return button;
+        });
+        var area = make('text-area', column, {value: 'plain strong code', runs: '0 0', rows: '3'});
+        make('text-area-style', area, {});
+        make('text-area-style', area, {role: 'strong', tone: 'accent'});
+        make('text-area-style', area, {role: 'mono', tone: 'success'});
+        hear(area, ['change', 'runs', 'steps']);
+        // What each button asks of the area. The number of the ask makes each value another one than the last.
+        var asks = 0;
+        function ask(button) {
+            asks += 1;
+            const name = ['style-selection', 'style-selection', 'undo', 'redo'][button];
+            kitTree.set(area, name, ['1 ', '2 ', '', ''][button] + asks);
+            // The press took focus from the area, which takes it back as the next round ends. The script asks the host
+            // to declare the round after that one in the frame of the click, in which the area shows its focus.
+            kitTree.set(area, 'focus', String(asks));
+            kitTree.requestRound();
+        }
+        // The script gives the area the text and the runs that it hears, which leaves the area as it is.
+        kitTree.onevent = function (node, type, detail) {
+            if (node !== area)
+                return ask(buttons.indexOf(node));
+            heard.push(told(type, detail));
+            if (type !== 'steps')
+                kitTree.set(area, type === 'change' ? 'value' : 'runs', detail.text);
+        };
+    )JS");
+    PrTextEditBuffer* buffer = prTextEditBufferCreate("plain strong code");
+    PrTextEditHistory* history = prTextEditHistoryCreate(buffer);
+    const PrKitTextAreaStyle styles[] = {
+        {PrKitTextRole_Body, PrKitTone_Auto},
+        {PrKitTextRole_Strong, PrKitTone_Accent},
+        {PrKitTextRole_Mono, PrKitTone_Success},
+    };
+    const char* const names[] = {"Strong", "Code", "Undo", "Redo"};
+    PrLayoutNode buttons[4] = {};
+    PrLayoutNode area = kPrLayoutNodeNone;
+    bool plain = false;
+    pair.direct.build = [&](PrLayoutNode root) {
+        PrKit* kit = pair.direct.kit;
+        PrKitBoxStyle style{.gap = 8, .padding = prKitEdgesAll(8), .place = {.width = prKitPx(320)}};
+        PrLayoutNode column = prKitBox(kit, root, {}, style);
+        PrLayoutNode tools = prKitBox(kit, column, {}, {.direction = PrKitDirection_Row, .gap = 4});
+        bool chosen[4] = {};
+        bool acted = false;
+        for (uint32_t i = 0; i < 4; ++i) {
+            buttons[i] = prKitButton(kit, tools, {.text = names[i]}, {});
+            chosen[i] = prKitActivated(kit, buttons[i]);
+            acted = acted || chosen[i];
+        }
+        PrKitTextArea content{.buffer = buffer, .rows = 3, .styles = styles, .styleCount = 3};
+        if (plain) {
+            content.buffer = nullptr;
+            content.text = "\xc3\xa9\xf0\x9f\x98\x80plain STRONG code more!";
+        }
+        area = prKitTextArea(kit, column, content, {});
+        // An area that edits a value has no view, and no history to step.
+        PrTextEditView* view = prUiTextEditView(kit->ui, area);
+        if (view != nullptr && chosen[0])
+            prTextEditViewSetStyle(view, 1);
+        if (view != nullptr && chosen[1])
+            prTextEditViewSetStyle(view, 2);
+        if (view != nullptr && chosen[2])
+            prTextEditHistoryUndo(history, view);
+        if (view != nullptr && chosen[3])
+            prTextEditHistoryRedo(history, view);
+        if (acted)
+            prUiSetFocus(kit->ui, area);
+    };
+    // Runs a frame of each, and then the round that the script asked for in answer to its frame, in which time stands
+    // still, as a host runs it (prJsKitTreeTakeRoundRequest).
+    auto step = [&]() {
+        pair.frame();
+        if (prJsKitTreeTakeRoundRequest(pair.scripted.tree))
+            pair.scripted.fixture.frame(0);
+    };
+    // Clicks a button of both toolbars. Both areas show what the button did, and their focus, as the frame ends.
+    auto press = [&](uint32_t button) {
+        PrVec2 at = pair.direct.center(buttons[button]);
+        pair.scripted.fixture.click(at);
+        pair.direct.click(at);
+        step();
+        CHECK(prUiFocus(pair.direct.ui) == area);
+        CHECK(pair.alike());
+    };
+    auto keys = [&](PrAppKey key, PrAppModifierFlags modifiers, uint32_t count) {
+        for (uint32_t i = 0; i < count; ++i) {
+            pair.key(key, modifiers);
+            pair.frame();
+        }
+    };
+    pair.frame(2);
+    CHECK(pair.alike());
+
+    // The last word takes a style, as one step of the history, and the area tells its runs and that there is a step to
+    // undo.
+    PrRect box = pair.direct.bounds(area);
+    pair.click(PrVec2{box.right - 4, box.bottom - 4});
+    keys(PrAppKey_Left, PrAppModifierFlag_Shift, 4);
+    press(1);
+    CHECK(prTextEditBufferStyleAt(buffer, 13) == 2);
+    CHECK(pair.text("heard.join('|')") == "steps:0 0|runs:0 0 13 2|steps:1 0");
+
+    // An undo that the script resets before the next round is withdrawn, so the step stands.
+    pair.scripted.run("kitTree.set(area, 'undo', 'now'); kitTree.set(area, 'undo', null);");
+    pair.frame(30);
+    CHECK(pair.alike());
+    CHECK(!prUiOutput(pair.scripted.fixture.ui).wantsFrame);
+
+    // A redo finds no step to repeat, and changes nothing. The round that looked for one had declared the area's text
+    // by then, so it asks for a frame, which would show what a step changed.
+    pair.scripted.run("kitTree.set(area, 'redo', 'now');");
+    pair.frame();
+    CHECK(prUiOutput(pair.scripted.fixture.ui).wantsFrame);
+    pair.frame();
+    CHECK(!prUiOutput(pair.scripted.fixture.ui).wantsFrame);
+    CHECK(pair.alike());
+
+    // Typing goes on in the area, which has focus again. Text typed after every run's start moves none of them.
+    keys(PrAppKey_End, 0, 1);
+    pair.type(" more");
+    pair.frame();
+    keys(PrAppKey_Home, PrAppModifierFlag_Super, 1);
+    keys(PrAppKey_Right, PrAppModifierFlag_Shift, 5);
+    press(0);
+    CHECK(pair.text("heard.slice(3).join('|')") == "change:plain strong code more|runs:0 1 5 0 13 2");
+
+    // Each undo reverts one step: the style of the first word, the typing, and the style of the last word. A step that
+    // changes the styles alone tells the runs, and one that changes the text alone tells the text.
+    pair.scripted.run("heard = [];");
+    press(2);
+    CHECK(pair.text("heard.join('|')") == "runs:0 0 13 2|steps:1 1");
+    press(2);
+    CHECK(prTextEditBufferText(buffer) == "plain strong code");
+    press(2);
+    CHECK(prTextEditBufferStyleRunCount(buffer) == 0);
+    CHECK(pair.text("heard.slice(2).join('|')") == "change:plain strong code|runs:0 0|steps:0 1");
+    // With no step left, an undo does nothing but return the focus.
+    press(2);
+    CHECK(pair.scripted.number("heard.length") == 5);
+
+    // Each redo repeats a step, and leaves the caret where the step left it.
+    pair.scripted.run("heard = [];");
+    press(3);
+    press(3);
+    CHECK(prTextEditBufferText(buffer) == "plain strong code more");
+    CHECK(pair.text("heard.join('|')") == "runs:0 0 13 2|steps:1 1|change:plain strong code more");
+
+    // With nothing selected, the style waits for the text that is typed next at the caret. That edit ends the steps to
+    // redo.
+    press(0);
+    pair.type("!");
+    pair.frame();
+    CHECK(prTextEditBufferStyleAt(buffer, 22) == 1);
+    CHECK(pair.text("heard.slice(3).join('|')") == "change:plain strong code more!|runs:0 0 13 2 22 1|steps:1 0");
+    CHECK(pair.alike());
+
+    // A run's start counts the code units of the script's string: one for the letter and two for the face, which are
+    // six bytes of the buffer.
+    pair.scripted.run("heard = [];");
+    keys(PrAppKey_Home, PrAppModifierFlag_Super, 1);
+    pair.type("\xc3\xa9\xf0\x9f\x98\x80");
+    pair.frame();
+    CHECK(prTextEditBufferStyleAt(buffer, 19) == 2);
+    CHECK(pair.text("heard.join('|')") == "change:\xc3\xa9\xf0\x9f\x98\x80plain strong code more!|runs:0 0 16 2 25 1");
+    CHECK(pair.alike());
+
+    // A text that the script sets is a program's change of the buffer, which empties the history. The runs that the
+    // script gave last style it, which are the runs that the area told.
+    pair.scripted.run(R"JS(heard = []; kitTree.set(area, 'value', 'é😀plain STRONG code more!');)JS");
+    PrTextEditChange capitals{.start = 12, .end = 18, .text = "STRONG"};
+    prTextEditBufferApply(buffer, &capitals, 1, PrTextEditOrigin_Program);
+    pair.frame(2);
+    CHECK(pair.text("heard.join('|')") == "steps:0 0");
+    press(2);
+    CHECK(prTextEditBufferText(buffer) == "\xc3\xa9\xf0\x9f\x98\x80plain STRONG code more!");
+    CHECK(pair.settledAlike());
+
+    // An area with no runs edits a value, with no buffer and no history, so the buttons return its focus and do nothing
+    // more.
+    pair.scripted.run("kitTree.set(area, 'runs', null);");
+    plain = true;
+    pair.frame(2);
+    press(0);
+    press(2);
+    CHECK(pair.scripted.number("heard.length") == 1);
+    CHECK(pair.settledAlike());
+    prTextEditHistoryDestroy(history);
+    prTextEditBufferDestroy(buffer);
+}
+
 TEST_CASE("a suggest field opens the script's suggestions as the kit's own does, and a chosen one is a change") {
     Pair pair;
     pair.scripted.run(kHear);
@@ -1098,6 +1300,10 @@ TEST_CASE("an input's attribute refuses a value that does not suit it, and keeps
             kitTree.set(area, 'history', 'a'), kitTree.set(area, 'icon', 'search'),
             kitTree.set(area, 'runs', '1'), kitTree.set(area, 'runs', '0 0 0 1'), kitTree.set(area, 'runs', '5 1 3 2'),
             kitTree.set(area, 'runs', '0 x'), kitTree.set(area, 'runs', '-1 0'), kitTree.set(area, 'runs', '0 1.5'),
+            kitTree.set(area, 'style-selection', ''), kitTree.set(area, 'style-selection', 'strong'),
+            kitTree.set(area, 'style-selection', '-1'), kitTree.set(area, 'style-selection', '1.5'),
+            kitTree.set(area, 'style-selection', '1 x'), kitTree.set(area, 'style-selection', '1 2 3'),
+            kitTree.set(field, 'undo', '1'), kitTree.set(field, 'style-selection', '1'),
             kitTree.set(look, 'role', 'loud'), kitTree.set(look, 'tone', 'bright'), kitTree.set(look, 'value', 'a'),
             kitTree.set(slider, 'value', 'half'), kitTree.set(slider, 'step', '-0.1'),
             kitTree.set(slider, 'scale', 'log'), kitTree.set(slider, 'min', ''), kitTree.set(slider, 'precision', '2'),
@@ -1108,6 +1314,7 @@ TEST_CASE("an input's attribute refuses a value that does not suit it, and keeps
             kitTree.set(asset, 'kind', '-1'), kitTree.set(asset, 'kind', '7.5'), kitTree.set(asset, 'kind', ''),
             kitTree.set(asset, 'missing', '2'), kitTree.set(asset, 'value', '1'),
             kitTree.listen(number, 'submit', true), kitTree.listen(area, 'submit', true),
+            kitTree.listen(field, 'runs', true), kitTree.listen(field, 'steps', true),
             kitTree.listen(row, 'change', true), kitTree.listen(asset, 'change', true),
             kitTree.listen(field, 'drop', true),
         ].filter(Boolean).length;
@@ -1121,10 +1328,15 @@ TEST_CASE("an input's attribute refuses a value that does not suit it, and keeps
             kitTree.set(group, 'badge', 'A'), kitTree.set(group, 'badge', 'B'),
             kitTree.set(asset, 'kind', '3'), kitTree.set(asset, 'tint', '51e-2 0 0'),
             kitTree.set(asset, 'tint', '336699'),
+            // What a text area does once, which an area with no runs has no buffer to do to.
+            kitTree.set(area, 'style-selection', '1'), kitTree.set(area, 'style-selection', '1 2'),
+            kitTree.set(area, 'style-selection', null), kitTree.set(area, 'undo', ''),
+            kitTree.set(area, 'redo', 'again'), kitTree.set(area, 'redo', null),
+            kitTree.listen(area, 'runs', true), kitTree.listen(area, 'steps', true),
         ].filter(Boolean).length;
     )JS");
     CHECK(pair.scripted.number("refused") == 0);
-    CHECK(pair.scripted.number("taken") == 15);
+    CHECK(pair.scripted.number("taken") == 23);
     double number = 2.5;
     float vector[3] = {1, 2, 3};
     float slider = 0.25f;

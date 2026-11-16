@@ -32,11 +32,15 @@
 // list was scrolled to. Two nodes that one round declares with one name share a key, which is a script's error, as it
 // is a caller's: layout makes the second without the key, and lib/ui outlines both.
 //
-// A node of any kind but one whose kind declares no widget of its own, as an overlay's does not, also takes `reveal`,
-// and queues `bounds`. Setting `reveal`, to any value, scrolls the containers around the widget in the next round by
-// the least that brings it into view (prUiReveal), once; setting it to another value does so again. `bounds` tells
-// where the last layout put the widget's box, as `values` of its left, top, right and bottom in px of the viewport, in
-// the first round that the script listens and whenever they change.
+// A node of any kind but one whose kind declares no widget of its own, as an overlay's does not, also takes `reveal`
+// and `focus`, and queues `bounds`. Setting `reveal`, to any value, scrolls the containers around the widget in the
+// next round by the least that brings it into view (prUiReveal), once; setting it to another value does so again.
+// Setting `focus`, to any value, gives the widget focus (prUiSetFocus), once, and setting it to another value does so
+// again. Focus moves as the next round ends, so the round after that one is the first to declare the widget with focus,
+// and the tree asks for a frame to run it (prUiRequestFrame). If the widget takes no focus, or is disabled in the next
+// round, no widget has focus afterward. Resetting either attribute before the next round withdraws what it asked for.
+// `bounds` tells where the last layout put the widget's box, as `values` of its left, top, right and bottom in px of
+// the viewport, in the first round that the script listens and whenever they change.
 //
 // Such a node also takes `drag-source`, `drag-value` and `drag-threshold`, which make its widget the source of a
 // payload (prUiDragStart). `drag-source` is the payload's kind, and `drag-value` is its value. Each is a whole number

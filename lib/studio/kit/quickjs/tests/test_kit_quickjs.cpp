@@ -477,6 +477,114 @@ TEST_CASE("a widget that a script makes a drag source carries its payload as one
     CHECK(kitVerified(scripted.fixture.tree));
 }
 
+TEST_CASE("a node's widget takes focus when the script asks, as a widget does that the kit's caller gives focus") {
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var row = make('box', 0, {direction: 'row', align: 'center', gap: '8', padding: '8'});
+        var first = make('button', row, {}, 'First');
+        var second = make('button', row, {}, 'Second');
+        var locked = make('button', row, {disabled: ''}, 'Locked');
+        var note = make('label', row, {}, 'a label takes no focus');
+        // The buttons that were activated, in order, as the digits of a number: 1 for the first, and 2 for the second.
+        var clicks = 0;
+        kitTree.listen(first, 'click', true);
+        kitTree.listen(second, 'click', true);
+        kitTree.onevent = function (node) {
+            clicks = clicks * 10 + (node === first ? 1 : 2);
+        };
+    )JS");
+    KitFixture direct;
+    constexpr uint32_t kNone = 4;
+    PrLayoutNode widgets[kNone] = {};
+    uint32_t asked = kNone;         // the widget that the next round gives focus, or kNone
+    uint32_t activations[2] = {};
+    direct.build = [&](PrLayoutNode root) {
+        PrKit* kit = direct.kit;
+        PrKitBoxStyle style{
+            .direction = PrKitDirection_Row,
+            .align = PrKitAlign_Center,
+            .gap = 8,
+            .padding = prKitEdgesAll(8),
+        };
+        PrLayoutNode row = prKitBox(kit, root, {}, style);
+        widgets[0] = prKitButton(kit, row, {.text = "First"}, {});
+        widgets[1] = prKitButton(kit, row, {.text = "Second"}, {});
+        widgets[2] = prKitButton(kit, row, {.text = "Locked", .disabled = true}, {});
+        widgets[3] = prKitLabel(kit, row, {.text = "a label takes no focus"}, {});
+        for (uint32_t i = 0; i < 2; ++i)
+            activations[i] += prKitActivated(kit, widgets[i]) ? 1 : 0;
+        if (asked != kNone)
+            prUiSetFocus(kit->ui, widgets[asked]);
+        asked = kNone;
+    };
+    auto frames = [&](uint32_t count) {
+        for (uint32_t i = 0; i < count; ++i) {
+            scripted.fixture.frame();
+            direct.frame();
+        }
+    };
+    // Gives a widget focus in each, by the script's attribute and by the kit's call, and presses Enter, which activates
+    // the widget that has focus.
+    auto focusAndEnter = [&](const char* script, uint32_t widget) {
+        scripted.run(script);
+        asked = widget;
+        frames(2);
+        scripted.fixture.key(PrAppKey_Enter);
+        direct.key(PrAppKey_Enter);
+        frames(2);
+    };
+    frames(2);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(prUiFocus(scripted.fixture.ui) == kPrLayoutNodeNone);
+
+    // The key shows the ring of the focus that it found, which both draw around the second button.
+    focusAndEnter("kitTree.set(second, 'focus', '1');", 1);
+    CHECK(prUiFocus(direct.ui) == widgets[1]);
+    CHECK(prUiFocus(scripted.fixture.ui) != kPrLayoutNodeNone);
+    CHECK(activations[1] == 1);
+    CHECK(scripted.number("clicks") == 2);
+    frames(30);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+
+    // The round that gives a widget focus asks for a frame, since the widget shows its focus in a later round.
+    CHECK(!prUiOutput(scripted.fixture.ui).wantsFrame);
+    scripted.run("kitTree.set(first, 'focus', '0');");
+    asked = 0;
+    frames(1);
+    CHECK(prUiOutput(scripted.fixture.ui).wantsFrame);
+    frames(30);
+    CHECK(!prUiOutput(scripted.fixture.ui).wantsFrame);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+
+    // Focus moves once for each time that the script sets the attribute, and not at all if it resets it before the
+    // round.
+    focusAndEnter("kitTree.set(first, 'focus', '1');", 0);
+    focusAndEnter("kitTree.set(second, 'focus', '2'); kitTree.set(second, 'focus', null);", kNone);
+    CHECK(prUiFocus(direct.ui) == widgets[0]);
+    CHECK(activations[0] == 2);
+    CHECK(activations[1] == 1);
+    CHECK(scripted.number("clicks") == 211);
+    frames(30);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+
+    // A widget that takes no focus, or is disabled, leaves no widget with focus, so Enter activates none.
+    focusAndEnter("kitTree.set(note, 'focus', '1');", 3);
+    CHECK(prUiFocus(direct.ui) == kPrLayoutNodeNone);
+    CHECK(prUiFocus(scripted.fixture.ui) == kPrLayoutNodeNone);
+    focusAndEnter("kitTree.set(second, 'focus', '3');", 1);
+    CHECK(prUiFocus(scripted.fixture.ui) != kPrLayoutNodeNone);
+    focusAndEnter("kitTree.set(locked, 'focus', '1');", 2);
+    CHECK(prUiFocus(direct.ui) == kPrLayoutNodeNone);
+    CHECK(prUiFocus(scripted.fixture.ui) == kPrLayoutNodeNone);
+    CHECK(activations[0] == 2);
+    CHECK(activations[1] == 2);
+    CHECK(scripted.number("clicks") == 2112);
+    frames(30);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(kitVerified(scripted.fixture.tree));
+}
+
 TEST_CASE("a script's request for another round is told to the host once") {
     JsKitScripted scripted;
     CHECK(!prJsKitTreeTakeRoundRequest(scripted.tree));

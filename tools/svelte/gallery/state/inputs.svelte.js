@@ -33,18 +33,15 @@ export const inputs = $state({
         'triple-click the line, and hold the drag to grow the selection by that unit.',
     snippet: 'vec3 n = normalize(worldNormal);\nfloat d = dot(n, lightDir);\nreturn baseColor * max(d, 0.0);',
 
-    // The text of the styled area, and the style that all of it has, which indexes the area's styles.
+    // The text of the styled area, and the styles of its ranges, as the area's `runs` takes them: each run's start and
+    // its style, which indexes the area's styles. The area holds both, with the history of their edits, and tells
+    // each as it changes.
     styled: {
         text:
             'Select some text and give it a style. Each style is a run of its own, and the ' +
             'caret, the selection and undo count through them all.',
-        style: 0,
+        runs: '0 0',
     },
-
-    // The states of the styled area that its Undo and Redo step through, oldest first, each a copy of `styled`, and
-    // the one that `styled` is.
-    styledHistory: [],
-    styledCursor: 0,
 
     // Submitted lines, oldest first.
     commands: ['build --release', 'suite render css/flex-basis', 'bench vg'],
@@ -131,23 +128,4 @@ export function undoStep(undo, forward) {
     undo.cursor = forward ? undo.cursor + 1 : undo.cursor - 1;
     undo.values = { ...undo.history[undo.cursor] };
     return true;
-}
-
-// Records the styled area's state as the step after the one it is at, dropping the states after an undo. The first
-// record keeps the state that the area started in before it.
-export function styledRecord(before) {
-    if (inputs.styledHistory.length === 0)
-        inputs.styledHistory.push({ ...before });
-    inputs.styledHistory.length = inputs.styledCursor + 1;
-    inputs.styledHistory.push({ ...inputs.styled });
-    inputs.styledCursor = inputs.styledHistory.length - 1;
-}
-
-// Steps the styled area one state back, or forward if `forward` is true, if there is a state to step to.
-export function styledStep(forward) {
-    const cursor = inputs.styledCursor + (forward ? 1 : -1);
-    if (cursor < 0 || cursor >= inputs.styledHistory.length)
-        return;
-    inputs.styledCursor = cursor;
-    inputs.styled = { ...inputs.styledHistory[cursor] };
 }

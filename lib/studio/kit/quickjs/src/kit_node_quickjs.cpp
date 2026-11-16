@@ -55,6 +55,7 @@ struct JsKitNode {
     PrKitPlace place;
     bool placed;                    // the script set an attribute of `place`
     bool revealPending;             // the script set `reveal`, and no round has brought the widget into view since
+    bool focusPending;              // the script set `focus`, and no round has asked for the widget's focus since
     bool listensBounds;             // the script listens for `bounds`
     uint32_t listens;               // a bit for each of the kind's events, by its index, that the script listens for
     PrRect bounds;                  // what the last `bounds` event told, in px of the viewport
@@ -694,6 +695,12 @@ void jsKitDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode par
         prUiReveal(round.kit->ui, made);
         declared.revealPending = false;
     }
+    if (declared.focusPending) {
+        // Focus moves as the round ends, so the widget shows it in a later round, which this asks a frame for.
+        prUiSetFocus(round.kit->ui, made);
+        prUiRequestFrame(round.kit->ui);
+        declared.focusPending = false;
+    }
     if (declared.listensBounds) {
         // The geometry of the last layout, which is what a program that declares its own widgets reads in a round.
         PrRect bounds = prLayoutRectToPx(prLayoutNodeBounds(round.kit->tree, made, PrLayoutCoordinates_Viewport));
@@ -847,6 +854,12 @@ bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, P
     }
     if (name == "reveal") {
         changed.revealPending = !reset;
+        tree->changed = true;
+        ++tree->version;
+        return true;
+    }
+    if (name == "focus") {
+        changed.focusPending = !reset;
         tree->changed = true;
         ++tree->version;
         return true;
