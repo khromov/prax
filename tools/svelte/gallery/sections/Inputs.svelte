@@ -1,5 +1,6 @@
 <!-- The gallery's sectionInputs (examples/studio_gallery/section_controls.cpp). -->
 <script>
+    import { sameFrame } from 'prax-svelte';
     import CaptionRow from '../parts/CaptionRow.svelte';
     import DemoPanel from '../parts/DemoPanel.svelte';
     import FillLabel from '../parts/FillLabel.svelte';
@@ -140,6 +141,13 @@
         inputs.styled.text = event.text;
         styledRecord(before);
     }
+
+    // Sets a value that several controls show. The example gives them one variable, so each shows another's edit in
+    // the frame that made it.
+    function share(name, value) {
+        inputs[name] = value;
+        sameFrame();
+    }
 </script>
 
 <SectionFrame number="06" title="Inputs" lede="Text, numeric, vector, slider and color." {description}>
@@ -232,15 +240,15 @@
     </CaptionRow>
     <CaptionRow caption="SCALAR" labelWidth={captionWidth}>
       <number-field type="f32" value={inputs.scalar} step={0.01} min={0} max={1} width={120} flex="fixed"
-          onchange={(event) => (inputs.scalar = event.value)}></number-field>
+          onchange={(event) => share('scalar', event.value)}></number-field>
     </CaptionRow>
     <CaptionRow caption="UNITS" labelWidth={captionWidth}>
       <number-field type="f32" value={inputs.mass} step={0.5} min={0} unit="kg" precision={1} width={120} flex="fixed"
-          onchange={(event) => (inputs.mass = event.value)}></number-field>
+          onchange={(event) => share('mass', event.value)}></number-field>
       <number-field type="f32" value={inputs.shutter} step={0.001} min={0} unit="s" precision={4} width={120}
           flex="fixed" onchange={(event) => (inputs.shutter = event.value)}></number-field>
       <number-field type="u32" value={inputs.seed} step={1} unit="Hz" width={120} flex="fixed"
-          onchange={(event) => (inputs.seed = event.value)}></number-field>
+          onchange={(event) => share('seed', event.value)}></number-field>
     </CaptionRow>
   </DemoPanel>
   <DemoPanel title="TYPED SCALARS" tags="I8-U64 . F32 . F64">
@@ -249,7 +257,7 @@
         <box gap={space[2]}>
           <label {...text.caption}>{typed.caption}</label>
           <number-field type={typed.type} value={inputs[typed.value]} step={0.5}
-              onchange={(event) => (inputs[typed.value] = event.value)}></number-field>
+              onchange={(event) => share(typed.value, event.value)}></number-field>
         </box>
       {/snippet}
     </Grid>
@@ -259,9 +267,9 @@
     {#each sliderRows as row (row.caption)}
       <CaptionRow caption={row.caption} labelWidth={72}>
         <slider type={row.type} value={inputs[row.value]} min={row.min} max={row.max} scale={row.scale}
-            onchange={(event) => (inputs[row.value] = event.value)}></slider>
+            onchange={(event) => share(row.value, event.value)}></slider>
         <number-field type={row.type} value={inputs[row.value]} min={row.min} max={row.max} unit={row.unit}
-            precision={row.precision} width={88} flex="fixed" onchange={(event) => (inputs[row.value] = event.value)}>
+            precision={row.precision} width={88} flex="fixed" onchange={(event) => share(row.value, event.value)}>
         </number-field>
       </CaptionRow>
     {/each}
