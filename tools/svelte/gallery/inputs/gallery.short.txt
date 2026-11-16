@@ -1,0 +1,12 @@
+# extent 1000x420
+# A window too short for the sidebar's list, which scrolls on its own, and narrower than the gallery was laid out
+# for. A row far down the list is activated once the list has scrolled to it.
+settle
+screenshot top
+move 100 300
+scroll 100 300 0 300
+settle
+screenshot list-scrolled
+click 60 300
+settle
+screenshot section

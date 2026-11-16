@@ -1,0 +1,76 @@
+# extent 1440x900
+# Each row of the sidebar is activated in turn, from the last section to the first, which brings its section into
+# view and marks it in the sidebar. Each screenshot is the whole window once the page has come to rest.
+settle
+click 60 745
+settle
+screenshot keys
+click 60 695
+settle
+screenshot graph
+click 60 673
+settle
+screenshot images
+click 60 651
+settle
+screenshot timeline
+click 60 629
+settle
+screenshot collections
+click 60 579
+settle
+screenshot status
+click 60 557
+settle
+screenshot dialogs
+click 60 535
+settle
+screenshot tooltips
+click 60 513
+settle
+screenshot progress
+click 60 463
+settle
+screenshot tags
+click 60 441
+settle
+screenshot tables
+click 60 419
+settle
+screenshot toolbar
+click 60 397
+settle
+screenshot inspector
+click 60 375
+settle
+screenshot tree
+click 60 325
+settle
+screenshot menus
+click 60 303
+settle
+screenshot tabs
+click 60 281
+settle
+screenshot toggles
+click 60 259
+settle
+screenshot inputs
+click 60 237
+settle
+screenshot buttons
+click 60 187
+settle
+screenshot icons
+click 60 165
+settle
+screenshot space
+click 60 143
+settle
+screenshot type
+click 60 121
+settle
+screenshot color
+click 60 99
+settle
+screenshot principles

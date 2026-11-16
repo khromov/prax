@@ -1,0 +1,4 @@
+# extent 1440x900
+# The whole gallery at rest: the sidebar, and the top of the column of sections.
+settle
+screenshot top

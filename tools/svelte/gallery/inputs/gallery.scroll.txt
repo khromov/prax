@@ -1,0 +1,53 @@
+# extent 1440x900
+# The page scrolled by the wheel, which moves the sidebar's mark from section to section as each reaches the top,
+# then back, and the sidebar's own list scrolled in a window too short to show it all.
+settle
+move 800 500
+scroll 800 500 0 700
+settle
+screenshot down-01
+scroll 800 500 0 700
+settle
+screenshot down-02
+scroll 800 500 0 700
+settle
+screenshot down-03
+scroll 800 500 0 700
+settle
+screenshot down-04
+scroll 800 500 0 700
+settle
+screenshot down-05
+scroll 800 500 0 700
+settle
+screenshot down-06
+scroll 800 500 0 700
+settle
+screenshot down-07
+scroll 800 500 0 700
+settle
+screenshot down-08
+scroll 800 500 0 700
+settle
+screenshot down-09
+scroll 800 500 0 700
+settle
+screenshot down-10
+scroll 800 500 0 700
+settle
+screenshot down-11
+scroll 800 500 0 700
+settle
+screenshot down-12
+scroll 800 500 0 -1500
+settle
+screenshot up-01
+scroll 800 500 0 -1500
+settle
+screenshot up-02
+scroll 800 500 0 -1500
+settle
+screenshot up-03
+scroll 800 500 0 -1500
+settle
+screenshot up-04
