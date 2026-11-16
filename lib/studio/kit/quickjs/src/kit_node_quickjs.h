@@ -262,7 +262,7 @@ bool jsKitNodeIsWithin(const JsKitNodeTree* tree, JsKitNodeIndex node, JsKitNode
 void jsKitNodeInsert(JsKitNodeTree* tree, JsKitNodeIndex parent, JsKitNodeIndex node, JsKitNodeIndex before);
 void jsKitNodeRemove(JsKitNodeTree* tree, JsKitNodeIndex node);
 
-// Sets a node's attribute, the placement that every kind takes or one of its kind's own, or resets it. Returns false,
+// Sets a node's attribute, one of those that every kind takes or one of its kind's own, or resets it. Returns false,
 // and changes nothing, if the node takes no such attribute or `value` does not suit it.
 bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, PrStringView value, bool reset);
 

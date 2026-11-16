@@ -35,6 +35,15 @@
 // where the last layout put the widget's box, as `values` of its left, top, right and bottom in px of the viewport, in
 // the first round that the script listens and whenever they change.
 //
+// Such a node also takes `drag-source`, `drag-value` and `drag-threshold`, which make its widget the source of a
+// payload (prUiDragStart). `drag-source` is the payload's kind, and `drag-value` is its value. Each is a whole number
+// of up to 64 bits, and the kind of the system's content (kPrUiPayloadKindSystem) is refused. The widget is a source
+// while its kind is not zero. A press on it picks the payload up once the pointer has moved `drag-threshold` px, which
+// is 4 unless the script sets it. A threshold of 0 picks the payload up as the press begins. A press that picked a
+// payload up ends without a click. A widget that takes no presses, as a label takes none, picks nothing up. The payload
+// drops on a node that takes its kind, such as an `asset-field` or a `drop-zone`, and a `drag-ghost` under the source
+// shows beside the pointer while the payload is in flight.
+//
 // An attribute's value is a string: a keyword, a number, a flag, which is present or `true` when set, or several
 // numbers separated by spaces. An event's `detail` is an object that holds what the event tells beyond its type: a
 // `value` and `values`, numbers, and a `text`, each only if the event has one.

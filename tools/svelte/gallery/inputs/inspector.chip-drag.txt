@@ -1,13 +1,26 @@
 # extent 1100x1240
-# known: an asset chip starts its drag below the kit (prUiDragStart on a button), and the binding has no kind that
-# makes a widget the source of a payload, so the port's chips do not drag: no ghost follows the pointer, the mesh field
-# is not marked, and the drop gives it no asset.
+# Each chip is a button that is the source of a payload, which carries the chip's index to the mesh field. The chip's
+# ghost follows the pointer while that chip is in flight.
 
-# Carries the third chip to the mesh field, which is marked while the chip is over it, and drops it there.
+# A press that moves less than the threshold picks nothing up: the chip shows as pressed, and no ghost follows the
+# pointer.
+down 370 991
+frame
+move 372 992
+frame 2
+screenshot pressed
+up 372 992
+settle
+screenshot clicked
+
+# Carries the third chip to the mesh field and drops it there. The screenshots hold the first frame that carries the
+# chip, the chip on its way, the field marked while the chip is over it, the frame of the drop, and the field once it
+# has taken the chip.
 down 370 991
 frame
 move 380 985
 frame
+screenshot picked-up
 move 600 700
 frame 2
 screenshot carried
@@ -15,5 +28,52 @@ move 600 352
 frame 2
 screenshot over-mesh
 up 600 352
+frame
+screenshot dropping
 settle
 screenshot dropped
+
+# The material field takes no chip: it is not marked under the fourth chip, and a release there changes nothing.
+down 500 991
+frame
+move 510 985
+frame
+move 600 378
+frame 2
+screenshot over-material
+up 600 378
+frame
+screenshot released-on-material
+settle
+screenshot kept
+
+# Escape drops the first chip nowhere, and the release that follows is no click and no drop.
+down 100 991
+frame
+move 110 985
+frame
+move 600 352
+frame 2
+screenshot first-over-mesh
+key Escape
+frame
+screenshot cancelling
+settle
+screenshot cancelled
+up 600 352
+settle
+screenshot released-after-cancel
+
+# The fourth chip replaces the third in the mesh field.
+down 500 991
+frame
+move 500 980
+frame
+move 300 352
+frame 2
+screenshot fourth-over-mesh
+up 300 352
+settle
+move 900 1220
+settle
+screenshot dropped-fourth

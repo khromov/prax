@@ -36,11 +36,12 @@
 // Sorting and drops. A table keeps the column that it is sorted by in `sort-column` and `sort-descending`, which mark
 // that column's heading. A click on the heading of a `sortable` column writes them, and the table queues `sort`, whose
 // `values` are the column and 1 if the order is descending, or 0. The script orders the table's rows by moving their
-// nodes. A tree view with a `drag-kind` lets its rows drag, and takes their drops. It queues a drop as `drop`. The
-// event's `text` is `before`, `inside` or `after`, which is where the dragged row lands by the row that it was dropped
-// on. Its `values` are the row dropped on, the dragged row, which is -1 if the payload is not a row that the view
-// shows, and the payload's value, which for a row is its node. The script moves the dragged row's node, and sets the
-// depths of the rows that move with it.
+// nodes. A tree view with a `drag-kind` lets its rows drag, and takes their drops. A `drag-ghost` under a row shows
+// beside the pointer while that row is the one dragged. The view queues a drop as `drop`. The event's `text` is
+// `before`, `inside` or `after`, which is where the dragged row lands by the row that it was dropped on. Its `values`
+// are the row dropped on, the dragged row, which is -1 if the payload is not a row that the view shows, and the
+// payload's value, which for a row is its node. The script moves the dragged row's node, and sets the depths of the
+// rows that move with it.
 //
 // The kinds, each with the attributes that it takes besides the placement that every kind takes:
 //

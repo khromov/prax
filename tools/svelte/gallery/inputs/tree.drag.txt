@@ -1,11 +1,10 @@
 # extent 1100x600
-# Each screenshot of a row in flight is cut at the pointer, which leaves out the ghost beside it. tree.drag-ghost covers
-# the ghost.
+# Where a dragged row lands. Each screenshot of a row in flight holds the ghost beside the pointer too.
 
 # A press that stays put drags nothing, and its release selects the row.
 down 900 242
 frame 2
-screenshot pressed 0 0 900 560
+screenshot pressed
 up 900 242
 settle
 screenshot clicked
@@ -17,10 +16,10 @@ move 900 250
 frame
 move 900 300
 frame 2
-screenshot over-player 0 0 900 560
+screenshot over-player
 move 900 374
 frame 2
-screenshot into-level 0 0 900 560
+screenshot into-level
 up 900 374
 settle
 screenshot dropped-into-level
@@ -32,7 +31,7 @@ move 900 320
 frame
 move 900 190
 frame 2
-screenshot before-environment 0 0 900 560
+screenshot before-environment
 up 900 190
 settle
 screenshot dropped-before-environment
@@ -44,7 +43,7 @@ move 900 320
 frame
 move 900 228
 frame 2
-screenshot after-environment 0 0 900 560
+screenshot after-environment
 up 900 228
 settle
 screenshot dropped-after-environment
@@ -56,7 +55,7 @@ move 900 186
 frame
 move 900 220
 frame 2
-screenshot world-over-its-own-row 0 0 900 560
+screenshot world-over-its-own-row
 up 900 220
 settle
 screenshot dropped-on-its-own-row
@@ -66,7 +65,7 @@ move 900 252
 frame
 move 900 520
 frame 2
-screenshot outside 0 0 900 560
+screenshot outside
 up 900 520
 settle
 move 600 540

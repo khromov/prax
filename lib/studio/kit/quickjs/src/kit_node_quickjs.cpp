@@ -8,6 +8,7 @@
 #include "pr/count_of.h"
 #include "pr/float.h"
 #include "pr/float_convert.h"
+#include "pr/integer.h"
 #include "pr/kit_button.h"
 #include "pr/kit_color.h"
 #include "pr/kit_text.h"
@@ -57,6 +58,12 @@ struct JsKitNode {
     bool listensBounds;             // the script listens for `bounds`
     uint32_t listens;               // a bit for each of the kind's events, by its index, that the script listens for
     PrRect bounds;                  // what the last `bounds` event told, in px of the viewport
+
+    // The payload that a press on the node's widget picks up, which is none while `dragKind` is zero. The press picks
+    // it up once it has moved `dragThreshold` px.
+    uint64_t dragKind;
+    uint64_t dragValue;
+    float dragThreshold;
 };
 
 // A queued event. Its text is a range of the tree's event text.
@@ -232,6 +239,36 @@ bool setPlacement(PrKitPlace& place, PrStringView name, PrStringView value, bool
         return jsKitSetKeyword(kAlignments, value, reset, &place.align);
     if (name == "weight")
         return jsKitSetLength(value, reset, &place.weight);
+    return false;
+}
+
+// The distance in px that a press moves before it picks up a payload whose node gives no `drag-threshold`. The kit's
+// own sources, such as the rows of a tree view, pick theirs up at the same distance.
+constexpr float kDragThreshold = 4;
+
+// Sets an attribute of the payload that a node's widget is the source of. Returns false if `name` is not one, or
+// `value` does not suit it. The kind of the system's content is refused, since no widget is the source of that.
+bool setDragSource(JsKitNode& node, PrStringView name, PrStringView value, bool reset) {
+    if (name == "drag-source" || name == "drag-value") {
+        uint64_t number = 0;
+        if (!reset && !prU64Parse(value.data, value.size, &number, 10))
+            return false;
+        if (name == "drag-value") {
+            node.dragValue = number;
+            return true;
+        }
+        if (number == kPrUiPayloadKindSystem)
+            return false;
+        node.dragKind = number;
+        return true;
+    }
+    if (name == "drag-threshold") {
+        float threshold = kDragThreshold;
+        if (!reset && !jsKitSetLength(value, false, &threshold))
+            return false;
+        node.dragThreshold = threshold;
+        return true;
+    }
     return false;
 }
 
@@ -651,6 +688,8 @@ void jsKitDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode par
     JsKitNode& declared = round.tree->nodes.data[node];
     if (declared.placed && (kind->flags & JsKitKindFlag_PlacesItself) == 0)
         prKitPlace(round.kit, made, declared.place);
+    if (declared.dragKind != 0)
+        prUiDragStart(round.kit->ui, made, declared.dragThreshold, declared.dragKind, declared.dragValue, 0);
     if (declared.revealPending) {
         prUiReveal(round.kit->ui, made);
         declared.revealPending = false;
@@ -742,6 +781,7 @@ JsKitNodeIndex jsKitNodeCreate(JsKitNodeTree* tree, const JsKitKind* kind) {
     node.lastChild = kJsKitNodeNone;
     node.previous = kJsKitNodeNone;
     node.next = kJsKitNodeNone;
+    node.dragThreshold = kDragThreshold;
     if (kind->dataSize > 0) {
         node.data = prMemoryAllocZeroed(kind->dataSize);
         if (kind->create != nullptr)
@@ -807,6 +847,11 @@ bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, P
     }
     if (name == "reveal") {
         changed.revealPending = !reset;
+        tree->changed = true;
+        ++tree->version;
+        return true;
+    }
+    if (setDragSource(changed, name, value, reset)) {
         tree->changed = true;
         ++tree->version;
         return true;

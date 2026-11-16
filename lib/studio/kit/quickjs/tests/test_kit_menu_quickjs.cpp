@@ -4,6 +4,7 @@
 #include "pr/kit_box.h"
 #include "pr/kit_button.h"
 #include "pr/kit_choice.h"
+#include "pr/kit_collection.h"
 #include "pr/kit_input.h"
 #include "pr/kit_menu.h"
 #include "pr/kit_text.h"
@@ -742,26 +743,35 @@ TEST_CASE("a tooltip shows under its anchor once the pointer has rested on it") 
     CHECK(pair.alike());
 }
 
-TEST_CASE("a drag's ghost follows the pointer while a tab is dragged, and is gone when the drag ends") {
+TEST_CASE("a ghost under a tab follows the pointer while that tab is dragged, and is gone when the drag ends") {
     Pair pair;
     pair.scripted.run(kJsKitMake);
     pair.scripted.run(R"JS(
         var strip = make('tab-strip', 0, {reorderable: ''});
-        ['Console', 'Output'].forEach(function (label, i) {
-            make('tab-label', make('tab', strip, {id: String(i + 1)}), {}, label);
+        var tabs = ['Console', 'Output'].map(function (label, i) {
+            var tab = make('tab', strip, {id: String(i + 1)});
+            make('tab-label', tab, {}, label);
+            return tab;
         });
-        make('drag-ghost', 0, {icon: 'cube'}, 'player_base.mesh');
+        make('drag-ghost', tabs[0], {icon: 'cube'}, 'player_base.mesh');
+        // A ghost that is under no source, and names no kind, shows for no payload.
+        make('drag-ghost', strip, {}, 'under the strip');
+        make('drag-ghost', 0, {}, 'under the root');
     )JS");
     TwoTabs held;
-    PrLayoutNode first = kPrLayoutNodeNone;
+    PrLayoutNode tabs[2] = {};
     PrLayoutNode ghost = kPrLayoutNodeNone;
     pair.direct.build = [&](PrLayoutNode root) {
         PrKit* kit = pair.direct.kit;
         PrLayoutNode strip = prKitTabStrip(kit, root, {.tabs = held.tabs, .reorderable = true}, {});
-        first = prKitTab(kit, strip, {.id = 1});
-        prKitTabLabel(kit, first, {.text = "Console"});
-        prKitTabLabel(kit, prKitTab(kit, strip, {.id = 2}), {.text = "Output"});
-        ghost = prKitDragGhost(kit, {.text = "player_base.mesh", .icon = PrKitIconKind_Cube});
+        tabs[0] = prKitTab(kit, strip, {.id = 1});
+        prKitTabLabel(kit, tabs[0], {.text = "Console"});
+        tabs[1] = prKitTab(kit, strip, {.id = 2});
+        prKitTabLabel(kit, tabs[1], {.text = "Output"});
+        const PrUiPayload* carried = prUiDragging(kit->ui);
+        ghost = kPrLayoutNodeNone;
+        if (carried != nullptr && carried->value == 1)
+            ghost = prKitDragGhost(kit, {.text = "player_base.mesh", .icon = PrKitIconKind_Cube});
     };
     pair.frame();
     CHECK(ghost == kPrLayoutNodeNone);
@@ -769,7 +779,7 @@ TEST_CASE("a drag's ghost follows the pointer while a tab is dragged, and is gon
     Array<uint8_t> still;
     REQUIRE(pair.direct.render(&still));
 
-    PrVec2 start = pair.direct.center(first);
+    PrVec2 start = pair.direct.center(tabs[0]);
     PrVec2 away{start.x + 100, start.y + 100};
     pair.push(PrAppEvent{.kind = PrAppEventKind_PointerDown, .pointer = {.position = start}});
     pair.frame();
@@ -782,6 +792,156 @@ TEST_CASE("a drag's ghost follows the pointer while a tab is dragged, and is gon
     pair.frame(30);
     CHECK(ghost == kPrLayoutNodeNone);
     CHECK(pair.alike());
+
+    // The other tab holds no ghost, so its drag shows none.
+    start = pair.direct.center(tabs[1]);
+    away = PrVec2{start.x + 100, start.y + 100};
+    pair.push(PrAppEvent{.kind = PrAppEventKind_PointerDown, .pointer = {.position = start}});
+    pair.frame();
+    pair.move(away);
+    pair.frame(2);
+    REQUIRE(prUiDragging(pair.scripted.fixture.ui) != nullptr);
+    CHECK(ghost == kPrLayoutNodeNone);
+    CHECK(pair.alike());
+    pair.push(PrAppEvent{.kind = PrAppEventKind_PointerUp, .pointer = {.position = away}});
+    pair.frame(30);
+    CHECK(pair.alike());
+}
+
+TEST_CASE("a ghost shows for the source that it is under alone, and a ghost of a kind for every payload of that kind") {
+    Pair pair;
+    pair.scripted.run(kJsKitMake);
+    pair.scripted.run(R"JS(
+        var row = make('box', 0, {direction: 'row', gap: '8', padding: '16'});
+        var cube = make('button', row, {'drag-source': '7', 'drag-value': '0'}, 'Cube');
+        make('drag-ghost', cube, {icon: 'cube'}, 'cube.mesh');
+        var sphere = make('button', row, {'drag-source': '7', 'drag-value': '1'}, 'Sphere');
+        make('drag-ghost', sphere, {icon: 'sphere'}, 'sphere.mesh');
+        // Two sources of another kind hold no ghost. The ghost of their kind is under a box, which is no source.
+        make('button', row, {'drag-source': '8', 'drag-value': '2'}, 'Step');
+        make('button', row, {'drag-source': '8', 'drag-value': '3', 'drag-threshold': '0'}, 'Loop');
+        make('drag-ghost', row, {icon: 'audio', 'drag-kind': '8'}, 'a sound');
+    )JS");
+    struct Source {
+        const char* name;
+        uint64_t kind;
+        float threshold;
+        PrKitDragGhost ghost;
+    };
+    const Source sources[] = {
+        {"Cube", 7, 4, {.text = "cube.mesh", .icon = PrKitIconKind_Cube}},
+        {"Sphere", 7, 4, {.text = "sphere.mesh", .icon = PrKitIconKind_Sphere}},
+        {"Step", 8, 4, {.text = "a sound", .icon = PrKitIconKind_Audio}},
+        {"Loop", 8, 0, {.text = "a sound", .icon = PrKitIconKind_Audio}},
+    };
+    PrLayoutNode buttons[4] = {};
+    PrLayoutNode ghost = kPrLayoutNodeNone;
+    pair.direct.build = [&](PrLayoutNode root) {
+        PrKit* kit = pair.direct.kit;
+        PrKitBoxStyle line{.direction = PrKitDirection_Row, .gap = 8, .padding = prKitEdgesAll(16)};
+        PrLayoutNode row = prKitBox(kit, root, {}, line);
+        for (uint32_t i = 0; i < 4; ++i) {
+            buttons[i] = prKitButton(kit, row, {.text = sources[i].name}, {});
+            prUiDragStart(kit->ui, buttons[i], sources[i].threshold, sources[i].kind, i, 0);
+        }
+        const PrUiPayload* carried = prUiDragging(kit->ui);
+        ghost = carried != nullptr ? prKitDragGhost(kit, sources[carried->value].ghost) : kPrLayoutNodeNone;
+    };
+    pair.frame(2);
+    CHECK(ghost == kPrLayoutNodeNone);
+    CHECK(pair.alike());
+    Array<uint8_t> still;
+    REQUIRE(pair.direct.render(&still));
+
+    for (uint32_t i = 0; i < 4; ++i) {
+        CAPTURE(i);
+        PrVec2 start = pair.direct.center(buttons[i]);
+        PrVec2 away{start.x + 60, start.y + 120};
+        pair.push(PrAppEvent{.kind = PrAppEventKind_PointerDown, .pointer = {.position = start}});
+        pair.frame();
+        // A threshold of zero picks the payload up as the press begins, and its ghost shows in that frame.
+        CHECK((ghost != kPrLayoutNodeNone) == (sources[i].threshold == 0));
+        CHECK(pair.alike());
+        // The ghost shows in the frame that carries the payload past its threshold.
+        pair.move(PrVec2{start.x + 6, start.y});
+        pair.frame();
+        REQUIRE(ghost != kPrLayoutNodeNone);
+        CHECK(pair.alike());
+        pair.move(away);
+        pair.frame(2);
+        CHECK(pair.alike());
+        CHECK(rendersIn(pair.scripted.fixture, still, pair.direct.bounds(ghost)));
+        pair.push(PrAppEvent{.kind = PrAppEventKind_PointerUp, .pointer = {.position = away}});
+        pair.frame(30);
+        CHECK(ghost == kPrLayoutNodeNone);
+        CHECK(pair.alike());
+    }
+}
+
+TEST_CASE("a ghost under a row of a tree view shows while that row is dragged") {
+    Pair pair;
+    pair.scripted.run(kJsKitMake);
+    pair.scripted.run(R"JS(
+        var view = make('tree-view', 0, {'drag-kind': '5', 'row-height': '24', height: '200', flex: 'fixed'});
+        ['World', 'Camera', 'Light', 'Sky'].forEach(function (name, i) {
+            var row = make('tree-row', view, {depth: i === 0 ? '0' : '1', open: ''});
+            make('row-label', row, {}, name);
+            make('drag-ghost', row, {icon: i === 2 ? 'light' : 'cube'}, name);
+        });
+    )JS");
+    const char* const names[] = {"World", "Camera", "Light", "Sky"};
+    const PrKitTreeItem items[] = {
+        {.depth = 0, .hasChildren = true, .open = true},
+        {.depth = 1, .open = true},
+        {.depth = 1, .open = true},
+        {.depth = 1, .open = true},
+    };
+    PrLayoutNode rows[4] = {};
+    PrLayoutNode ghost = kPrLayoutNodeNone;
+    pair.direct.build = [&](PrLayoutNode root) {
+        PrKit* kit = pair.direct.kit;
+        PrKitListViewStyle style{.rowHeight = 24, .place = {.height = prKitPx(200), .flex = PrKitFlex_Fixed}};
+        PrLayoutNode view = prKitTreeView(kit, root, {.count = 4, .items = items, .dragKind = 5}, style);
+        PrKitWindow window = prKitListWindow(kit, view);
+        for (uint32_t i = window.first; i < window.first + window.count; ++i) {
+            rows[i] = prKitTreeRow(kit, view, {.index = i, .item = i});
+            prKitRowLabel(kit, rows[i], {.text = names[i]}, PrKitTone_Auto);
+        }
+        // The program names the row that the payload in flight carries.
+        const PrUiPayload* carried = prUiDragging(kit->ui);
+        ghost = kPrLayoutNodeNone;
+        if (carried != nullptr && carried->kind == 5) {
+            PrKitIconKind icon = carried->value == 2 ? PrKitIconKind_Light : PrKitIconKind_Cube;
+            ghost = prKitDragGhost(kit, {.text = names[carried->value], .icon = icon});
+        }
+    };
+    pair.frame(2);
+    CHECK(pair.alike());
+    Array<uint8_t> still;
+    REQUIRE(pair.direct.render(&still));
+
+    // Light, and then Camera, is carried over Sky, which marks where it would land, and dropped there. The script
+    // listens for no drop, so the rows stay as they are.
+    const uint32_t dragged[] = {2, 1};
+    for (uint32_t row : dragged) {
+        CAPTURE(row);
+        PrVec2 start = pair.direct.center(rows[row]);
+        PrVec2 over = pair.direct.center(rows[3]);
+        pair.push(PrAppEvent{.kind = PrAppEventKind_PointerDown, .pointer = {.position = start}});
+        pair.frame();
+        pair.move(PrVec2{start.x + 6, start.y});
+        pair.frame();
+        REQUIRE(ghost != kPrLayoutNodeNone);
+        CHECK(pair.alike());
+        pair.move(PrVec2{over.x + 40, over.y});
+        pair.frame(2);
+        CHECK(pair.alike());
+        CHECK(rendersIn(pair.scripted.fixture, still, pair.direct.bounds(ghost)));
+        pair.push(PrAppEvent{.kind = PrAppEventKind_PointerUp, .pointer = {.position = PrVec2{over.x + 40, over.y}}});
+        pair.frame(30);
+        CHECK(ghost == kPrLayoutNodeNone);
+        CHECK(pair.alike());
+    }
 }
 
 TEST_CASE("a modal opens over a scrim with focus on the node that its autofocus names, and closes on Escape or a press on the scrim") {
@@ -1187,6 +1347,8 @@ TEST_CASE("the menus and overlays take only the values of their attributes, and 
             kitTree.set(context, 'triggered', ''), kitTree.set(context, 'offset', '1 2'),
             kitTree.set(tooltip, 'icon', 'cube'), kitTree.set(ghost, 'icon', 'none'),
             kitTree.set(ghost, 'shortcut', 'G'), kitTree.set(modal, 'placement', 'bottom'),
+            kitTree.set(ghost, 'drag-kind', 'cube'), kitTree.set(ghost, 'drag-kind', '-7'),
+            kitTree.set(ghost, 'drag-kind', '7.5'), kitTree.set(ghost, 'drag-kind', ''),
             kitTree.set(modal, 'inset', '-1'), kitTree.set(modal, 'title', 'x'), kitTree.set(focus, 'open', ''),
             kitTree.set(dialog, 'inset', 'far'), kitTree.set(dialog, 'placement', ''),
             kitTree.set(footer, 'gap', '4'), kitTree.set(palette, 'searchable', 'no'),
@@ -1207,10 +1369,11 @@ TEST_CASE("the menus and overlays take only the values of their attributes, and 
             kitTree.set(popover, 'offset', '-4.5 +2'), kitTree.set(popover, 'offset', ' 0  6 '),
             kitTree.set(context, 'at', '10 20'), kitTree.set(context, 'at', null),
             kitTree.set(popover, 'triggered', 'true'), kitTree.set(popover, 'triggered', 'false'),
+            kitTree.set(ghost, 'drag-kind', '18446744073709551615'), kitTree.set(ghost, 'drag-kind', null),
         ].filter(Boolean).length;
     )JS");
     CHECK(pair.scripted.number("refused") == 0);
-    CHECK(pair.scripted.number("taken") == 16);
+    CHECK(pair.scripted.number("taken") == 18);
     bool applies = true;
     pair.direct.build = [&](PrLayoutNode root) {
         PrKit* kit = pair.direct.kit;

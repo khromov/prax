@@ -2,7 +2,7 @@
 <script>
     import DemoPanel from '../parts/DemoPanel.svelte';
     import SectionFrame from '../parts/SectionFrame.svelte';
-    import { findTreeNode, moveTreeNode, seedTree, treeOrder } from '../state/tree.js';
+    import { moveTreeNode, seedTree, treeOrder } from '../state/tree.js';
 
     // The kind of the payload that a row of the tree carries.
     const dragTreeRow = 1;
@@ -17,12 +17,6 @@
 
     // The visible rows, in display order.
     const rows = $derived(treeOrder(nodes));
-
-    // The node that the ghost of a dragged row names. The gallery reads the payload in flight, shows the ghost only for
-    // a row of this tree, and names the row that is dragged. A tree view tells a script which row was dragged only once
-    // it is dropped, and a ghost shows for a payload of any kind. So this names the selected node, which is the dragged
-    // one only if the drag starts on the selected row.
-    const carried = $derived(findTreeNode(nodes, selected));
 
     function folded(event) {
         const [row, open] = event.values;
@@ -66,11 +60,11 @@
           {/if}
           <visibility-toggle hidden={node.hidden} revealed="hover"
               onclick={() => (node.hidden = !node.hidden)}></visibility-toggle>
+          <!-- The gallery reads the payload in flight and shows a ghost that names the dragged row. A ghost under a
+               row shows while that row is dragged, so each row holds its own. -->
+          <drag-ghost icon={node.icon}>{node.name}</drag-ghost>
         </tree-row>
       {/each}
     </tree-view>
   </DemoPanel>
-  {#if carried !== null}
-    <drag-ghost icon={carried.icon}>{carried.name}</drag-ghost>
-  {/if}
 </SectionFrame>

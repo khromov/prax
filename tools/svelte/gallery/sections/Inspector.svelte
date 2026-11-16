@@ -7,6 +7,9 @@
     // The kind of the payload that an asset chip carries.
     const dragAssetChip = 2;
 
+    // The distance in px that a press moves before it picks up a chip.
+    const dragThreshold = 4;
+
     // The assets that the inspector's mesh field takes.
     const assetChips = [
         { name: 'player_base.mesh', icon: 'cube' },
@@ -174,12 +177,15 @@
     </box>
   </DemoPanel>
   <DemoPanel title="ASSET DRAG" tags="DROP ON THE MESH SLOT">
-    <!-- The gallery makes each chip the source of a payload that carries the chip's index, and shows a ghost of the
-         chip in flight. The binding has no kind that makes a widget the source of a payload, so these chips do not
-         drag, and nothing here starts the drop that the mesh field above takes. -->
+    <!-- Each chip is the source of a payload that carries the chip's index, which the mesh field above takes. The
+         ghost under a chip shows while that chip is the one in flight. -->
     <box direction="row" align="center" wrap gap={space[2]}>
-      {#each assetChips as chip (chip.name)}
-        <button icon={chip.icon} size="sm">{chip.name}</button>
+      {#each assetChips as chip, i (chip.name)}
+        <button icon={chip.icon} size="sm" drag-source={dragAssetChip} drag-value={i}
+            drag-threshold={dragThreshold}>
+          {chip.name}
+          <drag-ghost icon={chip.icon}>{chip.name}</drag-ghost>
+        </button>
       {/each}
     </box>
   </DemoPanel>

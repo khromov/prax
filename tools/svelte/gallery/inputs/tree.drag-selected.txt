@@ -1,7 +1,6 @@
 # extent 1100x600
-# The whole viewport while the selected row is dragged, with the ghost that follows the pointer. The port's ghost names
-# the selected row, so it is the gallery's ghost when the dragged row is the selected one. tree.drag-ghost covers a drag
-# of another row.
+# The whole viewport while the selected row is dragged, with the ghost that follows the pointer. tree.drag-ghost covers
+# a drag of another row.
 down 500 308
 frame
 move 500 316

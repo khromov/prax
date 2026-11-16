@@ -1,11 +1,53 @@
 # extent 1100x600
-# known: the gallery's ghost names the dragged row, which it reads from the payload in flight (prUiDragging), below the
-# kit. A tree view tells a script which row was dragged only once it is dropped, and a drag-ghost shows the text that it
-# has for any payload, so the port's ghost names the selected row, here MainCamera, while Sky Dome is dragged.
+# The whole viewport while rows other than the selected one are dragged, with the ghost that follows the pointer. The
+# gallery's ghost names the row that the payload in flight carries. The port's rows each hold a ghost, which shows while
+# its row is the one dragged. MainCamera stays selected throughout.
+
+# Carries Sky Dome to PlayerMesh and drops it there. The screenshots hold the first frame that carries the row, the row
+# over PlayerMesh, the frame of the drop, and the tree once the row has landed.
 down 500 242
 frame
 move 500 250
 frame
+screenshot picked-up
 move 600 330
 frame 2
 screenshot carried
+up 600 330
+frame
+screenshot dropping
+settle
+screenshot dropped
+
+# Fog Volume's row shows a status in place of its icon, and its ghost shows the icon. The rows have moved since the
+# drop, and each ghost has moved with its row. Escape ends the drag, and the ghost with it.
+down 300 242
+frame
+move 310 250
+frame
+move 420 400
+frame 2
+screenshot status-row-carried
+move 420 540
+frame 2
+screenshot carried-outside
+key Escape
+frame
+screenshot cancelling
+up 420 540
+settle
+screenshot cancelled
+
+# A row with a status and no icon, whose ghost has none either.
+down 300 440
+frame
+move 320 430
+frame
+move 700 200
+frame 2
+screenshot plain-status-row-carried
+up 700 200
+settle
+move 600 540
+settle
+screenshot dropped-plain-status-row

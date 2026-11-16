@@ -23,8 +23,8 @@
 //                   where `open` opens it. Holds what a `menu` holds. Queues `toggle`.
 //   tooltip         Shows its node's text below the node it is under, once the pointer has rested there. `shortcut`, a
 //                   text.
-//   drag-ghost      Shows its node's text beside the pointer while a payload is dragged, wherever the node is in the
-//                   tree. `icon`.
+//   drag-ghost      Shows its node's text beside the pointer while the widget that it is under is the source of the
+//                   payload in flight. `icon`, and `drag-kind`, a whole number of up to 64 bits.
 //   modal           A column over a scrim. `placement` (PrKitModalPlacement), `inset` in px, `open` and `triggered`.
 //                   Holds nodes of any kind. Queues `toggle`.
 //   modal-autofocus Makes the node it is under the one that takes focus as the modal, the dialog or the palette that
@@ -50,7 +50,8 @@
 // `open`, a flag that the script sets to open the overlay and resets to close it. Each queues `toggle` when it opens or
 // closes other than by `open`, with 1 as its `value` if it is now open and 0 if it is now closed: on Escape, on a press
 // outside it, on the activation of one of its items, or as its trigger opens it. The overlay stays as the event says
-// until the script sets `open` to the other state. A tooltip and a drag's ghost show by the kit's rule alone.
+// until the script sets `open` to the other state. A tooltip shows by the kit's rule alone, and a drag's ghost by the
+// payload in flight.
 //
 // The kit keeps one open state on a node for whichever popover, select's menu, modal, dialog or palette is under it. A
 // node therefore opens the first of these under it, and the others under it are not declared. A context menu's state is
@@ -61,6 +62,13 @@
 // opens on a secondary click on its host. For any other node, `triggered` on a `popover`, a `modal`, a `dialog` or a
 // `command-palette` makes an activation of the node that the overlay is under open the overlay, and close a popover
 // that is open, with no script. An overlay without it opens when the script sets `open`, as on its trigger's `click`.
+//
+// Ghosts. A `drag-ghost` goes under the node whose widget starts a drag: a node with `drag-source`, a `tree-row` of a
+// view whose rows drag, or a `tab` of a reorderable strip. It shows while that widget is the source of the payload in
+// flight (prUiDragging), from the round that picks the payload up. Each source holds its own ghost, so no script runs
+// to choose the ghost that shows. A ghost with a `drag-kind` that is not zero goes anywhere in the tree instead, and
+// shows while a payload of that kind is in flight, whatever its source. No event tells a script which source a drag
+// began on, so such a ghost shows what the payloads of its kind have in common.
 //
 // The other events:
 //
@@ -80,6 +88,7 @@
 
 #include "studio/kit/quickjs/src/kit_menu_quickjs.h"
 
+#include "pr/integer.h"
 #include "pr/kit_input.h"
 #include "pr/kit_menu.h"
 #include "pr/mem.h"
@@ -519,17 +528,39 @@ PrLayoutNode tooltipDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayo
     });
 }
 
+// A drag's ghost: its icon, and the kind of the payloads that it shows for, or zero if it shows for the payload of the
+// widget that it is under.
+struct GhostData {
+    uint64_t dragKind;
+    PrKitIconKind icon;
+};
+
 bool dragGhostSet(void* data, PrStringView name, PrStringView value, bool reset) {
+    GhostData& ghost = *static_cast<GhostData*>(data);
     if (name == "icon")
-        return jsKitSetIcon(value, reset, static_cast<PrKitIconKind*>(data));
+        return jsKitSetIcon(value, reset, &ghost.icon);
+    if (name == "drag-kind") {
+        uint64_t kind = 0;
+        if (!reset && !prU64Parse(value.data, value.size, &kind, 10))
+            return false;
+        ghost.dragKind = kind;
+        return true;
+    }
     return false;
 }
 
-PrLayoutNode dragGhostDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode) {
+PrLayoutNode dragGhostDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
+    const GhostData& ghost = jsKitData<GhostData>(round, node);
+    const PrUiPayload* carried = prUiDragging(round.kit->ui);
+    if (carried == nullptr)
+        return kPrLayoutNodeNone;
+    bool shows = ghost.dragKind != 0 ? carried->kind == ghost.dragKind : carried->source == parent;
+    if (!shows)
+        return kPrLayoutNodeNone;
     return prKitDragGhost(round.kit, {
         .key = jsKitNodeKey(round, node),
         .text = jsKitNodeText(round.tree, node),
-        .icon = jsKitData<PrKitIconKind>(round, node),
+        .icon = ghost.icon,
     });
 }
 
@@ -779,7 +810,7 @@ constexpr JsKitKind kKinds[] = {
         .set = tooltipSet,
         .declare = tooltipDeclare,
     },
-    {.name = "drag-ghost", .dataSize = sizeof(PrKitIconKind), .set = dragGhostSet, .declare = dragGhostDeclare},
+    {.name = "drag-ghost", .dataSize = sizeof(GhostData), .set = dragGhostSet, .declare = dragGhostDeclare},
     {
         .name = "modal",
         .dataSize = sizeof(ModalData),
