@@ -1,5 +1,4 @@
 # extent 1100x1600
-# known: a script hears a drag's edit after the round that made it, so the field shows the picker's edit a frame late
 #
 # The example gives the picker and the field one color, so the field shows a drag on the picker's plane in the frame
 # that routes the pointer's move. The binding gives each control a color of its own, and the script copies an edit
