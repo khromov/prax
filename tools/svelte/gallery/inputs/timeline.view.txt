@@ -1,0 +1,42 @@
+# extent 1100x900
+settle
+
+# The wheel pans the lanes, and with Command zooms them about the pointer. The read-only timeline keeps its own view.
+scroll 600 343 0 60
+frame 2
+screenshot panned
+scroll 600 343 -90 0
+frame 2
+screenshot panned-back
+scroll 600 343 0 -120 super
+frame 2
+screenshot zoomed
+
+# A block moves under the zoomed view as it does at rest.
+down 500 373
+frame 2
+move 620 373
+frame 2
+up 620 373
+settle
+screenshot zoomed-drag
+
+# The read-only timeline pans and zooms too, though it edits nothing.
+scroll 600 580 40 0
+frame 2
+screenshot inspector-panned
+scroll 600 580 0 100 control
+frame 2
+screenshot inspector-zoomed
+down 500 557
+frame 2
+move 600 557
+frame 2
+up 600 557
+settle
+screenshot inspector-pressed
+
+# Fit view shows the editable timeline's first eight seconds again.
+click 219 234
+settle
+screenshot fit

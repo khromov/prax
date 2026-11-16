@@ -21,11 +21,11 @@
 //   frame [count]               runs frames, one unless a count is given, a sixtieth of a second apart
 //   settle                      runs the frames that let the kit's transitions end
 //   move <x> <y>                queues the pointer's move to a point
-//   down <x> <y>                queues a press of the primary button, or its release with `up`
-//   click <x> <y> [modifier]... queues a move, a press and a release, with shift, control, alt or super held, and runs
-//                               a frame
+//   down <x> <y> [press]...     queues a press of the primary button, or its release with `up`
+//   click <x> <y> [press]...    queues a move, a press and a release, and runs a frame
 //   secondary <x> <y>           queues a move, and a press and a release of the secondary button, and runs a frame
-//   scroll <x> <y> <dx> <dy>    queues a scroll of px at a point
+//   scroll <x> <y> <dx> <dy> [modifier]...
+//                               queues a scroll of px at a point, with shift, control, alt or super held
 //   key <name> [modifier]...    queues a key's press and release, by its name in UI Events, with shift, control, alt or
 //                               super held
 //   text <characters>           queues typed text, the rest of the line
@@ -33,7 +33,9 @@
 //                               writes what the last frame shows to <name>.png in the directory of --out, or only the
 //                               part of it in a rectangle of the viewport, in px
 //
-// A line that is empty or begins with # is skipped. Queued input is routed by the frames that follow it.
+// A line that is empty or begins with # is skipped. Queued input is routed by the frames that follow it. Each word
+// after a press's point says how the press is made: a modifier that is held, `secondary` for the secondary button in
+// place of the primary, or `double` for the second press of a double click.
 
 #include "pr/app_input.h"
 #include "pr/array.h"
@@ -453,15 +455,27 @@ void headlessPush(Headless& headless, PrAppEvent event) {
     prUiPushEvent(headless.ui, kPrUiViewportMain, &event);
 }
 
-// Queues a move to `at`, a press and a release there, with `modifiers` held.
-void headlessClick(Headless& headless, PrVec2 at, PrAppModifierFlags modifiers = 0) {
-    headlessPush(headless, {.kind = PrAppEventKind_PointerMove, .modifiers = modifiers, .pointer = {.position = at}});
-    headlessPush(headless, {
-        .kind = PrAppEventKind_PointerDown,
-        .modifiers = modifiers,
-        .pointer = {.position = at, .clicks = 1},
-    });
-    headlessPush(headless, {.kind = PrAppEventKind_PointerUp, .modifiers = modifiers, .pointer = {.position = at}});
+// How a press is made: its button, its place in a multi-click, and the modifiers that are held.
+struct Press {
+    uint8_t button = 0;
+    uint32_t clicks = 1;
+    PrAppModifierFlags modifiers = 0;
+};
+
+// Queues an event of the pointer at a point: a move, or a press or its release made as `press` says.
+void headlessPoint(Headless& headless, PrAppEventKind kind, PrVec2 at, const Press& press) {
+    PrAppPointerEvent pointer{.position = at};
+    if (kind != PrAppEventKind_PointerMove)
+        pointer.button = press.button;
+    if (kind == PrAppEventKind_PointerDown)
+        pointer.clicks = press.clicks;
+    headlessPush(headless, {.kind = kind, .modifiers = press.modifiers, .pointer = pointer});
+}
+
+void headlessClick(Headless& headless, PrVec2 at, const Press& press = {}) {
+    headlessPoint(headless, PrAppEventKind_PointerMove, at, press);
+    headlessPoint(headless, PrAppEventKind_PointerDown, at, press);
+    headlessPoint(headless, PrAppEventKind_PointerUp, at, press);
 }
 
 // Renders the tree as the last frame laid it out, on the CPU, over the color that a window would clear to, and writes
@@ -600,6 +614,24 @@ bool takeModifiers(PrStringView& line, PrAppModifierFlags* out) {
     return true;
 }
 
+// Reads how the rest of `line` says a press is made: `secondary`, `double`, and the modifiers that it names. Returns
+// false for any other word.
+bool takePress(PrStringView& line, Press* out) {
+    Press press;
+    for (PrStringView word = takeWord(line); word.size > 0; word = takeWord(line)) {
+        PrAppModifierFlags modifier = 0;
+        if (word == "secondary")
+            press.button = 1;
+        else if (word == "double")
+            press.clicks = 2;
+        else if (!takeModifiers(word, &modifier))
+            return false;
+        press.modifiers |= modifier;
+    }
+    *out = press;
+    return true;
+}
+
 // Performs one action of an input file. Returns false if the line is not an action, or its screenshot is not written.
 bool headlessAct(Headless& headless, Content& content, PrStringView line, PrStringView out) {
     PrStringView action = takeWord(line);
@@ -624,34 +656,34 @@ bool headlessAct(Headless& headless, Content& content, PrStringView line, PrStri
         headlessPush(headless, {.kind = PrAppEventKind_PointerMove, .pointer = {.position = at}});
         return true;
     }
-    if (action == "down" && takePoint(line, &at)) {
-        headlessPush(headless, {.kind = PrAppEventKind_PointerDown, .pointer = {.position = at, .clicks = 1}});
+    Press press;
+    if (action == "down" && takePoint(line, &at) && takePress(line, &press)) {
+        headlessPoint(headless, PrAppEventKind_PointerDown, at, press);
         return true;
     }
-    if (action == "up" && takePoint(line, &at)) {
-        headlessPush(headless, {.kind = PrAppEventKind_PointerUp, .pointer = {.position = at}});
+    if (action == "up" && takePoint(line, &at) && takePress(line, &press)) {
+        headlessPoint(headless, PrAppEventKind_PointerUp, at, press);
         return true;
     }
-    if (action == "click" && takePoint(line, &at)) {
-        PrAppModifierFlags modifiers = 0;
-        if (!takeModifiers(line, &modifiers))
-            return false;
-        headlessClick(headless, at, modifiers);
+    if (action == "click" && takePoint(line, &at) && takePress(line, &press)) {
+        headlessClick(headless, at, press);
         headlessFrame(headless, content);
         return true;
     }
     if (action == "secondary" && takePoint(line, &at)) {
         // The secondary button is button 1 (pointerevents3/#the-button-property).
-        PrAppPointerEvent press{.position = at, .button = 1, .clicks = 1};
-        headlessPush(headless, {.kind = PrAppEventKind_PointerMove, .pointer = {.position = at}});
-        headlessPush(headless, {.kind = PrAppEventKind_PointerDown, .pointer = press});
-        headlessPush(headless, {.kind = PrAppEventKind_PointerUp, .pointer = {.position = at, .button = 1}});
+        headlessClick(headless, at, Press{.button = 1});
         headlessFrame(headless, content);
         return true;
     }
     PrVec2 delta{};
-    if (action == "scroll" && takePoint(line, &at) && takePoint(line, &delta)) {
-        headlessPush(headless, {.kind = PrAppEventKind_Scroll, .scroll = {.position = at, .delta = delta}});
+    PrAppModifierFlags held = 0;
+    if (action == "scroll" && takePoint(line, &at) && takePoint(line, &delta) && takeModifiers(line, &held)) {
+        headlessPush(headless, {
+            .kind = PrAppEventKind_Scroll,
+            .modifiers = held,
+            .scroll = {.position = at, .delta = delta},
+        });
         return true;
     }
     if (action == "key") {

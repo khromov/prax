@@ -10,8 +10,10 @@
 //                   corner and the zoom is 1
 //   type-colors     colors separated by spaces. The color at the index of a port's `type` is the color of the port and
 //                   of the wires that leave it, and a port whose type is past the colors takes the accent. A color is
-//                   one of the palette's by name, such as `accent` or `axis-x`, which follows the theme, or six or
-//                   eight hex digits after an optional `#`
+//                   one of the palette's by name, such as `accent` or `axis-x`, which follows the theme, six or eight
+//                   hex digits after an optional `#`, or three or four numbers separated by commas with no spaces, as
+//                   in `0.41,0.62,0.87`: the red, green and blue channels in sRGB, where 1 is a channel's full value,
+//                   and the alpha, which is 1 if it is left out
 //   arrange         a flag. Setting it arranges the nodes once, in the next round: each node takes its place in columns
 //                   from left to right, after the nodes that feed it by a wire (prKitGraphArrange), and queues `change`
 //                   as if a drag had moved it. Resetting it does nothing
@@ -230,10 +232,31 @@ bool setView(PrStringView value, bool reset, PrKitGraphView* out) {
     return true;
 }
 
-// Reads a color: one of the palette's by name, or hex digits.
+// Reads a color's red, green and blue channels and an alpha, which is 1 if it is left out, from three or four numbers
+// separated by commas. Returns false, and writes nothing, if `text` is anything else.
+bool channelsFrom(PrStringView text, PrColor* out) {
+    float channels[4] = {0, 0, 0, 1};
+    uint32_t count = 0;
+    size_t start = 0;
+    for (size_t at = 0; at <= text.size; ++at) {
+        if (at < text.size && text.data[at] != ',')
+            continue;
+        if (count == 4 || !jsKitSetFloat(PrStringView{text.data + start, at - start}, false, &channels[count]))
+            return false;
+        ++count;
+        start = at + 1;
+    }
+    if (count < 3)
+        return false;
+    *out = PrColor{channels[0], channels[1], channels[2], channels[3]};
+    return true;
+}
+
+// Reads a color: one of the palette's by name, hex digits, or its channels.
 bool colorFrom(PrStringView text, GraphColor* out) {
     GraphColor color{};
-    if (!jsKitKeywordFrom(jsKitColors(), text, &color.palette) && !prKitColorParseHex(text, &color.value))
+    if (!jsKitKeywordFrom(jsKitColors(), text, &color.palette) && !prKitColorParseHex(text, &color.value) &&
+            !channelsFrom(text, &color.value))
         return false;
     *out = color;
     return true;

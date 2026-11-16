@@ -1,0 +1,53 @@
+# extent 1100x900
+settle
+
+# A drag from an output draws a wire to the pointer, and a drop on an input of its type asks for the wire.
+down 243 347
+frame 2
+move 400 400
+frame 2
+screenshot wiring
+move 553 441
+frame 2
+screenshot over-port
+up 553 441
+settle
+screenshot wired
+
+# A wire into an input replaces the wire that fed it.
+down 243 327
+frame 2
+move 553 421
+frame 2
+up 553 421
+settle
+screenshot replaced
+
+# A port of another type refuses the wire.
+down 259 481
+frame 2
+move 553 461
+frame 2
+screenshot unlike
+up 553 461
+settle
+screenshot refused
+
+# A drag from an input to an output asks for the same wire as one from the output.
+down 313 407
+frame 2
+move 300 380
+frame 2
+move 243 327
+frame 2
+up 243 327
+settle
+screenshot backward
+
+# A click on a wire selects it, and Delete removes what is selected.
+click 286 454
+settle
+screenshot picked
+key Delete
+settle
+screenshot deleted

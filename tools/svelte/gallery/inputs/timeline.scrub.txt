@@ -1,0 +1,29 @@
+# extent 1100x900
+settle
+
+# A press on the ruler brings the playhead there, by the grid's step.
+down 700 288
+frame 2
+screenshot pressed
+
+# A drag scrubs it, and a line marks a snap to a marker and to a block's edge.
+move 601 288
+frame 2
+screenshot marker
+move 482 288
+frame 2
+screenshot edge
+move 900 288
+frame 2
+screenshot dragged
+up 900 288
+settle
+screenshot scrubbed
+
+# Reset cursor returns the playhead to the loop's start, and the scrub was a gesture that Undo steps back.
+click 140 234
+settle
+screenshot reset
+click 959 234
+settle
+screenshot undone

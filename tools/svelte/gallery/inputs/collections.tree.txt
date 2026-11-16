@@ -1,0 +1,50 @@
+# extent 1100x900
+settle
+click 141 226
+settle
+screenshot tree
+
+# A disclosure opens its group and selects nothing, and a click on a row selects it.
+click 40 273
+settle
+screenshot opened
+click 300 339
+move 300 427
+settle
+screenshot selected
+click 300 405 shift
+settle
+screenshot range
+click 300 361 super
+settle
+screenshot toggle
+
+# Right opens a closed group and then steps into it, and Left climbs out of it and then closes it.
+click 300 251
+frame
+key ArrowRight
+settle
+screenshot right
+key ArrowRight
+frame
+key ArrowDown shift
+frame
+key ArrowDown shift
+settle
+screenshot stepped
+key ArrowLeft
+frame
+key ArrowLeft
+settle
+screenshot left
+
+# The wheel scrolls the rows, and a group opens where the scroll brought it.
+scroll 500 400 0 1500
+settle
+screenshot scrolled
+click 40 405
+settle
+screenshot scrolled-opened
+key End
+settle
+screenshot end

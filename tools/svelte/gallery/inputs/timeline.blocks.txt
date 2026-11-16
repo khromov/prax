@@ -1,0 +1,73 @@
+# extent 1100x900
+settle
+
+# A press on a block selects it alone, and the read-only timeline shows the same model.
+down 650 313
+frame 2
+screenshot pressed
+
+# A drag moves the block by the grid's step, and a line marks a snap to another block's edge. The script hears of a
+# move a frame after the kit makes it, so each screenshot of a drag is two frames after its move.
+move 620 313
+frame 2
+screenshot snapped
+move 760 313
+frame 2
+screenshot moved
+up 760 313
+settle
+screenshot released
+
+# Undo puts the blocks back where the gesture found them.
+click 959 234
+settle
+screenshot undone
+
+# A drag on either end of a block resizes it.
+down 775 373
+frame 2
+move 850 373
+frame 2
+screenshot resizing
+up 850 373
+settle
+screenshot resized
+down 421 373
+frame 2
+move 330 373
+frame 2
+up 330 373
+settle
+screenshot resized-start
+
+# Shift joins a block to the selection, Command takes one out, and a drag moves every selected block.
+click 200 313 shift
+click 280 343 shift
+click 600 373 super
+settle
+screenshot selection
+down 200 313
+frame 2
+move 265 313
+frame 2
+screenshot both-moving
+up 265 313
+settle
+screenshot both-moved
+
+# Delete removes the selected blocks, and Undo brings them back.
+key Delete
+settle
+screenshot deleted
+click 959 234
+settle
+screenshot restored
+
+# A double press on an empty part of a track asks for a block there, which Undo takes away.
+click 950 343
+click 950 343 double
+settle
+screenshot added
+click 959 234
+settle
+screenshot added-undone

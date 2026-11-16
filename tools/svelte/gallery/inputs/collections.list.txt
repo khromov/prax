@@ -1,0 +1,58 @@
+# extent 1100x900
+settle
+
+# A click selects a row, and the pointer over another row marks it.
+click 300 320
+move 300 416
+settle
+screenshot click
+
+# Shift extends the range from the anchor, Command toggles a row, and both together add a range.
+click 300 448 shift
+settle
+screenshot range
+click 300 384 super
+settle
+screenshot toggle
+click 300 544 super shift
+settle
+screenshot add
+
+# The arrows move the lead, and Shift extends the range from the anchor.
+key ArrowDown
+frame
+key ArrowDown shift
+frame
+key ArrowDown shift
+settle
+screenshot keys
+key ArrowUp
+settle
+screenshot up
+
+# The page keys, End and Home move the lead further, and scroll it into view.
+key PageDown
+settle
+screenshot page
+key PageUp shift
+settle
+screenshot page-range
+key End
+settle
+screenshot end
+key Home shift
+settle
+screenshot home
+
+# Command with A selects every row.
+key a super
+settle
+screenshot all
+
+# The wheel scrolls the rows, and a click selects one that the scroll brought.
+scroll 500 400 0 1000
+settle
+screenshot scrolled
+click 300 416
+settle
+screenshot scrolled-click

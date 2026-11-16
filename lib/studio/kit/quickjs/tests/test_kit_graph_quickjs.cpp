@@ -235,6 +235,14 @@ TEST_CASE("a graph that a script describes renders as the kit's graph of the sam
     CHECK(pair.alike());
     CHECK(pair.scripted.number("heard.length") == 0);
 
+    // A type's color by its channels, with and without an alpha.
+    pair.scripted.run("kitTree.set(graph, 'type-colors', '0.41,0.62,0.87 0.46,0.76,0.54,0.5');");
+    direct.colors[0] = PrColor{0.41f, 0.62f, 0.87f, 1};
+    direct.colors[1] = PrColor{0.46f, 0.76f, 0.54f, 0.5f};
+    pair.frame();
+    pair.frame();
+    CHECK(pair.alike());
+
     // Without them, each is its default: no body, the default width, and the accent for every port.
     pair.scripted.run(R"JS(
         ['view', 'type-colors'].forEach(function (name) { kitTree.set(graph, name, null); });
@@ -580,6 +588,8 @@ TEST_CASE("a graph's kinds refuse values that do not suit them, and declare noth
             kitTree.set(graph, 'view', '4 5 0'), kitTree.set(graph, 'view', '4 5 -2'), kitTree.set(graph, 'zoom', '2'),
             kitTree.set(graph, 'offset', '4 5'),
             kitTree.set(graph, 'type-colors', 'accent nocolor'), kitTree.set(graph, 'type-colors', '#12345'),
+            kitTree.set(graph, 'type-colors', 'accent 0.41,0.62'), kitTree.set(graph, 'type-colors', '0.4,0.6,blue'),
+            kitTree.set(graph, 'type-colors', '0.4,0.6,0.8,1,1'), kitTree.set(graph, 'type-colors', '0.4,,0.8'),
             kitTree.set(graph, 'arrange', 'now'), kitTree.set(graph, 'position', '1 2'),
             kitTree.set(sampler, 'id', '-1'), kitTree.set(sampler, 'id', '1.5'), kitTree.set(sampler, 'position', '7'),
             kitTree.set(sampler, 'body-height', '-4'), kitTree.set(sampler, 'selected', 'yes'),

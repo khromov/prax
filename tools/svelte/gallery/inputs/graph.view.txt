@@ -1,0 +1,40 @@
+# extent 1100x900
+settle
+
+# The wheel pans the canvas, and with Command zooms it about the pointer.
+scroll 800 500 -60 -30
+frame 2
+screenshot panned
+scroll 400 400 0 -30 super
+frame 2
+screenshot zoomed
+
+# A node moves under the zoomed view by the graph's px, and its wire with it.
+down 800 437
+frame 2
+move 830 380
+frame 2
+move 860 337
+frame 2
+screenshot zoomed-dragging
+up 860 337
+settle
+screenshot zoomed-dragged
+
+# Arrange puts the nodes in columns by their wires, and does so again once a node has moved.
+click 61 202
+settle
+screenshot arranged
+scroll 400 400 0 60 super
+frame 2
+screenshot zoomed-out
+down 300 350
+frame 2
+move 500 480
+frame 2
+up 500 480
+settle
+screenshot moved
+click 61 202
+settle
+screenshot arranged-again

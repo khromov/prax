@@ -1,0 +1,27 @@
+# extent 1100x900
+settle
+
+# A drag on the canvas selects the nodes that its rectangle touches.
+down 780 300
+frame 2
+move 600 420
+frame 2
+screenshot one
+move 400 520
+frame 2
+screenshot two
+up 400 520
+settle
+screenshot selected
+
+# The Delete button removes the selected nodes, and the wires of the nodes that left.
+click 123 202
+settle
+screenshot deleted
+
+# Delete removes a node that a press selected, while the graph has focus.
+click 120 303
+frame
+key Delete
+settle
+screenshot key-deleted

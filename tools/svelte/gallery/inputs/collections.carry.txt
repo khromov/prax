@@ -1,0 +1,11 @@
+# extent 1100x900
+# known: the list and the tree are nodes of two kinds, so they are not one widget that keeps its scroll offset
+settle
+
+# The example's three views are one scroll container, so the tree shows where the list was scrolled to. The script's
+# tree is a node of its own, which starts at its first row.
+scroll 500 400 0 500
+settle
+click 141 226
+settle
+screenshot tree 25 240 1050 360

@@ -1,0 +1,69 @@
+# extent 1100x900
+settle
+
+# The grid takes the list's place where the list was scrolled to, and shows what the list selected.
+scroll 500 400 0 100
+settle
+click 300 320
+click 300 384 shift
+scroll 500 400 0 400
+settle
+click 99 226
+settle
+screenshot grid
+
+# A click selects a tile, Shift extends the range, and the pointer over a tile marks it.
+click 200 300
+click 660 400 shift
+move 430 300
+settle
+screenshot range
+
+# Right and Left move the lead by a tile, and Down and Up by a row of tiles.
+key ArrowRight
+frame
+key ArrowDown
+frame
+key ArrowDown
+frame
+key ArrowLeft shift
+frame
+key ArrowUp shift
+settle
+screenshot keys
+
+# The context menu opens on a secondary click where the view has no tile, which is after its last one.
+key End
+settle
+screenshot end
+click 800 560 secondary
+settle
+screenshot menu
+move 840 602
+settle
+screenshot menu-hover
+click 840 602
+settle
+screenshot chosen
+
+# Escape and a press outside close the menu, and the next item that is chosen replaces the verb.
+click 800 560 secondary
+settle
+key Escape
+settle
+screenshot escaped
+click 800 560 secondary
+settle
+click 300 300
+settle
+screenshot outside
+click 900 540 secondary
+settle
+click 940 612
+settle
+screenshot delete
+
+# The list shows what the grid selected, where the grid was scrolled to.
+click 56 226
+settle
+screenshot list

@@ -55,11 +55,13 @@
 // `row-icon` takes `icon`. `row-label` shows its node's text and takes `tone`. `row-meta` shows its node's text. They
 // are a row's cells, and go under a `list-row` or a `tree-row`.
 //
-// `tile-icon` takes `icon` and `tint`, a color of the kit's palette by name, which fills the thumbnail. `tile-image`
-// takes `hover-zoom`, the fraction by which its picture grows under the pointer, and `image`, the picture as three
-// values separated by spaces: its width and its height in pixels, each at most 4096, and its pixels in base64, which
-// are RGBA8 with straight alpha in sRGB, row by row. A `tile-image` with no picture declares nothing. `tile-label`
-// shows its node's text. They are a tile's parts, and go under a `list-tile`.
+// `tile-icon` takes `icon` and `tint`, the color that fills the thumbnail. A tint has the forms that a `swatch` takes
+// for its `color`: the name of a color of the kit's palette, hexadecimal digits after `#`, or the color's channels as
+// numbers separated by spaces. With no tint, or a fully transparent one, the thumbnail is on the theme's raised
+// background. `tile-image` takes `hover-zoom`, the fraction by which its picture grows under the pointer, and `image`,
+// the picture as three values separated by spaces: its width and its height in pixels, each at most 4096, and its
+// pixels in base64, which are RGBA8 with straight alpha in sRGB, row by row. A `tile-image` with no picture declares
+// nothing. `tile-label` shows its node's text. They are a tile's parts, and go under a `list-tile`.
 //
 // `empty-state` shows its node's text as its title, and takes `icon` and `hint`, a line under the title.
 //
@@ -104,6 +106,8 @@
 #include "pr/kit_collection.h"
 #include "pr/memory.h"
 #include "pr/raw_array.h"
+
+#include "studio/kit/quickjs/src/kit_panel_quickjs.h"
 
 namespace pr_impl {
 
@@ -672,10 +676,10 @@ PrLayoutNode rowMetaDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayo
     return prKitRowMeta(round.kit, parent, label);
 }
 
-// A tile's icon, and the color of the palette that fills its thumbnail, if any.
+// A tile's icon, and the color that fills its thumbnail, which is transparent if the script gave none.
 struct TileIconData {
     PrKitIconKind icon;
-    JsKitColor tint;
+    JsKitColorValue tint;
 };
 
 bool tileIconSet(void* data, PrStringView name, PrStringView value, bool reset) {
@@ -683,14 +687,14 @@ bool tileIconSet(void* data, PrStringView name, PrStringView value, bool reset) 
     if (name == "icon")
         return jsKitSetIcon(value, reset, &tile.icon);
     if (name == "tint")
-        return jsKitSetKeyword(jsKitColors(), value, reset, &tile.tint);
+        return jsKitSetColorValue(value, reset, &tile.tint);
     return false;
 }
 
 PrLayoutNode tileIconDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
     const TileIconData& tile = jsKitData<TileIconData>(round, node);
     PrKitIcon icon{.key = jsKitNodeKey(round, node), .icon = tile.icon};
-    return prKitTileIcon(round.kit, parent, icon, jsKitColorFrom(*round.kit, tile.tint));
+    return prKitTileIcon(round.kit, parent, icon, jsKitColorFromValue(*round.kit, tile.tint));
 }
 
 // A tile's picture, which the node owns a reference to, and the fraction by which it grows under the pointer.

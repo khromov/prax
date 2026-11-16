@@ -1,0 +1,60 @@
+# extent 1100x900
+settle
+
+# Without the grid, a drag moves a block by as little as the pointer moves, and still snaps to an edge that is near.
+click 265 234
+settle
+screenshot grid-off
+down 650 313
+frame 2
+move 667 313
+frame 2
+screenshot free
+move 624 313
+frame 2
+screenshot edge
+up 624 313
+settle
+
+# Without the edges, the block lies where the pointer leaves it, past the other block's edge.
+click 354 234
+settle
+down 650 313
+frame 2
+move 630 313
+frame 2
+screenshot edges-off
+up 630 313
+settle
+screenshot overlapped
+
+# A block's start snaps to the playhead and to a marker, which are both at a second and a half, until both are off.
+down 320 343
+frame 2
+move 377 343
+frame 2
+screenshot playhead
+up 377 343
+settle
+click 420 234
+click 498 234
+settle
+down 400 343
+frame 2
+move 404 343
+frame 2
+screenshot markers-off
+up 404 343
+settle
+screenshot unsnapped
+
+# With the grid again, a drag is by its step.
+click 265 234
+settle
+down 400 343
+frame 2
+move 470 343
+frame 2
+up 470 343
+settle
+screenshot grid-on

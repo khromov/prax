@@ -1,0 +1,36 @@
+# extent 1100x900
+# known: the binding has no edit sink (prUiSetEditSink), so a script hears what a gesture changed, not its begin or end
+settle
+
+# The example's Undo and its tally of BEGIN, CHANGE and COMMIT come from the edit sink of the panel, which hears every
+# gesture on the timeline. The script's come from the events of the timeline and its blocks, so they differ wherever a
+# gesture is more than its changes.
+
+# A gesture that changes nothing: a drag of a block by less than the grid's step begins and commits in the example.
+down 650 313
+frame 2
+move 656 313
+frame 2
+screenshot began
+up 656 313
+settle
+screenshot nothing
+
+# A gesture's end: the example commits at the release, and the script once no change has come for a quarter of a second.
+down 650 313
+frame 2
+move 700 313
+frame 2
+up 700 313
+frame 2
+screenshot released
+
+# A marquee: its selection is a gesture's change in the example, and the script cannot tell it from a press's.
+settle
+down 850 320
+frame 2
+move 450 380
+frame 2
+up 450 380
+settle
+screenshot marquee

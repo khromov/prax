@@ -1,0 +1,44 @@
+# extent 1100x900
+settle
+
+# A drag on an empty part of a track selects the blocks that its rectangle touches. The screenshots are of the lanes,
+# of the read-only timeline and of the count of the selection, which match. The Undo button and the edit sink's tally
+# do not after a marquee, which timeline.sink.txt shows.
+down 850 320
+frame 2
+move 700 350
+frame 2
+screenshot one-lanes 25 278 1050 140
+screenshot one-inspector 25 526 1050 108
+screenshot one-count 996 222 80 24
+move 450 380
+frame 2
+screenshot three-lanes 25 278 1050 140
+screenshot three-inspector 25 526 1050 108
+screenshot three-count 996 222 80 24
+up 450 380
+settle
+screenshot selected-lanes 25 278 1050 140
+screenshot selected-inspector 25 526 1050 108
+screenshot selected-count 996 222 80 24
+
+# With Shift, the rectangle's blocks join what was selected.
+click 900 400
+settle
+click 300 343
+down 880 395 shift
+frame 2
+move 600 365
+frame 2
+up 600 365
+settle
+screenshot extended-lanes 25 278 1050 140
+screenshot extended-inspector 25 526 1050 108
+screenshot extended-count 996 222 80 24
+
+# A click on an empty part of a track clears the selection.
+click 900 343
+settle
+screenshot cleared-lanes 25 278 1050 140
+screenshot cleared-inspector 25 526 1050 108
+screenshot cleared-count 996 222 80 24

@@ -36,8 +36,10 @@
 //
 //   start           a number
 //   duration        a number, zero or more
-//   color           one of the palette's colors by name, such as `accent` or `axis-x`, which follows the theme, or six
-//                   or eight hex digits after an optional `#`. It is the accent if it is not set
+//   color           one of the palette's colors by name, such as `accent` or `axis-x`, which follows the theme, six or
+//                   eight hex digits after an optional `#`, or three or four numbers separated by spaces: the red,
+//                   green and blue channels in sRGB, where 1 is a channel's full value, and the alpha, which is 1 if
+//                   it is left out. It is the accent if it is not set
 //   selected        a flag
 //
 //   change          a drag moved the block, as it moves every selected block, or resized it from either end. `values`
@@ -58,7 +60,6 @@
 #include "studio/kit/quickjs/src/kit_timeline_quickjs.h"
 
 #include "pr/color.h"
-#include "pr/kit_color.h"
 #include "pr/kit_timeline.h"
 #include "pr/raw_array.h"
 
@@ -158,11 +159,11 @@ bool spanFrom(PrStringView value, PrKitTimeSpan* out) {
     return true;
 }
 
-// Reads a color: one of the palette's by name, or hex digits. With `reset`, writes that none was given.
+// Reads a color: one of the palette's by name, hex digits, or its channels. With `reset`, writes that none was given.
 bool setColor(PrStringView value, bool reset, TimelineColor* out) {
     TimelineColor color{};
     if (!reset) {
-        if (!jsKitKeywordFrom(jsKitColors(), value, &color.palette) && !prKitColorParseHex(value, &color.value))
+        if (!jsKitKeywordFrom(jsKitColors(), value, &color.palette) && !jsKitSetColor(value, false, &color.value))
             return false;
         color.given = true;
     }

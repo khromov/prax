@@ -1,0 +1,24 @@
+# extent 1100x900
+settle
+
+# The generated assets are the example's far down the list: their names, sizes, types and icons.
+scroll 500 400 0 40000
+settle
+screenshot list-1250 25 240 1050 360
+scroll 500 400 0 60000
+settle
+screenshot list-3125 25 240 1050 360
+scroll 500 400 0 60000
+settle
+screenshot list-end 25 240 1050 360
+
+# So are the tints of their tiles, back up the grid.
+click 99 226
+settle
+screenshot grid-end 25 240 1050 360
+scroll 500 400 0 -20000
+settle
+screenshot grid-middle 25 240 1050 360
+scroll 500 400 0 -20000
+settle
+screenshot grid-early 25 240 1050 360

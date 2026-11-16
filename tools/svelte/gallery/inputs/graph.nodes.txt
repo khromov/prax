@@ -1,0 +1,42 @@
+# extent 1100x900
+settle
+
+# The pointer over a node, and a press on it, which selects it alone and enables Delete.
+move 120 303
+settle
+screenshot hover
+down 120 303
+frame 2
+screenshot pressed
+
+# A drag moves the node, and its wires follow. The script hears of a move a frame after the kit makes it, so each
+# screenshot of a drag is two frames after its move.
+move 110 290
+frame 2
+move 100 275
+frame 2
+screenshot dragging
+up 100 275
+settle
+screenshot dragged
+
+# Shift joins a node to the selection, and a drag moves every selected node.
+down 600 397 shift
+frame 2
+screenshot joined
+move 630 440
+frame 2
+move 660 497
+frame 2
+screenshot both-dragging
+up 660 497
+settle
+screenshot both-dragged
+
+# Command takes a node out of the selection, and a click on the canvas clears it.
+click 180 375 super
+settle
+screenshot left
+click 900 300
+settle
+screenshot cleared

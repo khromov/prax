@@ -216,6 +216,7 @@ TEST_CASE("a timeline that a script describes renders as the kit's timeline of t
         kitTree.set(turn, 'selected', '');
         kitTree.set(walk, 'color', null);
         kitTree.set(run, 'color', '#cc804d80');
+        kitTree.set(turn, 'color', '0.38 0.58 0.82');
         kitTree.set(cue, 'color', null);
         kitTree.set(cue, 'time', '0.5');
         kitTree.setText(rotation, 'Spin');
@@ -230,6 +231,7 @@ TEST_CASE("a timeline that a script describes renders as the kit's timeline of t
     direct.blocks[2].selected = true;
     direct.blocks[0].color = palette.accent;
     prKitColorParseHex("#cc804d80", &direct.blocks[1].color);
+    direct.blocks[2].color = PrColor{0.38f, 0.58f, 0.82f, 1};
     direct.markers[0] = PrKitTimelineMarker{.track = 1, .time = 0.5f, .color = palette.accent};
     direct.tracks[1].name = "Spin";
     pair.frame();
@@ -237,16 +239,18 @@ TEST_CASE("a timeline that a script describes renders as the kit's timeline of t
     CHECK(pair.alike());
 
     // Without a view, a playhead, a loop and a height, the timeline shows its first ten seconds on tracks of the
-    // default height.
+    // default height. A marker takes a color by its channels as a block does, with an alpha.
     pair.scripted.run(R"JS(
         ['view', 'loop', 'playhead', 'track-height'].forEach(function (name) { kitTree.set(timeline, name, null); });
         kitTree.set(turn, 'selected', null);
+        kitTree.set(cue, 'color', '0.86 0.38 0.38 0.5');
     )JS");
     direct.view = PrKitTimeSpan{0, 10};
     direct.hasLoop = false;
     direct.hasPlayhead = false;
     direct.trackHeight = 0;
     direct.blocks[2].selected = false;
+    direct.markers[0].color = PrColor{0.86f, 0.38f, 0.38f, 0.5f};
     pair.frame();
     pair.frame();
     CHECK(pair.alike());
@@ -561,7 +565,9 @@ TEST_CASE("a timeline's kinds refuse values that do not suit them, and declare n
             kitTree.set(timeline, 'track-height', '-3'), kitTree.set(timeline, 'start', '1'),
             kitTree.set(position, 'name', 'Position'), kitTree.set(walk, 'start', 'soon'),
             kitTree.set(walk, 'duration', '-1'), kitTree.set(walk, 'color', 'blueish'),
-            kitTree.set(walk, 'color', '#4d80'), kitTree.set(walk, 'selected', '2'), kitTree.set(walk, 'id', '4'),
+            kitTree.set(walk, 'color', '#4d80'), kitTree.set(walk, 'color', '0.38 0.58'),
+            kitTree.set(walk, 'color', '0.38 0.58 0.82 1 1'), kitTree.set(walk, 'color', '0.38 0.58 blue'),
+            kitTree.set(walk, 'selected', '2'), kitTree.set(walk, 'id', '4'),
             kitTree.set(walk, 'track', '1'), kitTree.set(cue, 'time', ''), kitTree.set(cue, 'color', 'none'),
             kitTree.set(cue, 'selected', ''), kitTree.listen(timeline, 'select', true),
             kitTree.listen(position, 'add', true), kitTree.listen(walk, 'add', true),

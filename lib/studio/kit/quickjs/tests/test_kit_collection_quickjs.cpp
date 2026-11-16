@@ -837,10 +837,11 @@ TEST_CASE("a grid's tiles show their icons and labels, select as rows do, and a 
         var view = make('list-view', 0, {
             'row-height': '80', 'tile-width': '100', width: '410', height: '220', flex: 'fixed', selectable: '',
         });
+        var tints = [{icon: 'cube', tint: 'accent-weak'}, {icon: 'sphere'}, {icon: 'image', tint: '0.27 0.4 0.33'}];
         var tiles = [];
         for (var i = 0; i < 40; i++) {
             var tile = make('list-tile', view, i === 1 ? {selected: ''} : {});
-            make('tile-icon', tile, i % 3 === 0 ? {icon: 'cube', tint: 'accent-weak'} : {icon: 'sphere'});
+            make('tile-icon', tile, tints[i % 3]);
             make('tile-label', tile, {}, 'Tile ' + i);
             tiles.push(tile);
         }
@@ -865,8 +866,10 @@ TEST_CASE("a grid's tiles show their icons and labels, select as rows do, and a 
                 prKitListTile(direct.kit, view, {.index = index, .item = index, .selected = selected[index]});
             if (index % 3 == 0)
                 prKitTileIcon(direct.kit, tile, {.icon = PrKitIconKind_Cube}, direct.kit->theme.palette.accentWeak);
-            else
+            else if (index % 3 == 1)
                 prKitTileIcon(direct.kit, tile, {.icon = PrKitIconKind_Sphere}, PrColor{});
+            else
+                prKitTileIcon(direct.kit, tile, {.icon = PrKitIconKind_Image}, PrColor{0.27f, 0.4f, 0.33f, 1});
             prKitTileLabel(direct.kit, tile, {.text = formatToBuffer(Span(label), "Tile {}", index)});
             nodes[index] = tile;
         }
@@ -1440,7 +1443,8 @@ TEST_CASE("an attribute of a collection takes only the values of its kind") {
             set('list-view', 'lead', '4'), set('list-view', 'max-height', '50%'),
             set('list-row', 'selected', 'true'), set('list-tile', 'selected', 'false'),
             set('row-icon', 'icon', 'cube'), set('row-label', 'tone', 'faint'),
-            set('tile-icon', 'icon', 'sphere'), set('tile-icon', 'tint', 'accent'), set('tile-icon', 'tint', null),
+            set('tile-icon', 'icon', 'sphere'), set('tile-icon', 'tint', 'accent'), set('tile-icon', 'tint', '#ff0000'),
+            set('tile-icon', 'tint', '0.27 0.4 0.33'), set('tile-icon', 'tint', null),
             set('tile-image', 'hover-zoom', '0.25'), set('tile-image', 'image', '1 1 /wAA/w=='),
             set('tile-image', 'image', null),
             set('empty-state', 'icon', 'search'), set('empty-state', 'hint', 'A hint'),
@@ -1474,7 +1478,7 @@ TEST_CASE("an attribute of a collection takes only the values of its kind") {
             set('list-tile', 'has-children', ''),
             set('row-icon', 'icon', 'no-such-icon'), set('row-label', 'tone', 'loud'),
             set('row-meta', 'tone', 'muted'), set('tile-label', 'icon', 'cube'),
-            set('tile-icon', 'tint', '#ff0000'), set('tile-icon', 'tint', 'no-such-color'),
+            set('tile-icon', 'tint', '0.27 0.4'), set('tile-icon', 'tint', 'no-such-color'),
             set('tile-image', 'hover-zoom', '-1'), set('tile-image', 'image', ''),
             set('tile-image', 'image', '2 2 /wAA/w=='), set('tile-image', 'image', '0 1 '),
             set('tile-image', 'image', '5000 1 AAAA'), set('tile-image', 'image', '1 1 !!!!!!=='),
