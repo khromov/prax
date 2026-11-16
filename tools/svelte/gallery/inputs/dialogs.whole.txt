@@ -1,0 +1,3 @@
+# extent 1100x700
+settle
+screenshot whole

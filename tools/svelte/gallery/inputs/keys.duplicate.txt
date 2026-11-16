@@ -1,0 +1,7 @@
+# extent 1100x400
+# known: a node of the binding has a key of its own, so no two rows share one and lib/ui outlines no duplicate
+# The rows while the toggle is on: the example gives the third the first's key (prUiKey), and lib/ui outlines both. The
+# binding keys a node by the node (prUiKeyIndex), and no attribute names another key.
+click 48 188
+settle
+screenshot rows 0 200 1100 110

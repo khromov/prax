@@ -1,0 +1,23 @@
+# extent 1100x400
+# The pointer on the toggle.
+move 48 188
+settle
+screenshot hover
+# The toggle on. The rows are in a case of their own (keys.duplicate), so these hold the section above the rows, and
+# the second row, which is never outlined.
+click 48 188
+screenshot on-at-once 0 0 1100 200
+settle
+screenshot on 0 0 1100 200
+screenshot on-second-row 0 237 1100 32
+# The toggle off again, by its label, which leaves the section as it began.
+click 170 188
+settle
+screenshot off
+# Tab reaches the toggle, and Enter turns it on.
+key Tab
+settle
+screenshot focused
+key Enter
+settle
+screenshot keyed 0 0 1100 200

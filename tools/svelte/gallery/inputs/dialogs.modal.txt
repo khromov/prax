@@ -1,0 +1,34 @@
+# extent 1100x700
+# The plain modal, in the frame of the click that opens it and once it has settled.
+click 85 342
+screenshot opening
+settle
+screenshot open
+# The pointer on its button, and the button's click.
+move 703 382
+settle
+screenshot hover
+click 703 382
+screenshot closing
+settle
+screenshot closed
+# Escape, and a press on the scrim.
+click 85 342
+settle
+key Escape
+settle
+screenshot escaped
+click 85 342
+settle
+click 200 600
+settle
+screenshot missed
+# A press inside the frame, on nothing, leaves it open, and Enter on the button that has focus closes it.
+click 85 342
+settle
+click 500 380
+settle
+screenshot inside
+key Enter
+settle
+screenshot entered

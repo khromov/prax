@@ -1,0 +1,10 @@
+# extent 640x520
+# A narrower frame, whose bars end at other fractions of a pixel, in frames a third of a second apart.
+frame 9
+screenshot frame-10
+frame 20
+screenshot frame-30
+frame 20
+screenshot frame-50
+settle
+screenshot settled

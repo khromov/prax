@@ -1,0 +1,8 @@
+# extent 1100x500
+screenshot first
+frame
+screenshot second
+frame
+screenshot third
+settle
+screenshot whole

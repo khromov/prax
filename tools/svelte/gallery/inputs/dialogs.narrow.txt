@@ -1,0 +1,20 @@
+# extent 380x640
+# A frame narrower than the dialogs' cards and the modal's frame, with each open in turn.
+settle
+screenshot narrow
+click 96 235
+settle
+screenshot confirm
+key Escape
+settle
+click 95 334
+settle
+screenshot sheet
+key Escape
+settle
+click 85 449
+settle
+screenshot modal
+key Escape
+settle
+screenshot closed

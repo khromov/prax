@@ -1,0 +1,36 @@
+# extent 1100x700
+# The confirm dialog, in the frame of the click that opens it and once it has settled.
+click 96 188
+screenshot opening
+settle
+screenshot open
+# The pointer on a footer button.
+move 600 441
+settle
+screenshot hover
+# The option, which the model keeps while the dialog is closed.
+click 358 405
+settle
+screenshot checked
+# Cancel takes the dialog down, in the frame of its click and after.
+click 600 441
+screenshot cancelling
+settle
+screenshot cancelled
+click 96 188
+settle
+screenshot reopened
+# The danger button takes it down too.
+click 692 441
+settle
+screenshot confirmed
+# The option again, by its label, which clears it.
+click 96 188
+settle
+click 450 405
+settle
+screenshot cleared
+# The header's close control.
+click 738 257
+settle
+screenshot closed

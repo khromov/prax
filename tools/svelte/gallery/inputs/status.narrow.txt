@@ -1,0 +1,4 @@
+# extent 520x760
+# A frame too narrow for the status bar, which clips its items, and for the console's lines.
+settle
+screenshot narrow

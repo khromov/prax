@@ -1,0 +1,4 @@
+# extent 760x700
+# Panels narrower than the page's usual ones, whose frames keep their size while the captions wrap.
+settle
+screenshot narrow

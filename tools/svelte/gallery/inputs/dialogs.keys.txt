@@ -1,0 +1,36 @@
+# extent 1100x700
+# Tab moves focus from the open card's close control to the option, which Enter sets.
+click 96 188
+settle
+key Tab
+settle
+screenshot option
+key Enter
+settle
+screenshot option-set
+# Then to each footer button, around to the close control, and back with Shift.
+key Tab
+settle
+screenshot cancel
+key Tab
+settle
+screenshot delete
+key Tab
+settle
+screenshot around
+key Tab shift
+settle
+screenshot back
+# Enter on the danger button takes the dialog down, and then acts on nothing.
+key Enter
+settle
+screenshot entered
+key Enter
+settle
+screenshot idle
+# Tab reaches the trigger, and Enter on it opens the dialog, with the option as the keys left it.
+key Tab
+settle
+key Enter
+settle
+screenshot keyed

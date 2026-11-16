@@ -1,0 +1,21 @@
+# extent 1100x700
+# The pointer on a line of the console, on a line of the compact one, on a stat tile and on the status bar.
+move 300 377
+settle
+screenshot error-line
+move 300 550
+settle
+screenshot compact-line
+move 320 213
+settle
+screenshot tile
+move 300 123
+settle
+screenshot bar
+# The console scrolls when its lines outgrow it, and these do not, so a scroll over it moves nothing.
+scroll 500 360 0 60
+settle
+screenshot scrolled
+click 300 320
+settle
+screenshot pressed

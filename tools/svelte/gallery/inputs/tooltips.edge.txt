@@ -1,0 +1,13 @@
+# extent 230x640
+# A frame so narrow that the last buttons' tooltips would reach past its right edge, which they stay inside.
+settle
+screenshot narrow
+move 144 496
+settle
+screenshot eye
+move 176 496
+settle
+screenshot lock
+move 48 496
+settle
+screenshot move

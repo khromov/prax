@@ -1,0 +1,23 @@
+# extent 1100x500
+# The bake in the frames where its percent lies halfway between two whole numbers, 2.5, 7.5 and 12.5, which is
+# written as the even one. A run's first frame comes before its input, so these are its frames 7, 19 and 31.
+frame 6
+screenshot half-2
+frame 12
+screenshot half-8
+frame 12
+screenshot half-12
+# The frames around the end of the bake's turn, which takes four seconds.
+frame 208
+screenshot turn-239
+frame
+screenshot turn-240
+frame
+screenshot turn-241
+frame
+screenshot turn-242
+# A second turn, and a frame well into a third.
+frame 240
+screenshot turn-482
+frame 391
+screenshot turn-873

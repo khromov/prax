@@ -1,0 +1,10 @@
+# extent 1100x420
+# A frame shorter than the section, scrolled, so that the page clips the pictures at its top edge.
+settle
+screenshot top
+scroll 550 300 0 200
+settle
+screenshot scrolled
+scroll 550 300 0 1000
+settle
+screenshot end

@@ -1,0 +1,25 @@
+# extent 1100x400
+# The pointer on the first button, before the tooltip's delay has passed and after.
+move 48 261
+frame 10
+screenshot resting
+settle
+screenshot move
+# A tooltip with no shortcut, and the last one.
+move 144 261
+settle
+screenshot eye
+move 176 261
+settle
+screenshot lock
+# A press on the anchor, and the pointer gone from it.
+click 176 261
+settle
+screenshot pressed
+move 500 350
+settle
+screenshot away
+# Back on a button after leaving.
+move 80 261
+settle
+screenshot rotate

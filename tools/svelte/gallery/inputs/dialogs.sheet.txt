@@ -1,0 +1,28 @@
+# extent 1100x700
+# The top sheet, in the frame of the click that opens it and once it has settled.
+click 95 265
+screenshot opening
+settle
+screenshot open
+# Its footer's button.
+click 722 225
+screenshot closing
+settle
+screenshot closed
+# Its close control.
+click 95 265
+settle
+click 738 141
+settle
+screenshot crossed
+# Escape, and a press on the scrim.
+click 95 265
+settle
+key Escape
+settle
+screenshot escaped
+click 95 265
+settle
+click 900 600
+settle
+screenshot missed

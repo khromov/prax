@@ -1,0 +1,22 @@
+# extent 1100x700
+# Escape takes the confirm dialog down.
+click 96 188
+settle
+key Escape
+frame
+screenshot escaping
+settle
+screenshot escaped
+# A press on the scrim takes it down, and does not reach the button under the scrim.
+click 96 188
+settle
+click 95 265
+screenshot missing
+settle
+screenshot missed
+# A press inside the card, on nothing, leaves it open.
+click 96 188
+settle
+click 550 420
+settle
+screenshot inside

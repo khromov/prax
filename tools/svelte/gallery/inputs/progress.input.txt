@@ -1,0 +1,23 @@
+# extent 1100x500
+# A frame that routes a press or a key runs a second round, in which the example's bake shows the frame's own time. The
+# bake's row in such a frame is in a case of its own (progress.press). These hold the rest of the section in such a
+# frame, above and below that row, and all of it in the frame after.
+frame 20
+click 600 300
+screenshot press-above 0 0 1100 172
+screenshot press-below 0 192 1100 308
+frame
+screenshot press-after
+key Tab
+frame
+screenshot key-above 0 0 1100 172
+screenshot key-below 0 192 1100 308
+frame
+screenshot key-after
+# The pointer on the bar and on a meter, which take no input: a move runs no second round.
+move 300 182
+frame
+screenshot bar
+move 300 279
+settle
+screenshot meter
