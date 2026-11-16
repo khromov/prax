@@ -1,28 +1,21 @@
-// The kinds of Studio Kit's menus, popovers, tooltips and dialogs (pr/kit_menu.h). An attribute sets the field of its
-// name in the content or the style of the kind's widget, which the header describes, unless it is described here. One
-// that is given here with an enumeration takes the names of its members as keywords, in lower case with a hyphen
-// between words, and a reset leaves the first of them.
+// The kinds of Studio Kit's menus, popovers and dialogs (pr/kit_menu.h) that are written by hand. The header's other
+// kinds are described (kit_node_quickjs_kinds.txt): a menu's label, item and separator, the menu bar and its items, the
+// tooltip, a dialog's footer, and a command palette's item and footer. An attribute sets the field of its name in the
+// content or the style of the kind's widget, which the header describes, unless it is described here. One that is given
+// here with an enumeration takes the names of its members as keywords, in lower case with a hyphen between words, and a
+// reset leaves the first of them.
 //
 //   popover         A raised panel. `offset`, its x and y in px from its trigger's bottom left corner, `min-width` in
 //                   px, `open` and `triggered`. Holds nodes of any kind. Queues `toggle`.
 //   menu            A column of items, which goes anywhere, and holds the keyboard in a popover. `min-width` in px, and
 //                   `leaves-focus`. Holds `menu-label`, `menu-item` and `menu-separator` nodes, or any others.
-//   menu-label      A caption above a group of items, which shows its node's text.
-//   menu-item       Shows its node's text. `shortcut`, a text, `icon`, an icon's name (prKitIconName), `checked`,
-//                   `disabled`, and `variant` (PrKitMenuItemVariant). Queues `click`.
-//   menu-separator  A rule between groups of items.
 //   select          A field that shows its node's text, which is the label of the chosen option. `icon`, `disabled`,
 //                   and `size` (PrKitControlSize). Holds a `select-menu`. Queues `step`.
 //   select-menu     Under a `select` alone. The menu of the select's options. `open`. Holds a `menu-item` for each
 //                   option, the chosen one `checked`. Queues `toggle`.
-//   menu-bar        `plain`. Holds `menu-bar-item` nodes.
-//   menu-bar-item   Under a `menu-bar` alone. Shows its node's text. `disabled`. Holds its menu, as a `popover` with a
-//                   `menu` under it.
 //   context-menu    The menu that a secondary click on the node it is under, its host, opens at the pointer.
 //                   `min-width` in px, `leaves-focus`, `open`, and `at`, the x and y in px of the host's viewport
 //                   where `open` opens it. Holds what a `menu` holds. Queues `toggle`.
-//   tooltip         Shows its node's text below the node it is under, once the pointer has rested there. `shortcut`, a
-//                   text.
 //   drag-ghost      Shows its node's text beside the pointer while the widget that it is under is the source of the
 //                   payload in flight. `icon`, and `drag-kind`, a whole number of up to 64 bits.
 //   modal           A column over a scrim. `placement` (PrKitModalPlacement), `inset` in px, `open` and `triggered`.
@@ -31,14 +24,9 @@
 //                   holds that node opens. It does nothing under a node that takes no focus.
 //   dialog          A modal card whose title is its node's text. `placement`, `inset`, `width` in px, `open` and
 //                   `triggered`. Holds the nodes of the card's body, of any kind. Queues `toggle`.
-//   dialog-footer   A row that puts the nodes under it at its end, which goes last in a dialog for its buttons.
 //   command-palette A modal list under a search row. `prompt`, a text, `query`, the text that the search row edits,
 //                   `searchable`, `open` and `triggered`. Holds `command-item` nodes, and a `command-palette-footer`
 //                   after them. Queues `toggle` and `change`.
-//   command-item    Under a `command-palette` alone. Shows its node's text. `category` and `shortcut`, texts, `icon`,
-//                   and `disabled`. Queues `click`.
-//   command-palette-footer
-//                   Under a `command-palette` alone. The row of key hints at the end of the palette's card.
 //
 // A node that is not under the kind it goes under is not declared, and neither are the nodes under it.
 //
@@ -97,30 +85,16 @@ namespace pr_impl {
 
 namespace {
 
-constexpr JsKitKeyword kItemVariants[] = {
-    {"default", PrKitMenuItemVariant_Default},
-    {"danger", PrKitMenuItemVariant_Danger},
-};
-
 constexpr JsKitKeyword kModalPlacements[] = {{"center", PrKitModalPlacement_Center}, {"top", PrKitModalPlacement_Top}};
 
 typedef PrLayoutNode (*DeclareFn)(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
 
 PrLayoutNode popoverDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
-PrLayoutNode selectDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
 PrLayoutNode selectMenuDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
-PrLayoutNode menuBarItemDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
 PrLayoutNode contextMenuDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
 PrLayoutNode modalDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
 PrLayoutNode dialogDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
 PrLayoutNode commandPaletteDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
-PrLayoutNode commandItemDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
-
-// Returns true if the node's parent in the tree is of the kind that `declare` declares. A part that the kit creates
-// under its container alone is declared only if this holds, since a script may put a node under any other.
-bool isUnder(const JsKitNodeTree* tree, JsKitNodeIndex node, DeclareFn declare) {
-    return jsKitNodeKind(tree, jsKitNodeParent(tree, node))->declare == declare;
-}
 
 // Returns true if `kind` is an overlay whose open state the kit keeps on its trigger (prKitIsOpen).
 bool opensByState(const JsKitKind* kind) {
@@ -279,7 +253,7 @@ PrLayoutNode popoverDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayo
     PrKit* kit = round.kit;
     openApply(kit, popover.open, parent);
     // A select and a menu bar's item open and close themselves as they are activated.
-    bool opensItself = isUnder(tree, node, selectDeclare) || isUnder(tree, node, menuBarItemDeclare);
+    bool opensItself = jsKitNodeIsUnder(tree, node, "select") || jsKitNodeIsUnder(tree, node, "menu-bar-item");
     if (popover.open.triggered && !opensItself && prKitActivated(kit, parent))
         prKitToggleOpen(kit, parent);
     PrKitPlace place = jsKitNodePlace(tree, node);
@@ -294,18 +268,6 @@ PrLayoutNode popoverDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayo
 // ---------------------------------------------------------------------------------------------------------------------
 // Menus
 
-struct MenuItemData {
-    PrRawString shortcut;
-    PrKitIconKind icon;
-    PrKitMenuItemStyle style;
-    bool checked;
-    bool disabled;
-};
-
-// The events of a menu item and of a command item, by their index.
-enum { ItemEvent_Click };
-constexpr PrStringView kItemEvents[] = {"click"};
-
 bool menuSet(void* data, PrStringView name, PrStringView value, bool reset) {
     if (name == "leaves-focus")
         return jsKitSetFlag(value, reset, static_cast<bool*>(data));
@@ -318,49 +280,6 @@ PrLayoutNode menuDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutN
     PrLayoutNode made = prKitMenu(round.kit, parent, {.key = jsKitNodeKey(round, node)}, style);
     placeIfSet(round.kit, made, place);
     return made;
-}
-
-PrLayoutNode menuLabelDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitMenuLabel label{.key = jsKitNodeKey(round, node), .text = jsKitNodeText(round.tree, node)};
-    return prKitMenuLabel(round.kit, parent, label);
-}
-
-void menuItemDestroy(void* data) {
-    prRawStringReset(&static_cast<MenuItemData*>(data)->shortcut);
-}
-
-bool menuItemSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    MenuItemData& item = *static_cast<MenuItemData*>(data);
-    if (name == "shortcut")
-        return jsKitSetString(value, reset, &item.shortcut);
-    if (name == "icon")
-        return jsKitSetIcon(value, reset, &item.icon);
-    if (name == "checked")
-        return jsKitSetFlag(value, reset, &item.checked);
-    if (name == "disabled")
-        return jsKitSetFlag(value, reset, &item.disabled);
-    if (name == "variant")
-        return jsKitSetKeyword(kItemVariants, value, reset, &item.style.variant);
-    return false;
-}
-
-PrLayoutNode menuItemDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const MenuItemData& item = jsKitData<MenuItemData>(round, node);
-    PrLayoutNode made = prKitMenuItem(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .text = jsKitNodeText(round.tree, node),
-        .shortcut = prRawStringView(&item.shortcut),
-        .icon = item.icon,
-        .checked = item.checked,
-        .disabled = item.disabled,
-    }, item.style);
-    if (prKitActivated(round.kit, made))
-        jsKitEventPush(round, node, ItemEvent_Click, nullptr);
-    return made;
-}
-
-PrLayoutNode menuSeparatorDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    return prKitMenuSeparator(round.kit, parent, {.key = jsKitNodeKey(round, node)});
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -411,7 +330,7 @@ bool selectMenuSet(void* data, PrStringView name, PrStringView value, bool reset
 
 PrLayoutNode selectMenuDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
     const JsKitNodeTree* tree = round.tree;
-    if (!isUnder(tree, node, selectDeclare) || !isFirstOf(tree, node, opensByState))
+    if (!jsKitNodeIsUnder(tree, node, "select") || !isFirstOf(tree, node, opensByState))
         return kPrLayoutNodeNone;
     OpenData& open = jsKitData<OpenData>(round, node);
     openApply(round.kit, open, parent);
@@ -424,33 +343,6 @@ PrLayoutNode selectMenuDeclare(const JsKitRound& round, JsKitNodeIndex node, PrL
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Menu bars
-
-bool menuBarSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    if (name == "plain")
-        return jsKitSetFlag(value, reset, static_cast<bool*>(data));
-    return false;
-}
-
-PrLayoutNode menuBarDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitMenuBar bar{.key = jsKitNodeKey(round, node), .plain = jsKitData<bool>(round, node)};
-    return prKitMenuBar(round.kit, parent, bar);
-}
-
-bool menuBarItemSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    if (name == "disabled")
-        return jsKitSetFlag(value, reset, static_cast<bool*>(data));
-    return false;
-}
-
-PrLayoutNode menuBarItemDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    if (!isUnder(round.tree, node, menuBarDeclare))
-        return kPrLayoutNodeNone;
-    return prKitMenuBarItem(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .text = jsKitNodeText(round.tree, node),
-        .disabled = jsKitData<bool>(round, node),
-    });
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Context menus
@@ -509,24 +401,6 @@ PrLayoutNode contextMenuDeclare(const JsKitRound& round, JsKitNodeIndex node, Pr
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Tooltips and drag ghosts
-
-void tooltipDestroy(void* data) {
-    prRawStringReset(static_cast<PrRawString*>(data));
-}
-
-bool tooltipSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    if (name == "shortcut")
-        return jsKitSetString(value, reset, static_cast<PrRawString*>(data));
-    return false;
-}
-
-PrLayoutNode tooltipDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    return prKitTooltip(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .text = jsKitNodeText(round.tree, node),
-        .shortcut = prRawStringView(&jsKitData<PrRawString>(round, node)),
-    });
-}
 
 // A drag's ghost: its icon, and the kind of the payloads that it shows for, or zero if it shows for the payload of the
 // widget that it is under.
@@ -626,10 +500,6 @@ PrLayoutNode dialogDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayou
     return kPrLayoutNodeNone;
 }
 
-PrLayoutNode dialogFooterDeclare(const JsKitRound& round, JsKitNodeIndex, PrLayoutNode parent) {
-    return prKitDialogFooter(round.kit, parent);
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Command palettes
 
@@ -639,13 +509,6 @@ struct PaletteData {
     PrRawString query;
     OpenData open;
     bool searchable;
-};
-
-struct CommandItemData {
-    PrRawString category;
-    PrRawString shortcut;
-    PrKitIconKind icon;
-    bool disabled;
 };
 
 // The events of a command palette, by their index. Its `toggle` is every overlay's.
@@ -684,7 +547,7 @@ PrLayoutNode commandPaletteDeclare(const JsKitRound& round, JsKitNodeIndex node,
     uint32_t count = 0;
     for (JsKitNodeIndex child = jsKitNodeFirstChild(tree, node); child != kJsKitNodeNone;
             child = jsKitNodeNextSibling(tree, child))
-        count += jsKitNodeKind(tree, child)->declare == commandItemDeclare ? 1 : 0;
+        count += jsKitNodeKind(tree, child)->name == "command-item" ? 1 : 0;
     PrLayoutNode list = prKitCommandPalette(kit, parent, {
         .key = jsKitNodeKey(round, node),
         .prompt = prRawStringView(&palette.prompt),
@@ -705,48 +568,6 @@ PrLayoutNode commandPaletteDeclare(const JsKitRound& round, JsKitNodeIndex node,
     return kPrLayoutNodeNone;
 }
 
-void commandItemDestroy(void* data) {
-    CommandItemData& item = *static_cast<CommandItemData*>(data);
-    prRawStringReset(&item.category);
-    prRawStringReset(&item.shortcut);
-}
-
-bool commandItemSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    CommandItemData& item = *static_cast<CommandItemData*>(data);
-    if (name == "category")
-        return jsKitSetString(value, reset, &item.category);
-    if (name == "shortcut")
-        return jsKitSetString(value, reset, &item.shortcut);
-    if (name == "icon")
-        return jsKitSetIcon(value, reset, &item.icon);
-    if (name == "disabled")
-        return jsKitSetFlag(value, reset, &item.disabled);
-    return false;
-}
-
-PrLayoutNode commandItemDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    if (!isUnder(round.tree, node, commandPaletteDeclare))
-        return kPrLayoutNodeNone;
-    const CommandItemData& item = jsKitData<CommandItemData>(round, node);
-    PrLayoutNode made = prKitCommandItem(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .text = jsKitNodeText(round.tree, node),
-        .category = prRawStringView(&item.category),
-        .shortcut = prRawStringView(&item.shortcut),
-        .icon = item.icon,
-        .disabled = item.disabled,
-    });
-    if (prKitActivated(round.kit, made))
-        jsKitEventPush(round, node, ItemEvent_Click, nullptr);
-    return made;
-}
-
-PrLayoutNode commandPaletteFooterDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    if (!isUnder(round.tree, node, commandPaletteDeclare))
-        return kPrLayoutNodeNone;
-    return prKitCommandPaletteFooter(round.kit, parent);
-}
-
 constexpr JsKitKind kKinds[] = {
     {
         .name = "popover",
@@ -764,17 +585,6 @@ constexpr JsKitKind kKinds[] = {
         .set = menuSet,
         .declare = menuDeclare,
     },
-    {.name = "menu-label", .declare = menuLabelDeclare},
-    {
-        .name = "menu-item",
-        .dataSize = sizeof(MenuItemData),
-        .events = kItemEvents,
-        .eventCount = 1,
-        .destroy = menuItemDestroy,
-        .set = menuItemSet,
-        .declare = menuItemDeclare,
-    },
-    {.name = "menu-separator", .declare = menuSeparatorDeclare},
     {
         .name = "select",
         .dataSize = sizeof(SelectData),
@@ -792,8 +602,6 @@ constexpr JsKitKind kKinds[] = {
         .set = selectMenuSet,
         .declare = selectMenuDeclare,
     },
-    {.name = "menu-bar", .dataSize = sizeof(bool), .set = menuBarSet, .declare = menuBarDeclare},
-    {.name = "menu-bar-item", .dataSize = sizeof(bool), .set = menuBarItemSet, .declare = menuBarItemDeclare},
     {
         .name = "context-menu",
         .dataSize = sizeof(ContextMenuData),
@@ -802,13 +610,6 @@ constexpr JsKitKind kKinds[] = {
         .flags = JsKitKindFlag_PlacesItself,
         .set = contextMenuSet,
         .declare = contextMenuDeclare,
-    },
-    {
-        .name = "tooltip",
-        .dataSize = sizeof(PrRawString),
-        .destroy = tooltipDestroy,
-        .set = tooltipSet,
-        .declare = tooltipDeclare,
     },
     {.name = "drag-ghost", .dataSize = sizeof(GhostData), .set = dragGhostSet, .declare = dragGhostDeclare},
     {
@@ -830,7 +631,6 @@ constexpr JsKitKind kKinds[] = {
         .set = modalSet,
         .declare = dialogDeclare,
     },
-    {.name = "dialog-footer", .declare = dialogFooterDeclare},
     {
         .name = "command-palette",
         .dataSize = sizeof(PaletteData),
@@ -841,16 +641,6 @@ constexpr JsKitKind kKinds[] = {
         .set = commandPaletteSet,
         .declare = commandPaletteDeclare,
     },
-    {
-        .name = "command-item",
-        .dataSize = sizeof(CommandItemData),
-        .events = kItemEvents,
-        .eventCount = 1,
-        .destroy = commandItemDestroy,
-        .set = commandItemSet,
-        .declare = commandItemDeclare,
-    },
-    {.name = "command-palette-footer", .declare = commandPaletteFooterDeclare},
 };
 
 } // namespace

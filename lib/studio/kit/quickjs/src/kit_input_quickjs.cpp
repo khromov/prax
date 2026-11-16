@@ -1,5 +1,6 @@
-// The kinds of Studio Kit's inputs (pr/kit_input.h): `number-field`, `vector-field`, `text-field`, `text-area`,
-// `text-area-style`, `suggest-field`, `slider`, `inspector-group`, `inspector-row` and `asset-field`.
+// The kinds of Studio Kit's inputs (pr/kit_input.h) that are written by hand: `number-field`, `vector-field`,
+// `text-field`, `text-area`, `text-area-style`, `suggest-field`, `slider`, `inspector-group` and `asset-field`. An
+// `inspector-row` is described (kit_node_quickjs_kinds.txt).
 //
 // A control that edits a value takes the value as its `value`, and queues `change` with the new value in each round in
 // which the user edits it. The node keeps the edit, so a control works with no listener, and a script that sets `value`
@@ -131,13 +132,6 @@
 //   Events
 //     change         an activation of the header, with 1 as `value` if it opened the group, and 0 if it closed it
 //   The placement attributes place the column of the rows, which is the node that the kit returns for a group.
-//
-// inspector-row (prKitInspectorRow)
-//   Text             the row's label
-//   Attributes
-//     mono           a flag
-//   Children         the row's controls
-//   The placement attributes place the cell of the controls, which is the node that the kit returns for a row.
 //
 // asset-field (prKitAssetField)
 //   Text             the asset's name
@@ -1181,18 +1175,6 @@ PrLayoutNode groupDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayout
     return body;
 }
 
-bool rowSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    PrKitInspectorRowStyle& style = *static_cast<PrKitInspectorRowStyle*>(data);
-    if (name == "mono")
-        return jsKitSetFlag(value, reset, &style.mono);
-    return false;
-}
-
-PrLayoutNode rowDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitInspectorRow content{.key = jsKitNodeKey(round, node), .label = jsKitNodeText(round.tree, node)};
-    return prKitInspectorRow(round.kit, parent, content, jsKitData<PrKitInspectorRowStyle>(round, node));
-}
-
 // The events of an asset field, by their index.
 enum { AssetEvent_Browse, AssetEvent_Locate, AssetEvent_Clear, AssetEvent_Drop };
 constexpr PrStringView kAssetEvents[] = {"browse", "locate", "clear", "drop"};
@@ -1325,7 +1307,6 @@ constexpr JsKitKind kKinds[] = {
         .set = groupSet,
         .declare = groupDeclare,
     },
-    {.name = "inspector-row", .dataSize = sizeof(PrKitInspectorRowStyle), .set = rowSet, .declare = rowDeclare},
     {
         .name = "asset-field",
         .dataSize = sizeof(AssetData),

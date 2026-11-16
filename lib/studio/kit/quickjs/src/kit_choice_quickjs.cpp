@@ -1,15 +1,10 @@
-// The kinds of Studio Kit's choices, tabs and progress (pr/kit_choice.h). An attribute sets the field of its name in
-// the content or the style of the kind's widget, which the header describes, unless it is described here. One that is
-// given here with an enumeration takes the names of its members as keywords, in lower case with a hyphen between words,
-// and a reset leaves the first of them.
+// The kinds of Studio Kit's choices and tabs (pr/kit_choice.h) that are written by hand. The header's other kinds are
+// described (kit_node_quickjs_kinds.txt): the segmented control and the radio group with their items, a tab's label,
+// and the progress bar, the meter and the spinner. An attribute sets the field of its name in the content or the style
+// of the kind's widget, which the header describes, unless it is described here. One that is given here with an
+// enumeration takes the names of its members as keywords, in lower case with a hyphen between words, and a reset leaves
+// the first of them.
 //
-//   segmented     A track of segments. `size` (PrKitControlSize), and `disabled`, which disables every segment. Holds
-//                 `segment` nodes.
-//   radio-group   `size`, `direction` (PrKitDirection), the axis that its radios lie along, and `disabled`, which
-//                 disables every radio. Holds `radio` nodes.
-//   segment       Under a `segmented` alone. Shows its node's text as its label. `icon`, an icon's name
-//                 (prKitIconName), `selected` and `disabled`. Queues `click`.
-//   radio         Under a `radio-group` alone. Shows, takes and queues what a segment does.
 //   checkbox      Shows its node's text as its label. `value`, a flag that is the state it shows, `size` and
 //                 `disabled`. Queues `change`.
 //   toggle        A switch, which shows, takes and queues what a checkbox does.
@@ -18,18 +13,9 @@
 //                 `tearoff`.
 //   tab           Under a `tab-strip` alone. `id`, a whole number above 0, and `disabled`. Holds what the tab shows, in
 //                 the tree's order: a `tab-label`, a `tab-close`, or nodes of any other kind. Queues `remove`.
-//   tab-label     Under a `tab` alone. Shows its node's text in the tab's font and color, and holds no nodes.
 //   tab-close     Under a `tab` alone. The tab's close control, which only the pointer uses.
-//   progress      A bar. `value`, the fraction that is done, from 0 to 1, and `indeterminate`.
-//   meter         A bar of segments. `value`, a reading between `low` and `high`, which are 0 and 1 if both are 0, and
-//                 `tone` (PrKitTone).
-//   spinner       `size`, the side of its square in px, which is 16 if it is 0.
 //
 // A node that is not under the kind it goes under is not declared, and neither are the nodes under it.
-//
-// Segments and radios. The script holds the choice. An item queues `click` when it is activated, by a click or by an
-// arrow key that moved focus onto it from its neighbor, and the script then sets `selected` on the item that it chose
-// and resets it on the others.
 //
 // Checkboxes and toggles. An activation flips `value` and queues `change`, whose `value` is the new state, 1 or 0. The
 // state stays as the event says until the script sets `value`.
@@ -68,103 +54,8 @@ namespace pr_impl {
 
 namespace {
 
-constexpr JsKitKeyword kDirections[] = {{"column", PrKitDirection_Column}, {"row", PrKitDirection_Row}};
-
-typedef PrLayoutNode (*DeclareFn)(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
-
-// Returns true if the node's parent in the tree is of the kind that `declare` declares. A part that the kit creates
-// under its container alone is declared only if this holds, since a script may put a node under any other.
-bool isUnder(const JsKitNodeTree* tree, JsKitNodeIndex node, DeclareFn declare) {
-    return jsKitNodeKind(tree, jsKitNodeParent(tree, node))->declare == declare;
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Choices
-
-// A segmented control or a radio group.
-struct ChoicesData {
-    PrKitChoiceStyle style;
-    bool disabled;
-};
-
-// A segment or a radio.
-struct ChoiceData {
-    PrKitIconKind icon;
-    bool selected;
-    bool disabled;
-};
-
-// The events of a segment and of a radio, by their index.
-enum { ChoiceEvent_Click };
-constexpr PrStringView kChoiceEvents[] = {"click"};
-
-bool segmentedSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    ChoicesData& choices = *static_cast<ChoicesData*>(data);
-    if (name == "size")
-        return jsKitSetKeyword(jsKitControlSizes(), value, reset, &choices.style.size);
-    if (name == "disabled")
-        return jsKitSetFlag(value, reset, &choices.disabled);
-    return false;
-}
-
-bool radioGroupSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    ChoicesData& choices = *static_cast<ChoicesData*>(data);
-    if (name == "direction")
-        return jsKitSetKeyword(kDirections, value, reset, &choices.style.direction);
-    return segmentedSet(data, name, value, reset);
-}
-
-PrLayoutNode segmentedDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const ChoicesData& choices = jsKitData<ChoicesData>(round, node);
-    PrKitChoices content{.key = jsKitNodeKey(round, node), .disabled = choices.disabled};
-    return prKitSegmented(round.kit, parent, content, choices.style);
-}
-
-PrLayoutNode radioGroupDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const ChoicesData& choices = jsKitData<ChoicesData>(round, node);
-    PrKitChoices content{.key = jsKitNodeKey(round, node), .disabled = choices.disabled};
-    return prKitRadioGroup(round.kit, parent, content, choices.style);
-}
-
-bool choiceSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    ChoiceData& choice = *static_cast<ChoiceData*>(data);
-    if (name == "icon")
-        return jsKitSetIcon(value, reset, &choice.icon);
-    if (name == "selected")
-        return jsKitSetFlag(value, reset, &choice.selected);
-    if (name == "disabled")
-        return jsKitSetFlag(value, reset, &choice.disabled);
-    return false;
-}
-
-// Declares a segment or a radio with `item`, the kit's function that creates one under its container, and queues its
-// activation.
-PrLayoutNode choiceDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent,
-        PrLayoutNode (*item)(PrKit* kit, PrLayoutNode container, PrKitChoice choice)) {
-    const ChoiceData& choice = jsKitData<ChoiceData>(round, node);
-    PrLayoutNode made = item(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .label = jsKitNodeText(round.tree, node),
-        .icon = choice.icon,
-        .selected = choice.selected,
-        .disabled = choice.disabled,
-    });
-    if (prKitActivated(round.kit, made))
-        jsKitEventPush(round, node, ChoiceEvent_Click, nullptr);
-    return made;
-}
-
-PrLayoutNode segmentDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    if (!isUnder(round.tree, node, segmentedDeclare))
-        return kPrLayoutNodeNone;
-    return choiceDeclare(round, node, parent, prKitSegment);
-}
-
-PrLayoutNode radioDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    if (!isUnder(round.tree, node, radioGroupDeclare))
-        return kPrLayoutNodeNone;
-    return choiceDeclare(round, node, parent, prKitRadio);
-}
 
 // A checkbox or a toggle. The kit flips `value` through the pointer that the node's widget is given.
 struct CheckData {
@@ -458,7 +349,7 @@ PrLayoutNode tabStripDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLay
 
 PrLayoutNode tabDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
     const JsKitNodeTree* tree = round.tree;
-    if (!isUnder(tree, node, tabStripDeclare))
+    if (!jsKitNodeIsUnder(tree, node, "tab-strip"))
         return kPrLayoutNodeNone;
     const TabData& tab = jsKitData<TabData>(round, node);
     if (tab.id == 0)
@@ -472,17 +363,9 @@ PrLayoutNode tabDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNo
     return prKitTab(round.kit, parent, {.id = tab.id, .disabled = tab.disabled});
 }
 
-PrLayoutNode tabLabelDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    if (!isUnder(round.tree, node, tabDeclare))
-        return kPrLayoutNodeNone;
-    // The label is a text, which holds no nodes.
-    prKitTabLabel(round.kit, parent, {.key = jsKitNodeKey(round, node), .text = jsKitNodeText(round.tree, node)});
-    return kPrLayoutNodeNone;
-}
-
 PrLayoutNode tabCloseDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
     const JsKitNodeTree* tree = round.tree;
-    if (!isUnder(tree, node, tabDeclare))
+    if (!jsKitNodeIsUnder(tree, node, "tab"))
         return kPrLayoutNodeNone;
     PrLayoutNode made = prKitTabClose(round.kit, parent);
     if (prKitActivated(round.kit, made)) {
@@ -496,90 +379,7 @@ PrLayoutNode tabCloseDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLay
 // ---------------------------------------------------------------------------------------------------------------------
 // Progress
 
-struct ProgressData {
-    float value;
-    bool indeterminate;
-};
-
-struct MeterData {
-    float value;
-    float low;
-    float high;
-    PrKitMeterStyle style;
-};
-
-bool progressSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    ProgressData& progress = *static_cast<ProgressData*>(data);
-    if (name == "value")
-        return jsKitSetFloat(value, reset, &progress.value);
-    if (name == "indeterminate")
-        return jsKitSetFlag(value, reset, &progress.indeterminate);
-    return false;
-}
-
-PrLayoutNode progressDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const ProgressData& progress = jsKitData<ProgressData>(round, node);
-    return prKitProgress(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .value = progress.value,
-        .indeterminate = progress.indeterminate,
-    });
-}
-
-bool meterSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    MeterData& meter = *static_cast<MeterData*>(data);
-    if (name == "value")
-        return jsKitSetFloat(value, reset, &meter.value);
-    if (name == "low")
-        return jsKitSetFloat(value, reset, &meter.low);
-    if (name == "high")
-        return jsKitSetFloat(value, reset, &meter.high);
-    if (name == "tone")
-        return jsKitSetKeyword(jsKitTones(), value, reset, &meter.style.tone);
-    return false;
-}
-
-PrLayoutNode meterDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const MeterData& meter = jsKitData<MeterData>(round, node);
-    return prKitMeter(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .value = meter.value,
-        .low = meter.low,
-        .high = meter.high,
-    }, meter.style);
-}
-
-bool spinnerSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    PrKitSpinnerStyle& style = *static_cast<PrKitSpinnerStyle*>(data);
-    if (name == "size")
-        return jsKitSetLength(value, reset, &style.size);
-    return false;
-}
-
-PrLayoutNode spinnerDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitSpinner spinner{.key = jsKitNodeKey(round, node)};
-    return prKitSpinner(round.kit, parent, spinner, jsKitData<PrKitSpinnerStyle>(round, node));
-}
-
 constexpr JsKitKind kKinds[] = {
-    {.name = "segmented", .dataSize = sizeof(ChoicesData), .set = segmentedSet, .declare = segmentedDeclare},
-    {
-        .name = "segment",
-        .dataSize = sizeof(ChoiceData),
-        .events = kChoiceEvents,
-        .eventCount = 1,
-        .set = choiceSet,
-        .declare = segmentDeclare,
-    },
-    {.name = "radio-group", .dataSize = sizeof(ChoicesData), .set = radioGroupSet, .declare = radioGroupDeclare},
-    {
-        .name = "radio",
-        .dataSize = sizeof(ChoiceData),
-        .events = kChoiceEvents,
-        .eventCount = 1,
-        .set = choiceSet,
-        .declare = radioDeclare,
-    },
     {
         .name = "checkbox",
         .dataSize = sizeof(CheckData),
@@ -615,11 +415,7 @@ constexpr JsKitKind kKinds[] = {
         .set = tabSet,
         .declare = tabDeclare,
     },
-    {.name = "tab-label", .declare = tabLabelDeclare},
     {.name = "tab-close", .declare = tabCloseDeclare},
-    {.name = "progress", .dataSize = sizeof(ProgressData), .set = progressSet, .declare = progressDeclare},
-    {.name = "meter", .dataSize = sizeof(MeterData), .set = meterSet, .declare = meterDeclare},
-    {.name = "spinner", .dataSize = sizeof(PrKitSpinnerStyle), .set = spinnerSet, .declare = spinnerDeclare},
 };
 
 } // namespace

@@ -1,7 +1,7 @@
-// The kinds of Studio Kit's collections (pr/kit_collection.h): the views `list-view`, `tree-view` and `table`, their
-// rows `list-row`, `list-tile`, `tree-row` and `table-row`, a table's `table-column` and `table-cell`, the parts
-// `row-icon`, `row-label`, `row-meta`, `tile-icon`, `tile-image` and `tile-label`, and `visibility-toggle`,
-// `empty-state` and `drop-zone`.
+// The kinds of Studio Kit's collections (pr/kit_collection.h) that are written by hand: the views `list-view`,
+// `tree-view` and `table`, their rows `list-row`, `list-tile`, `tree-row` and `table-row`, a table's `table-column` and
+// `table-cell`, and `tile-image`, `visibility-toggle` and `drop-zone`. The other parts of a row and of a tile, and
+// `empty-state`, are described (kit_node_quickjs_kinds.txt).
 //
 // Rows and windows. The script makes every row of a view as a node under the view's node. A view's rows are the nodes
 // of its row kinds under it, in the tree's order, and a row's index is its place among them. In each round a view asks
@@ -53,18 +53,10 @@
 // queues `click` when it is activated, with its index as the event's `value`. A click that edits the selection is
 // queued before the view's `select`.
 //
-// `row-icon` takes `icon`. `row-label` shows its node's text and takes `tone`. `row-meta` shows its node's text. They
-// are a row's cells, and go under a `list-row` or a `tree-row`.
-//
-// `tile-icon` takes `icon` and `tint`, the color that fills the thumbnail. A tint has the forms that a `swatch` takes
-// for its `color`: the name of a color of the kit's palette, hexadecimal digits after `#`, or the color's channels as
-// numbers separated by spaces. With no tint, or a fully transparent one, the thumbnail is on the theme's raised
-// background. `tile-image` takes `hover-zoom`, the fraction by which its picture grows under the pointer, and `image`,
-// the picture as three values separated by spaces: its width and its height in pixels, each at most 4096, and its
-// pixels in base64, which are RGBA8 with straight alpha in sRGB, row by row. A `tile-image` with no picture declares
-// nothing. `tile-label` shows its node's text. They are a tile's parts, and go under a `list-tile`.
-//
-// `empty-state` shows its node's text as its title, and takes `icon` and `hint`, a line under the title.
+// `tile-image` takes `hover-zoom`, the fraction by which its picture grows under the pointer, and `image`, the picture
+// as three values separated by spaces: its width and its height in pixels, each at most 4096, and its pixels in base64,
+// which are RGBA8 with straight alpha in sRGB, row by row. A `tile-image` with no picture declares nothing. It is a
+// tile's part, and goes under a `list-tile`.
 //
 // `tree-view` takes `row-height`, `selectable`, `anchor`, `lead` and `drag-kind`, a number that is not zero if its rows
 // drag. Its rows are its `tree-row` children. It queues `select`, `fold` and `drop`. The node's placement is the
@@ -108,8 +100,6 @@
 #include "pr/memory.h"
 #include "pr/raw_array.h"
 
-#include "studio/kit/quickjs/src/kit_panel_quickjs.h"
-
 namespace pr_impl {
 
 namespace {
@@ -119,13 +109,7 @@ enum {
     Kind_ListView,
     Kind_ListRow,
     Kind_ListTile,
-    Kind_RowIcon,
-    Kind_RowLabel,
-    Kind_RowMeta,
-    Kind_TileIcon,
     Kind_TileImage,
-    Kind_TileLabel,
-    Kind_EmptyState,
     Kind_TreeView,
     Kind_TreeRow,
     Kind_VisibilityToggle,
@@ -650,54 +634,6 @@ PrLayoutNode tableDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayout
 // ---------------------------------------------------------------------------------------------------------------------
 // Parts
 
-bool rowIconSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    if (name == "icon")
-        return jsKitSetIcon(value, reset, static_cast<PrKitIconKind*>(data));
-    return false;
-}
-
-PrLayoutNode rowIconDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitIcon icon{.key = jsKitNodeKey(round, node), .icon = jsKitData<PrKitIconKind>(round, node)};
-    return prKitRowIcon(round.kit, parent, icon);
-}
-
-bool rowLabelSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    if (name == "tone")
-        return jsKitSetKeyword(jsKitTones(), value, reset, static_cast<PrKitTone*>(data));
-    return false;
-}
-
-PrLayoutNode rowLabelDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitLabel label{.key = jsKitNodeKey(round, node), .text = jsKitNodeText(round.tree, node)};
-    return prKitRowLabel(round.kit, parent, label, jsKitData<PrKitTone>(round, node));
-}
-
-PrLayoutNode rowMetaDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitLabel label{.key = jsKitNodeKey(round, node), .text = jsKitNodeText(round.tree, node)};
-    return prKitRowMeta(round.kit, parent, label);
-}
-
-// A tile's icon, and the color that fills its thumbnail, which is transparent if the script gave none.
-struct TileIconData {
-    PrKitIconKind icon;
-    JsKitColorValue tint;
-};
-
-bool tileIconSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    TileIconData& tile = *static_cast<TileIconData*>(data);
-    if (name == "icon")
-        return jsKitSetIcon(value, reset, &tile.icon);
-    if (name == "tint")
-        return jsKitSetColorValue(value, reset, &tile.tint);
-    return false;
-}
-
-PrLayoutNode tileIconDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const TileIconData& tile = jsKitData<TileIconData>(round, node);
-    PrKitIcon icon{.key = jsKitNodeKey(round, node), .icon = tile.icon};
-    return prKitTileIcon(round.kit, parent, icon, jsKitColorFromValue(*round.kit, tile.tint));
-}
-
 // A tile's picture, which the node owns a reference to, and the fraction by which it grows under the pointer.
 struct TileImageData {
     const PrDrawImage* PR_NULLABLE image;
@@ -767,40 +703,6 @@ PrLayoutNode tileImageDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLa
         return kPrLayoutNodeNone;
     PrKitImage image{.key = jsKitNodeKey(round, node), .image = tile.image};
     return prKitTileImage(round.kit, parent, image, {.hoverZoom = tile.hoverZoom});
-}
-
-PrLayoutNode tileLabelDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitLabel label{.key = jsKitNodeKey(round, node), .text = jsKitNodeText(round.tree, node)};
-    return prKitTileLabel(round.kit, parent, label);
-}
-
-// The icon of an empty list's notice, and the hint under its title.
-struct EmptyStateData {
-    PrKitIconKind icon;
-    PrRawString hint;
-};
-
-void emptyStateDestroy(void* data) {
-    prRawStringReset(&static_cast<EmptyStateData*>(data)->hint);
-}
-
-bool emptyStateSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    EmptyStateData& empty = *static_cast<EmptyStateData*>(data);
-    if (name == "icon")
-        return jsKitSetIcon(value, reset, &empty.icon);
-    if (name == "hint")
-        return jsKitSetString(value, reset, &empty.hint);
-    return false;
-}
-
-PrLayoutNode emptyStateDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const EmptyStateData& empty = jsKitData<EmptyStateData>(round, node);
-    return prKitEmptyState(round.kit, parent, {
-        .key = jsKitNodeKey(round, node),
-        .icon = empty.icon,
-        .title = jsKitNodeText(round.tree, node),
-        .hint = prRawStringView(&empty.hint),
-    });
 }
 
 // When a visibility toggle is revealed.
@@ -916,24 +818,12 @@ constexpr JsKitKind kKinds[] = {
         .set = rowSet,
         .declare = declareNothing,
     },
-    {.name = "row-icon", .dataSize = sizeof(PrKitIconKind), .set = rowIconSet, .declare = rowIconDeclare},
-    {.name = "row-label", .dataSize = sizeof(PrKitTone), .set = rowLabelSet, .declare = rowLabelDeclare},
-    {.name = "row-meta", .declare = rowMetaDeclare},
-    {.name = "tile-icon", .dataSize = sizeof(TileIconData), .set = tileIconSet, .declare = tileIconDeclare},
     {
         .name = "tile-image",
         .dataSize = sizeof(TileImageData),
         .destroy = tileImageDestroy,
         .set = tileImageSet,
         .declare = tileImageDeclare,
-    },
-    {.name = "tile-label", .declare = tileLabelDeclare},
-    {
-        .name = "empty-state",
-        .dataSize = sizeof(EmptyStateData),
-        .destroy = emptyStateDestroy,
-        .set = emptyStateSet,
-        .declare = emptyStateDeclare,
     },
     {
         .name = "tree-view",

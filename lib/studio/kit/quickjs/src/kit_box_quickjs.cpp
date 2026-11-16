@@ -1,7 +1,8 @@
-// The kinds of Studio Kit's boxes (pr/kit_box.h): `box`, `stack`, `layer`, `plane`, `spacer` and `divider`.
+// The kinds of Studio Kit's boxes (pr/kit_box.h) that are written by hand: `box` and `plane`. The header's other kinds
+// are described (kit_node_quickjs_kinds.txt), and a `stack` and a `layer` take a box's attributes.
 //
-// No kind of this family shows its node's text, and none but the box queues an event. Each but the spacer and the
-// divider is a container: the nodes under it are declared in it, in the tree's order.
+// Neither kind shows its node's text, and only the box queues an event. Each is a container: the nodes under it are
+// declared in it, in the tree's order.
 //
 // A `box` (prKitBox) takes the fields of PrKitBoxStyle: `direction`, `justify`, `align` and `overflow`, each a keyword
 // of its field's enumeration, `wrap`, a flag, `gap`, in px, and `padding`, one to four lengths in px. Its style's place
@@ -19,9 +20,6 @@
 // `editcommit`. Two gestures of one control in one round are the exception: the control queues one `change`, after
 // both.
 //
-// A `stack` (prKitStack) and a `layer` (prKitLayer) take a box's attributes. A layer covers the nearest stack or plane
-// above it.
-//
 // A `plane` (prKitPlane) takes a box's attributes, and:
 //
 //   `transform`        sixteen numbers separated by spaces, which are the plane's matrix in the order that matrix3d()
@@ -31,9 +29,6 @@
 //   `perspective`      the distance to the eye in px, or 0 for none
 //   `z-index`          a whole number, the plane's stack level, or 0 for none
 //   `backface-hidden`  a flag
-//
-// A `spacer` (prKitSpacer) and a `divider` (prKitDivider) take no attributes of their own, and the nodes under them are
-// declared in them as in a box, though neither is made to hold any.
 
 #include "studio/kit/quickjs/src/kit_box_quickjs.h"
 
@@ -128,11 +123,32 @@ bool setLevel(PrStringView value, bool reset, int32_t* out) {
     return true;
 }
 
+// Sets or resets an attribute of how a box lays out its children, as a box's style holds it. It leaves the style's
+// place alone, which a kind takes from its node's placement as it declares the widget. Returns false, leaving the style
+// as it was, for any other name or a value that does not suit the attribute.
+bool styleSet(PrKitBoxStyle& style, PrStringView name, PrStringView value, bool reset) {
+    if (name == "direction")
+        return jsKitSetKeyword(kDirections, value, reset, &style.direction);
+    if (name == "justify")
+        return jsKitSetKeyword(kJustifications, value, reset, &style.justify);
+    if (name == "align")
+        return jsKitSetKeyword(jsKitAlignments(), value, reset, &style.align);
+    if (name == "overflow")
+        return jsKitSetKeyword(kOverflows, value, reset, &style.overflow);
+    if (name == "wrap")
+        return jsKitSetFlag(value, reset, &style.wrap);
+    if (name == "gap")
+        return jsKitSetLength(value, reset, &style.gap);
+    if (name == "padding")
+        return jsKitSetEdges(value, reset, &style.padding);
+    return false;
+}
+
 bool boxSet(void* data, PrStringView name, PrStringView value, bool reset) {
     BoxData& box = *static_cast<BoxData*>(data);
     if (name == "disabled")
         return jsKitSetFlag(value, reset, &box.disabled);
-    return jsKitBoxStyleSet(box.style, name, value, reset);
+    return styleSet(box.style, name, value, reset);
 }
 
 // Returns a node's box, and its style with the node's place.
@@ -184,16 +200,6 @@ PrLayoutNode boxDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNo
     return kPrLayoutNodeNone;
 }
 
-PrLayoutNode stackDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const BoxData& box = jsKitData<BoxData>(round, node);
-    return prKitStack(round.kit, parent, boxOf(round, node, box.disabled), placed(round, node, box.style));
-}
-
-PrLayoutNode layerDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const BoxData& box = jsKitData<BoxData>(round, node);
-    return prKitLayer(round.kit, parent, boxOf(round, node, box.disabled), placed(round, node, box.style));
-}
-
 bool planeSet(void* data, PrStringView name, PrStringView value, bool reset) {
     PlaneData& plane = *static_cast<PlaneData*>(data);
     if (name == "transform") {
@@ -210,7 +216,7 @@ bool planeSet(void* data, PrStringView name, PrStringView value, bool reset) {
         return jsKitSetFlag(value, reset, &plane.style.backfaceHidden);
     if (name == "disabled")
         return jsKitSetFlag(value, reset, &plane.disabled);
-    return jsKitBoxStyleSet(plane.style.box, name, value, reset);
+    return styleSet(plane.style.box, name, value, reset);
 }
 
 PrLayoutNode planeDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
@@ -222,14 +228,6 @@ PrLayoutNode planeDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayout
         .disabled = plane.disabled,
         .transform = plane.transformed ? &plane.transform : nullptr,
     }, style);
-}
-
-PrLayoutNode spacerDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    return prKitSpacer(round.kit, parent, {.key = jsKitNodeKey(round, node)});
-}
-
-PrLayoutNode dividerDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    return prKitDivider(round.kit, parent, {.key = jsKitNodeKey(round, node)});
 }
 
 constexpr JsKitKind kKinds[] = {
@@ -244,52 +242,18 @@ constexpr JsKitKind kKinds[] = {
         .declare = boxDeclare,
     },
     {
-        .name = "stack",
-        .dataSize = sizeof(BoxData),
-        .flags = JsKitKindFlag_PlacesItself,
-        .set = boxSet,
-        .declare = stackDeclare,
-    },
-    {
-        .name = "layer",
-        .dataSize = sizeof(BoxData),
-        .flags = JsKitKindFlag_PlacesItself,
-        .set = boxSet,
-        .declare = layerDeclare,
-    },
-    {
         .name = "plane",
         .dataSize = sizeof(PlaneData),
         .flags = JsKitKindFlag_PlacesItself,
         .set = planeSet,
         .declare = planeDeclare,
     },
-    {.name = "spacer", .declare = spacerDeclare},
-    {.name = "divider", .declare = dividerDeclare},
 };
 
 } // namespace
 
 Span<const JsKitKind> jsKitBoxKinds() {
     return kKinds;
-}
-
-bool jsKitBoxStyleSet(PrKitBoxStyle& style, PrStringView name, PrStringView value, bool reset) {
-    if (name == "direction")
-        return jsKitSetKeyword(kDirections, value, reset, &style.direction);
-    if (name == "justify")
-        return jsKitSetKeyword(kJustifications, value, reset, &style.justify);
-    if (name == "align")
-        return jsKitSetKeyword(jsKitAlignments(), value, reset, &style.align);
-    if (name == "overflow")
-        return jsKitSetKeyword(kOverflows, value, reset, &style.overflow);
-    if (name == "wrap")
-        return jsKitSetFlag(value, reset, &style.wrap);
-    if (name == "gap")
-        return jsKitSetLength(value, reset, &style.gap);
-    if (name == "padding")
-        return jsKitSetEdges(value, reset, &style.padding);
-    return false;
 }
 
 } // namespace pr_impl

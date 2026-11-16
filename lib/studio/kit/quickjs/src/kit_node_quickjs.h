@@ -5,6 +5,10 @@
 // of a kind owns a block of the kind's data, which the kind's `set` writes from the attributes that the script sets and
 // its `declare` reads in each round. The tree owns the node's place among the others, its text, how it sits in its
 // parent, and which of its kind's events the script listens for.
+//
+// Most kinds need no source: the kit's function that creates the widget takes structs whose fields are the kind's
+// attributes, so the kind is described by them (JsKitField, JsKitWidget). tools/gen/gen_kit.py writes those
+// descriptions from the kit's headers.
 
 #pragma once
 
@@ -48,10 +52,13 @@ bool jsKitNumberFrom(PrStringView text, double* out);
 
 // Read each attribute's form, or with `reset`, which is how a script removes an attribute, write the form's zero: the
 // first keyword, zero, false, no edges, the auto size, and the null string. A length is a number that is zero or more.
-// A flag is true if it is present with no value, or `true`, and false if it is `false`. Edges are one to four lengths
-// separated by spaces, which give the edges as CSS's shorthands do. A size is `auto`, `fill`, a length in px, or a
-// percentage of the parent's size. A string is copied, and the node's kind resets it as the node is destroyed.
+// Several keywords are one or more of them separated by spaces, which give the union of their values, as the sides of a
+// box that are ruled. A flag is true if it is present with no value, or `true`, and false if it is `false`. Edges are
+// one to four lengths separated by spaces, which give the edges as CSS's shorthands do. A size is `auto`, `fill`, a
+// length in px, or a percentage of the parent's size. A string is copied, and the node's kind resets it as the node is
+// destroyed.
 bool jsKitSetKeyword(Span<const JsKitKeyword> keywords, PrStringView value, bool reset, uint8_t* out);
+bool jsKitSetKeywords(Span<const JsKitKeyword> keywords, PrStringView value, bool reset, uint8_t* out);
 bool jsKitSetNumber(PrStringView value, bool reset, double* out);
 bool jsKitSetFloat(PrStringView value, bool reset, float* out);
 bool jsKitSetLength(PrStringView value, bool reset, float* out);
@@ -119,6 +126,30 @@ typedef uint8_t JsKitColor;
 Span<const JsKitKeyword> jsKitColors();
 PrColor jsKitColorFrom(const PrKit& kit, JsKitColor color);
 
+// A color that an attribute gives a widget whose content holds a PrColor: a color of the kit's palette, which follows
+// the theme, or a color of its own. Zero is transparent black.
+struct JsKitColorValue {
+    JsKitColor named;               // JsKitColor_None if the color is `own`
+    PrColor own;                    // in sRGB, with straight alpha, as the palette's colors are
+
+    // The share of white that a named color is mixed with, from 0 to 1, or the share of black, negated. The mix is of
+    // the color's red, green and blue channels in sRGB, and keeps its alpha.
+    float shade;
+};
+
+// Reads a color, or with `reset` writes transparent black. A color is one of three forms. The first is the name of a
+// color of the palette (jsKitColors), which is that of PrKitPalette's field with a hyphen between its words and none
+// before a digit, as `accent-weak` and `bg0`. A space and a shade may follow it, a number from -1 to 1, which gives a
+// tint or a shade of the color that follows the theme as the color does: `accent 0.6` is the accent with six tenths of
+// white, and `accent -0.2` the accent with two tenths of black. The second is `#` and three, four, six or eight
+// hexadecimal digits (css-color-4/#hex-notation). The third is three or four numbers separated by spaces, which are the
+// red, green, blue and alpha channels, where 1 is a channel's full value and alpha is 1 if it is left out. Returns
+// false, and writes nothing, for any other text.
+bool jsKitSetColorValue(PrStringView value, bool reset, JsKitColorValue* out);
+
+// Returns the color that `value` stands for in the kit's theme.
+PrColor jsKitColorFromValue(const PrKit& kit, const JsKitColorValue& value);
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Nodes
 
@@ -140,6 +171,10 @@ PrStringView jsKitNodeText(const JsKitNodeTree* tree, JsKitNodeIndex node);
 JsKitNodeIndex jsKitNodeParent(const JsKitNodeTree* tree, JsKitNodeIndex node);
 JsKitNodeIndex jsKitNodeFirstChild(const JsKitNodeTree* tree, JsKitNodeIndex node);
 JsKitNodeIndex jsKitNodeNextSibling(const JsKitNodeTree* tree, JsKitNodeIndex node);
+
+// Returns true if the node's parent is of the kind named `kind`. A part that the kit creates under its container alone
+// is declared only if this holds, since a script may put a node under any other.
+bool jsKitNodeIsUnder(const JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView kind);
 
 // How the script placed the node in its parent, by the attributes that every kind takes, and whether it set any.
 PrKitPlace jsKitNodePlace(const JsKitNodeTree* tree, JsKitNodeIndex node);
@@ -183,14 +218,77 @@ void jsKitDeclareChildren(const JsKitRound& round, JsKitNodeIndex node, PrLayout
 // ---------------------------------------------------------------------------------------------------------------------
 // Kinds
 
+// The form of an attribute that a node's data holds as a field, each of which the reader of its name reads
+// (jsKitSetKeyword, jsKitSetFlag, and so on).
+enum {
+    JsKitFieldType_Keyword,         // a uint8_t, one of the field's keywords
+    JsKitFieldType_Keywords,        // a uint8_t, the union of one or more of the field's keywords
+    JsKitFieldType_Flag,            // a bool
+    JsKitFieldType_Float,           // a float
+    JsKitFieldType_Length,          // a float that is zero or more
+    JsKitFieldType_Uint,            // a uint32_t
+    JsKitFieldType_Edges,           // a PrKitEdges
+    JsKitFieldType_Size,            // a PrKitSize
+    JsKitFieldType_Icon,            // a PrKitIconKind
+    JsKitFieldType_String,          // a PrStringView of the text, which the data holds a copy of
+    JsKitFieldType_Color,           // a PrColor, which each round gives the color that the data holds
+};
+typedef uint8_t JsKitFieldType;
+
+// An attribute that a node's data holds as a field, in the type that the kit's widget takes it in. The tree sets and
+// resets such an attribute itself, so a kind's `set` reads only the attributes that are not fields.
+struct JsKitField {
+    PrStringView name;              // the name of the attribute
+    JsKitFieldType type;
+    uint32_t offset;                // where the field is in the data, in bytes
+
+    // Where the data holds the value that the field is given from, in bytes, for a type whose field does not hold it:
+    // the PrRawString of a String, which the field views and the tree resets as the node is destroyed, or the
+    // JsKitColorValue of a Color, which follows the kit's theme.
+    uint32_t owner;
+
+    // Keyword and Keywords: the keywords that the field takes. A reset leaves the value zero.
+    const JsKitKeyword* PR_NULLABLE keywords;
+    uint32_t keywordCount;
+};
+
+// An offset that names no field of a node's data.
+constexpr uint32_t kJsKitOffsetNone = 0xffffffffu;
+
+// One of the kit's queries of what a widget did in the current round, such as prKitActivated.
+typedef bool JsKitQueryFn(const PrKit* kit, PrLayoutNode node);
+
+// How jsKitWidgetDeclare declares the widget of a kind whose data holds what the kit's function takes after the kit and
+// the parent: for most, a content and a style.
+struct JsKitWidget {
+    // Calls the kit's function with what `data` holds, and returns the widget's node.
+    PrLayoutNode (*PR_NONNULL create)(PrKit* kit, PrLayoutNode parent, const void* data);
+
+    // The offsets in the data of what each round gives the widget from its node, before it calls `create`: the
+    // content's key, a PrUiKey, the string that shows the node's text, a PrStringView, and the place of a style that
+    // holds one, a PrKitPlace, whose kind has JsKitKindFlag_PlacesItself. Each is kJsKitOffsetNone for a widget that
+    // takes no such thing.
+    uint32_t key;
+    uint32_t text;
+    uint32_t place;
+
+    // The name of the kind that a node's parent must be of for the node to be declared, as a segment goes under a
+    // segmented control alone, or the empty string for a kind that goes anywhere.
+    PrStringView under;
+
+    // A query for each of the kind's events, by the event's index. The kind queues the event, with no detail, in each
+    // round in which its query holds for the widget. Null for a kind with no events.
+    JsKitQueryFn* PR_NONNULL const* PR_NULLABLE queries;
+};
+
 // What a kind does besides declaring its widget.
 enum {
     // The kind's declare applies the node's place itself, as a box does, whose style holds one. The tree places the
     // widget of any other kind with prKitPlace once it is declared, if the script placed the node.
     JsKitKindFlag_PlacesItself = 1u << 0,
 
-    // The kind's declare reads the nodes under its node itself, as a timeline reads its tracks, so the tree declares
-    // none of them under the widget that the declare returns.
+    // The kind's declare reads the nodes under its node itself, as a timeline reads its tracks, or its widget holds
+    // nothing, as an icon's, so the tree declares none of them under the widget that the declare returns.
     JsKitKindFlag_DeclaresChildren = 1u << 1,
 };
 typedef uint8_t JsKitKindFlags;
@@ -213,8 +311,15 @@ struct JsKitKind {
     void (*PR_NULLABLE create)(void* data);
     void (*PR_NULLABLE destroy)(void* data);
 
+    // The attributes that the data holds as fields. The tree looks an attribute up among these before it calls `set`.
+    const JsKitField* PR_NULLABLE fields;
+    uint32_t fieldCount;
+
+    // What jsKitWidgetDeclare declares the widget from. Null for a kind with a `declare` of its own.
+    const JsKitWidget* PR_NULLABLE widget;
+
     // Sets the attribute `name` from `value`, or resets it. Returns false, leaving the data as it was, if the kind has
-    // no such attribute or the value does not suit it. Null for a kind with no attributes of its own.
+    // no such attribute or the value does not suit it. Null for a kind whose attributes are all fields.
     bool (*PR_NULLABLE set)(void* data, PrStringView name, PrStringView value, bool reset);
 
     // Declares the node's widget under `parent` in the round, and queues its events. Returns the widget's node. The
@@ -231,9 +336,18 @@ Data& jsKitData(const JsKitRound& round, JsKitNodeIndex node) {
     return *static_cast<Data*>(jsKitNodeData(round.tree, node));
 }
 
-// Returns the kind of `name`, or null if no family has one. A family is the kinds of one of the kit's headers, in the
-// source named for the header, and every kind's name is unique among them all.
+// Returns the kind of `name`, or null if no family has one. A family is the kinds of one of the kit's headers that are
+// written by hand, in the source named for the header, or the described kinds. Every kind's name is unique among them
+// all.
 const JsKitKind* PR_NULLABLE jsKitKindFrom(PrStringView name);
+
+// The `declare` of a kind that has a JsKitWidget. It gives the widget's content and style what they take from the node,
+// creates the widget, and queues each of the kind's events whose query holds. It declares nothing for a node that is
+// not under the kind that the widget goes under.
+PrLayoutNode jsKitWidgetDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent);
+
+// Returns the kinds that the kit's headers describe, which kit_node_quickjs_kinds.txt lists.
+Span<const JsKitKind> jsKitDescribedKinds();
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Trees

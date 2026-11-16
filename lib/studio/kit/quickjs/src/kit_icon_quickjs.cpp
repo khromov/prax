@@ -1,16 +1,11 @@
-// The kinds of Studio Kit's icons (pr/kit_icon.h): `icon` and `path-icon`.
+// The kind of Studio Kit's icons (pr/kit_icon.h) that is written by hand: `path-icon`. An `icon` is described
+// (kit_node_quickjs_kinds.txt).
 //
-// Neither kind shows its node's text or queues an event, and the nodes under either are not declared, since an icon
-// holds nothing.
-//
-// An `icon` (prKitIcon) takes `icon`, the name of an icon of the kit's set (prKitIconName), and the fields of
-// PrKitIconStyle: `size`, the side of its square in px, where 0 is the set's 16 px, and `tone`, a keyword of PrKitTone.
-// Reset, `icon` is no icon, and the square is empty.
-//
-// A `path-icon` (prKitPathIcon) takes `path`, SVG path data on the set's grid of 24 units (SVG2/paths.html#PathData),
-// `color`, a color as a `swatch` takes one, `stroked`, a flag, and `size`, as an icon's. It takes no `tone`. A path
-// that has an error is refused whole. Reset, `path` is an empty path and `color` is transparent, so the square is empty
-// until the script gives both.
+// A `path-icon` (prKitPathIcon) shows no text and queues no event, and the nodes under it are not declared, since an
+// icon holds nothing. It takes `path`, SVG path data on the set's grid of 24 units (SVG2/paths.html#PathData), `color`,
+// a color as a `swatch` takes one, `stroked`, a flag, and `size`, the side of its square in px, where 0 is the set's 16
+// px. It takes no `tone`. A path that has an error is refused whole. Reset, `path` is an empty path and `color` is
+// transparent, so the square is empty until the script gives both.
 
 #include "studio/kit/quickjs/src/kit_icon_quickjs.h"
 
@@ -22,16 +17,9 @@
 #include "pr/status.h"
 #include "pr/ui.h"
 
-#include "studio/kit/quickjs/src/kit_panel_quickjs.h"
-
 namespace pr_impl {
 
 namespace {
-
-struct IconData {
-    PrKitIconStyle style;
-    PrKitIconKind icon;
-};
 
 // A path that a path icon draws, shared by the node that the script gave it to and by each widget that was last
 // declared with it. A widget keeps a pointer to its path until a later round declares it with another path or does not
@@ -74,28 +62,11 @@ void keptRelease(void* state) {
     pathRelease(*static_cast<IconPath**>(state));
 }
 
-bool iconSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    IconData& icon = *static_cast<IconData*>(data);
-    if (name == "icon")
-        return jsKitSetIcon(value, reset, &icon.icon);
-    if (name == "size")
-        return jsKitSetLength(value, reset, &icon.style.size);
-    if (name == "tone")
-        return jsKitSetKeyword(jsKitTones(), value, reset, &icon.style.tone);
-    return false;
-}
-
 // Places an icon's widget as the script placed its node. An icon is a replaced element, which holds no nodes, so its
 // kind places it and returns no node for the tree to declare the node's children under.
 void place(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode made) {
     if (jsKitNodeIsPlaced(round.tree, node))
         prKitPlace(round.kit, made, jsKitNodePlace(round.tree, node));
-}
-
-PrLayoutNode iconDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    const IconData& icon = jsKitData<IconData>(round, node);
-    place(round, node, prKitIcon(round.kit, parent, {.key = jsKitNodeKey(round, node), .icon = icon.icon}, icon.style));
-    return kPrLayoutNodeNone;
 }
 
 void pathIconCreate(void* data) {
@@ -152,7 +123,6 @@ PrLayoutNode pathIconDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLay
 }
 
 constexpr JsKitKind kKinds[] = {
-    {.name = "icon", .dataSize = sizeof(IconData), .set = iconSet, .declare = iconDeclare},
     {
         .name = "path-icon",
         .dataSize = sizeof(PathIconData),

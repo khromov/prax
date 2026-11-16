@@ -1,0 +1,173 @@
+# The kinds of Studio Kit's QuickJS binding that tools/gen/gen_kit.py describes from the kit's headers, and what the
+# headers cannot say of them. Run `./dev.sh gen kit` after changing this file or a header of the kit, which writes
+# kit_node_quickjs_kinds.cpp. The first comment of that file is the reference of these kinds for a script's author.
+#
+# A line that is not indented begins a kind: the name of its element, and the kit's function that creates its widget.
+# The function takes the kit, the parent and, for most, a content and a style. Every field of what it takes after the
+# parent is an attribute of the kind, named as the field is with a hyphen between its words, and read in the form that
+# the field's type gives. A struct of the kit's that a struct holds gives its fields as the struct's own. A float is a
+# length, which is zero or more, in a struct named as a style, and any number elsewhere. Three fields are not
+# attributes: the content's key, which is the node's, a style's place, which is the node's placement, and padding.
+#
+# The lines indented under a kind say the rest:
+#
+#   text <field>                The string that shows the node's text, which is then no attribute.
+#   attribute <name> <field>    An attribute whose name is not its field's.
+#   omit <field>                A field that the kind leaves zero, and that is no attribute.
+#   number <field>              A float that is any number where the rule above makes it a length.
+#   length <field>              A float that is a length where the rule above makes it any number.
+#   under <kind>                The kind that a node's parent must be of for the node to be declared.
+#   leaf                        The widget holds nothing, so the nodes under the kind's node are not declared.
+#   event <type> <query>        An event that the kind queues, with no detail, in each round in which the kit's query,
+#                               a function of the kit and the widget's node, holds for the widget.
+#
+# The generator fails on a field whose type has no attribute form. A kind that needs more than these lines say is
+# written by hand, in the source of its family: one whose widget reads or writes through a pointer, whose event
+# carries a detail, or that declares the nodes under it itself.
+
+# pr/kit_data.h
+
+stat-tile prKitStatTile
+    text label
+
+log-line prKitLogLine
+    text message
+
+# pr/kit_button.h. A script sets a button's `selected` in answer to its `click` if the button is a toggle, and destroys
+# a chip in answer to its `remove`: the widget stays until it does.
+
+button prKitButton
+    text text
+    event click prKitActivated
+
+badge prKitBadge
+    text text
+
+kbd prKitKbd
+    text text
+
+status prKitStatus
+    text text
+
+chip prKitChip
+    text label
+    event remove prKitRemoved
+
+button-group prKitButtonGroup
+
+# pr/kit_box.h. A layer covers the nearest stack or plane above it.
+
+stack prKitStack
+
+layer prKitLayer
+
+spacer prKitSpacer
+
+divider prKitDivider
+
+# pr/kit_text.h
+
+label prKitLabel
+    text text
+    attribute text-align align
+
+# pr/kit_panel.h
+
+panel prKitPanel
+
+selectable prKitSelectable
+    event click prKitActivated
+
+panel-header prKitPanelHeader
+    text title
+
+swatch prKitSwatch
+
+# pr/kit_icon.h
+
+icon prKitIcon
+    leaf
+
+# pr/kit_choice.h. A script sets `selected` on the segment or the radio that it chose in answer to a `click`, and
+# resets it on the others.
+
+segmented prKitSegmented
+    omit direction
+
+segment prKitSegment
+    under segmented
+    text label
+    event click prKitActivated
+
+radio-group prKitRadioGroup
+
+radio prKitRadio
+    under radio-group
+    text label
+    event click prKitActivated
+
+tab-label prKitTabLabel
+    under tab
+    text text
+    leaf
+
+progress prKitProgress
+
+meter prKitMeter
+
+spinner prKitSpinner
+
+# pr/kit_menu.h. A menu bar's item holds its menu, as a `popover` with a `menu` under it. A dialog's footer goes last
+# in a `dialog`, for its buttons, and a palette's footer after the palette's items.
+
+menu-label prKitMenuLabel
+    text text
+
+menu-item prKitMenuItem
+    text text
+    event click prKitActivated
+
+menu-separator prKitMenuSeparator
+
+menu-bar prKitMenuBar
+
+menu-bar-item prKitMenuBarItem
+    under menu-bar
+    text text
+
+tooltip prKitTooltip
+    text text
+
+dialog-footer prKitDialogFooter
+
+command-item prKitCommandItem
+    under command-palette
+    text text
+    event click prKitActivated
+
+command-palette-footer prKitCommandPaletteFooter
+    under command-palette
+
+# pr/kit_collection.h. The parts of a row go under a `list-row` or a `tree-row`, and those of a tile under a
+# `list-tile`. A tile's icon with no tint, or a fully transparent one, is on the theme's raised background.
+
+row-icon prKitRowIcon
+
+row-label prKitRowLabel
+    text text
+
+row-meta prKitRowMeta
+    text text
+
+tile-icon prKitTileIcon
+
+tile-label prKitTileLabel
+    text text
+
+empty-state prKitEmptyState
+    text title
+
+# pr/kit_input.h
+
+inspector-row prKitInspectorRow
+    text label

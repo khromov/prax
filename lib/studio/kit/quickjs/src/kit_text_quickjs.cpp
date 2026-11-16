@@ -1,12 +1,10 @@
-// The kinds of Studio Kit's text (pr/kit_text.h): `label`, `text` and `run`. None queues an event.
+// The kinds of Studio Kit's text (pr/kit_text.h) that are written by hand: `text` and `run`. Neither queues an event. A
+// `label` is described (kit_node_quickjs_kinds.txt).
 //
-// A `label` (prKitLabel) shows its node's text, and takes the fields of PrKitTextStyle: `role`, `tone` and `wrap`, each
-// a keyword of its field's enumeration, `text-align`, a keyword of PrKitTextAlign, and `preserve`, a flag. The nodes
-// under it are declared in it, after its text.
-//
-// A `text` (prKitText) is a paragraph, which takes a label's attributes. Its runs are the `run` nodes under it, in the
-// tree's order. Its own text, if it has any, is a run before them, in the paragraph's role and tone. A node of any
-// other kind under it is not declared.
+// A `text` (prKitText) is a paragraph, which takes the fields of PrKitTextStyle as a label does: `role`, `tone` and
+// `wrap`, each a keyword of its field's enumeration, `text-align`, a keyword of PrKitTextAlign, and `preserve`, a flag.
+// Its runs are the `run` nodes under it, in the tree's order. Its own text, if it has any, is a run before them, in the
+// paragraph's role and tone. A node of any other kind under it is not declared.
 //
 // A `run` is a PrKitTextRun of the `text` that it is directly under. It shows its node's text, exactly as the script
 // gave it, so the spaces between two runs' words are in a run's text. It takes `role` and `tone`, which are its own:
@@ -64,15 +62,6 @@ bool styleSet(PrKitTextStyle& style, PrStringView name, PrStringView value, bool
     return false;
 }
 
-bool labelSet(void* data, PrStringView name, PrStringView value, bool reset) {
-    return styleSet(*static_cast<PrKitTextStyle*>(data), name, value, reset);
-}
-
-PrLayoutNode labelDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutNode parent) {
-    PrKitLabel label{.key = jsKitNodeKey(round, node), .text = jsKitNodeText(round.tree, node)};
-    return prKitLabel(round.kit, parent, label, jsKitData<PrKitTextStyle>(round, node));
-}
-
 bool runSet(void* data, PrStringView name, PrStringView value, bool reset) {
     RunData& run = *static_cast<RunData*>(data);
     if (name == "role")
@@ -118,7 +107,6 @@ PrLayoutNode textDeclare(const JsKitRound& round, JsKitNodeIndex node, PrLayoutN
 }
 
 constexpr JsKitKind kKinds[] = {
-    {.name = "label", .dataSize = sizeof(PrKitTextStyle), .set = labelSet, .declare = labelDeclare},
     {.name = "text", .dataSize = sizeof(TextData), .destroy = textDestroy, .set = textSet, .declare = textDeclare},
     {.name = "run", .dataSize = sizeof(RunData), .set = runSet, .declare = runDeclare},
 };

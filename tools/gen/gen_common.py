@@ -61,14 +61,21 @@ def with_view_includes(text):
     return text[:first.end()] + "".join(needed) + text[first.end():]
 
 
-def write(path, chunks):
-    """Writes the file, with its comment paragraphs refilled to the line limit that lint requires. A header includes the
-    headers of the view types that it names."""
+def rendered(path, chunks):
+    """Returns the text that write gives the file at `path`: the chunks, with their comment paragraphs refilled to the
+    line limit that lint requires and their includes ordered. A header includes the headers of the view types that it
+    names."""
     text = "".join(chunks)
     if path.endswith(".h"):
         text = with_view_includes(text)
     if path.endswith((".h", ".cpp")):
         text = includes.ordered_text(path, rewrap.rewrap(text))
+    return text
+
+
+def write(path, chunks):
+    """Writes the file, as rendered gives its text."""
+    text = rendered(path, chunks)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)

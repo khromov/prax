@@ -49,20 +49,18 @@ if (PR_JS)
     pr_library(studio_kit_quickjs INCLUDE kit/quickjs/include
         kit/quickjs/src/kit_quickjs.cpp
         kit/quickjs/src/kit_node_quickjs.cpp
+        kit/quickjs/src/kit_node_quickjs_kinds.cpp
         kit/quickjs/src/kit_block_quickjs.cpp
         kit/quickjs/src/kit_box_quickjs.cpp
-        kit/quickjs/src/kit_button_quickjs.cpp
         kit/quickjs/src/kit_choice_quickjs.cpp
         kit/quickjs/src/kit_collection_quickjs.cpp
         kit/quickjs/src/kit_color_quickjs.cpp
-        kit/quickjs/src/kit_data_quickjs.cpp
         kit/quickjs/src/kit_dock_quickjs.cpp
         kit/quickjs/src/kit_graph_quickjs.cpp
         kit/quickjs/src/kit_icon_quickjs.cpp
         kit/quickjs/src/kit_image_quickjs.cpp
         kit/quickjs/src/kit_input_quickjs.cpp
         kit/quickjs/src/kit_menu_quickjs.cpp
-        kit/quickjs/src/kit_panel_quickjs.cpp
         kit/quickjs/src/kit_text_quickjs.cpp
         kit/quickjs/src/kit_timeline_quickjs.cpp
         kit/quickjs/src/kit_title_bar_quickjs.cpp

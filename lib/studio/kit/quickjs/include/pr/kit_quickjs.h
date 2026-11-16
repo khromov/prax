@@ -19,9 +19,11 @@
 //   kitTree.onevent(node, type, detail)    the script's function, which dispatching calls with each queued event
 //   kitTree.requestRound()                 asks the host to declare the tree again before it shows the frame
 //
-// A kind is one of the kit's widgets, named as an element is: `box`, `label`, `button`. Each of the kit's headers has a
-// source in this layer that defines its kinds, and says what attributes each takes and what events it queues. Every
-// kind takes the attributes of PrKitPlace besides its own: `width`, `height`, `min-width`, `min-height`, `max-width`,
+// A kind is one of the kit's widgets, named as an element is: `box`, `label`, `button`. The sources of this layer say
+// what attributes each kind takes and what events it queues. Most kinds are described by the structs of their widgets,
+// and the first comment of the source that is generated from them, kit_node_quickjs_kinds.cpp, is their reference. Each
+// of the kit's headers has a source besides for the kinds of its widgets that need code of their own. Every kind takes
+// the attributes of PrKitPlace besides its own: `width`, `height`, `min-width`, `min-height`, `max-width`,
 // `max-height`, `margin`, `flex`, `align-self` and `weight`. A node under another is declared under the other's widget,
 // which is how a box holds its content and a menu its items.
 //

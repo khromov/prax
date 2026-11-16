@@ -10,11 +10,13 @@ USAGE = {
     tools/gen/gen_float.py""",
 }
 
-GENERATORS = ("brotli", "charset", "css", "dom", "html", "url", "webidl", "unicode", "locale", "mathml", "float")
+GENERATORS = ("brotli", "charset", "css", "dom", "html", "url", "webidl", "unicode", "locale", "mathml", "float",
+              "kit")
 
-# The checkouts that the generators read, and the generators that compute their tables and read none.
+# The checkouts that the generators read, and the generators that read none: they compute their tables, or read the
+# repository's own files.
 SOURCES = ("webref", "entities", "encodings", "unicode", "cldr", "rfcs", "drafts", "mathml")
-COMPUTED = ("float",)
+COMPUTED = ("float", "kit")
 
 
 def gen(argv):

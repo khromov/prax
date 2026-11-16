@@ -90,6 +90,53 @@ TEST_CASE("an icon draws the icon of the set that a script names, at its size an
     CHECK(kitVerified(scripted.fixture.tree));
 }
 
+TEST_CASE("an icon, which holds nothing, tells where it was laid out and is brought into view as any widget is") {
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var column = make('box', 0, {overflow: 'scroll-y', height: '120', gap: '8'});
+        var icons = [];
+        for (var i = 0; i < 20; ++i)
+            icons.push(make('icon', column, {icon: 'star', size: '24'}));
+        make('label', icons[19], {}, 'not declared');
+        var told = null;
+        kitTree.listen(icons[19], 'bounds', true);
+        kitTree.onevent = function (node, type, detail) {
+            if (node !== icons[19] || type !== 'bounds')
+                throw new Error('an event of another node');
+            told = detail.values;
+        };
+    )JS");
+    KitFixture direct;
+    PrLayoutNode last = kPrLayoutNodeNone;
+    bool reveal = false;
+    direct.build = [&](PrLayoutNode root) {
+        PrKitBoxStyle style{.overflow = PrKitOverflow_ScrollY, .gap = 8};
+        style.place.height = prKitPx(120);
+        PrLayoutNode column = prKitBox(direct.kit, root, {}, style);
+        for (uint32_t i = 0; i < 20; ++i)
+            last = prKitIcon(direct.kit, column, {.icon = PrKitIconKind_Star}, {.size = 24});
+        if (reveal)
+            prUiReveal(direct.kit->ui, last);
+        reveal = false;
+    };
+    frames(scripted, direct, 2);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    PrRect box = direct.bounds(last);
+    CHECK(box.top > 120);
+    CHECK(scripted.number("told[1]") == doctest::Approx(double(box.top)));
+    CHECK(scripted.number("told[3]") == doctest::Approx(double(box.bottom)));
+
+    scripted.run("kitTree.set(icons[19], 'reveal', '1');");
+    reveal = true;
+    frames(scripted, direct, 30);
+    box = direct.bounds(last);
+    CHECK(box.bottom <= 120.5f);
+    CHECK(scripted.number("told[3]") == doctest::Approx(double(box.bottom)));
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(kitVerified(scripted.fixture.tree));
+}
+
 TEST_CASE("a path icon draws the path data that a script gives, stroked or filled in its color, and follows its edits") {
     JsKitScripted scripted;
     scripted.run(kJsKitMake);
