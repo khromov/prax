@@ -308,7 +308,7 @@ bool jsKitNumberFrom(PrStringView text, double* out) {
             continue;
         }
         if (c < '0' || c > '9')
-            return false;
+            break;
         mantissa = mantissa * 10 + (c - '0');
         if (fraction)
             divisor *= 10;
@@ -317,6 +317,26 @@ bool jsKitNumberFrom(PrStringView text, double* out) {
     if (!digits)
         return false;
     double value = mantissa / divisor;
+
+    // An exponent, which is how a script's number reads once it is very small or very large.
+    if (at < text.size && (text.data[at] == 'e' || text.data[at] == 'E')) {
+        ++at;
+        bool shrinks = false;
+        if (at < text.size && (text.data[at] == '-' || text.data[at] == '+'))
+            shrinks = text.data[at++] == '-';
+        uint32_t exponent = 0;
+        bool exponentDigits = false;
+        for (; at < text.size && text.data[at] >= '0' && text.data[at] <= '9' && exponent < 400; ++at) {
+            exponent = exponent * 10 + uint32_t(text.data[at] - '0');
+            exponentDigits = true;
+        }
+        if (!exponentDigits)
+            return false;
+        for (uint32_t i = 0; i < exponent; ++i)
+            value = shrinks ? value / 10 : value * 10;
+    }
+    if (at != text.size)
+        return false;
     *out = negative ? -value : value;
     return true;
 }

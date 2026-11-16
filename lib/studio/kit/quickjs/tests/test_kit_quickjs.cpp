@@ -149,16 +149,16 @@ TEST_CASE("an attribute takes only the values of its kind, and a value that does
         var taken = [
             kitTree.set(box, 'padding', '4 8 12'), kitTree.set(box, 'wrap', ''), kitTree.set(box, 'width', '50%'),
             kitTree.set(label, 'wrap', 'nowrap'), kitTree.set(label, 'max-width', 'fill'),
-            kitTree.set(button, 'size', 'lg'), kitTree.set(button, 'size', null),
+            kitTree.set(button, 'size', 'lg'), kitTree.set(button, 'size', null), kitTree.set(box, 'gap', '2.5e-1'),
             kitTree.listen(button, 'click', true),
         ].filter(Boolean).length;
         var refused = [
             kitTree.set(box, 'padding', '4 8 12 16 20'), kitTree.set(box, 'gap', '-1'), kitTree.set(box, 'role', 'title'),
-            kitTree.set(label, 'wrap', ''), kitTree.set(label, 'variant', 'primary'), kitTree.set(label, 'width', '1e3'),
+            kitTree.set(label, 'wrap', ''), kitTree.set(label, 'variant', 'primary'), kitTree.set(label, 'width', '1e'),
             kitTree.set(button, 'size', 'huge'), kitTree.set(0, 'gap', '4'),
             kitTree.listen(button, 'keydown', true), kitTree.listen(label, 'click', true),
         ].filter(Boolean).length;
     )JS");
-    CHECK(scripted.number("taken") == 8);
+    CHECK(scripted.number("taken") == 9);
     CHECK(scripted.number("refused") == 0);
 }

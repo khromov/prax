@@ -41,7 +41,8 @@ bool jsKitKeywordFrom(Span<const JsKitKeyword> keywords, PrStringView text, uint
 // Returns the name of `value` among `keywords`, or the empty string if none stands for it.
 PrStringView jsKitKeywordName(Span<const JsKitKeyword> keywords, uint8_t value);
 
-// Reads a decimal number that is the whole of `text`: an optional sign, digits, and an optional fraction.
+// Reads a decimal number that is the whole of `text`: an optional sign, digits, an optional fraction, and an optional
+// exponent, as a script writes a number.
 bool jsKitNumberFrom(PrStringView text, double* out);
 
 // Read each attribute's form, or with `reset`, which is how a script removes an attribute, write the form's zero: the
