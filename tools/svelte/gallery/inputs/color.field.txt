@@ -1,0 +1,64 @@
+# extent 1100x1600
+# The color field: its popover opened by a click and by a key, the picker in it, whose edits the picker beside the
+# field shows, an edit of that picker while the popover is open, and the popover closed by Escape, by a click outside
+# and by a click on the field.
+settle
+move 352 457
+settle
+screenshot hover
+click 352 457
+settle
+screenshot open
+move 350 560
+down 350 560
+settle
+screenshot popover-press
+move 450 650
+settle
+screenshot popover-drag
+up 450 650
+settle
+screenshot popover-released
+click 519 560
+settle
+screenshot popover-hue
+click 545 600
+settle
+screenshot popover-alpha
+click 424 486
+settle
+screenshot popover-oklch
+move 380 600
+down 380 600
+settle
+move 440 560
+settle
+up 440 560
+settle
+screenshot popover-oklch-drag
+click 506 486
+settle
+screenshot popover-ramp
+key Escape
+settle
+screenshot escaped
+key Enter
+settle
+screenshot opened-by-key
+click 100 600
+settle
+screenshot click-outside
+click 352 457
+settle
+screenshot open-again
+click 440 757
+key a super
+text #40C0A0
+settle
+screenshot popover-hex
+click 352 457
+settle
+screenshot closed-by-field
+move 700 500
+settle
+screenshot rest

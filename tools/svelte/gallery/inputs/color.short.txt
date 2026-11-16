@@ -1,0 +1,34 @@
+# extent 1100x700
+# A viewport shorter than the section, which the page scrolls: the field's popover where there is no room below the
+# field, the page scrolled under the open popover, and the pickers of the gamuts scrolled into view and dragged.
+settle
+screenshot top
+click 352 457
+settle
+screenshot open
+move 400 300
+settle
+screenshot popover-hover
+scroll 800 400 0 200
+settle
+screenshot scrolled-open
+key Escape
+settle
+screenshot scrolled-closed
+scroll 800 400 0 400
+settle
+screenshot gamuts
+move 120 400
+down 120 400
+settle
+move 200 320
+settle
+screenshot gamuts-drag
+up 200 320
+settle
+scroll 800 400 0 2000
+settle
+screenshot end
+scroll 800 400 0 -2000
+settle
+screenshot back

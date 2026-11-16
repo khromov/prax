@@ -16,7 +16,11 @@
 // with straight alpha, written either as `#` and three, four, six or eight hexadecimal digits or as three or four
 // numbers separated by spaces: red, green, blue and alpha, where 1 is a channel's full value and alpha is 1 if it is
 // left out. The names of the palette's colors are those of PrKitPalette's fields, with a hyphen between a name's words
-// and none before a digit: `accent-weak`, `bg0`, `text-inverse`. Reset, a color is transparent.
+// and none before a digit: `accent-weak`, `bg0`, `text-inverse`. A name may be followed by a space and a shade, a
+// number from -1 to 1, which gives a tint or a shade of the palette's color that follows the theme as the color does. A
+// shade above zero is the share of white that the color's red, green and blue are mixed with, and a shade below zero is
+// the share of black, negated: `accent 0.6` is the accent with six tenths of white, and `accent -0.2` the accent with
+// two tenths of black. The mix keeps the color's alpha. Reset, a color is transparent.
 
 #include "studio/kit/quickjs/src/kit_panel_quickjs.h"
 
@@ -139,6 +143,23 @@ bool channelsFrom(PrStringView text, PrColor* out) {
     return true;
 }
 
+// Reads the name of a color of the palette, a space, and the color's shade, a number from -1 to 1. Returns false, and
+// writes nothing, for any other text.
+bool shadedFrom(PrStringView text, JsKitColorValue* out) {
+    size_t space = 0;
+    while (space < text.size && text.data[space] != ' ')
+        ++space;
+    JsKitColor named = JsKitColor_None;
+    float shade = 0;
+    if (space == text.size || !jsKitKeywordFrom(jsKitColors(), PrStringView{text.data, space}, &named) ||
+            !jsKitSetFloat(PrStringView{text.data + space + 1, text.size - space - 1}, false, &shade) ||
+            !(shade >= -1 && shade <= 1))
+        return false;
+    out->named = named;
+    out->shade = shade;
+    return true;
+}
+
 bool panelSet(void* data, PrStringView name, PrStringView value, bool reset) {
     PanelData& panel = *static_cast<PanelData*>(data);
     if (name == "background")
@@ -257,7 +278,8 @@ bool jsKitSetColorValue(PrStringView value, bool reset, JsKitColorValue* out) {
         if (value.size > 0 && value.data[0] == '#') {
             if (!hexFrom(PrStringView{value.data + 1, value.size - 1}, &color.own))
                 return false;
-        } else if (!jsKitKeywordFrom(jsKitColors(), value, &color.named) && !channelsFrom(value, &color.own)) {
+        } else if (!jsKitKeywordFrom(jsKitColors(), value, &color.named) && !shadedFrom(value, &color) &&
+                !channelsFrom(value, &color.own)) {
             return false;
         }
     }
@@ -266,7 +288,17 @@ bool jsKitSetColorValue(PrStringView value, bool reset, JsKitColorValue* out) {
 }
 
 PrColor jsKitColorFromValue(const PrKit& kit, const JsKitColorValue& value) {
-    return value.named != JsKitColor_None ? jsKitColorFrom(kit, value.named) : value.own;
+    if (value.named == JsKitColor_None)
+        return value.own;
+    PrColor color = jsKitColorFrom(kit, value.named);
+    if (value.shade == 0)
+        return color;
+    float target = value.shade > 0 ? 1.0f : 0.0f;
+    float share = value.shade > 0 ? value.shade : -value.shade;
+    return PrColor{
+        color.r + (target - color.r) * share, color.g + (target - color.g) * share,
+        color.b + (target - color.b) * share, color.a,
+    };
 }
 
 } // namespace pr_impl

@@ -39,6 +39,14 @@ void set(JsKitScripted& scripted, const char* node, const char* name, const char
     scripted.run(source.data());
 }
 
+// Returns `color` with `share` of `target` mixed into each of its red, green and blue channels.
+PrColor mixed(PrColor color, float target, float share) {
+    return PrColor{
+        color.r + (target - color.r) * share, color.g + (target - color.g) * share,
+        color.b + (target - color.b) * share, color.a,
+    };
+}
+
 } // namespace
 
 } // namespace pr_impl
@@ -286,6 +294,53 @@ TEST_CASE("a swatch is filled with the color that a script names, in each form t
     CHECK(kitVerified(scripted.fixture.tree));
 }
 
+TEST_CASE("a swatch of a shaded name is filled with the palette's color mixed with white or with black") {
+    JsKitScripted scripted;
+    scripted.run(kJsKitMake);
+    scripted.run(R"JS(
+        var row = make('box', 0, {direction: 'row', gap: '4', padding: '8'});
+        var colors = ['accent 0.6', 'accent -0.25', 'accent-weak 0.5', 'danger 1', 'success -1', 'warning 0'];
+        var swatches = colors.map(function (color) {
+            return make('swatch', row, {color: color, size: '16'});
+        });
+    )JS");
+    KitFixture direct;
+    float last = 0;
+    direct.build = [&](PrLayoutNode root) {
+        PrKit* kit = direct.kit;
+        const PrKitPalette& palette = kit->theme.palette;
+        PrLayoutNode row = prKitBox(kit, root, {}, {
+            .direction = PrKitDirection_Row,
+            .gap = 4,
+            .padding = prKitEdgesAll(8),
+        });
+        const PrColor colors[] = {
+            mixed(palette.accent, 1, 0.6f),
+            mixed(palette.accent, 0, 0.25f),
+            mixed(palette.accentWeak, 1, 0.5f),
+            PrColor{1, 1, 1, palette.danger.a},
+            PrColor{0, 0, 0, palette.success.a},
+            mixed(palette.warning, 1, last),
+        };
+        for (PrColor color : colors)
+            prKitSwatch(kit, row, {.color = color}, {.size = 16});
+    };
+    frames(scripted, direct);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(kitVerified(scripted.fixture.tree));
+
+    // A later shade replaces the first, and a name alone has none.
+    scripted.run("kitTree.set(swatches[5], 'color', 'warning 0.75');");
+    last = 0.75f;
+    frames(scripted, direct);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    scripted.run("kitTree.set(swatches[5], 'color', 'warning');");
+    last = 0;
+    frames(scripted, direct);
+    CHECK(jsKitRendersAlike(scripted.fixture, direct));
+    CHECK(kitVerified(scripted.fixture.tree));
+}
+
 TEST_CASE("the kinds of panels take only their own attributes and events") {
     JsKitScripted scripted;
     scripted.run(R"JS(
@@ -297,7 +352,8 @@ TEST_CASE("the kinds of panels take only their own attributes and events") {
             kitTree.set(panel, 'rules', 'top top'), kitTree.set(panel, 'gap', '4'), kitTree.set(panel, 'width', 'fill'),
             kitTree.set(selectable, 'overflow', 'scroll'), kitTree.set(selectable, 'selected', 'false'),
             kitTree.set(header, 'meta', ''), kitTree.set(swatch, 'color', 'text-inverse'),
-            kitTree.set(swatch, 'color', '-0.5 2 0'), kitTree.set(swatch, 'size', '0'),
+            kitTree.set(swatch, 'color', '-0.5 2 0'), kitTree.set(swatch, 'color', 'accent 1'),
+            kitTree.set(swatch, 'color', 'bg2 -0.5'), kitTree.set(swatch, 'size', '0'),
             kitTree.listen(selectable, 'click', true), kitTree.listen(selectable, 'click', false),
         ].filter(Boolean).length;
         var refused = [
@@ -309,12 +365,16 @@ TEST_CASE("the kinds of panels take only their own attributes and events") {
             kitTree.set(swatch, 'color', '#12'), kitTree.set(swatch, 'color', '#12345'),
             kitTree.set(swatch, 'color', '#ggg'), kitTree.set(swatch, 'color', '#1234567'),
             kitTree.set(swatch, 'color', '1 2'), kitTree.set(swatch, 'color', '1 2 3 4 5'),
-            kitTree.set(swatch, 'color', '1 2 x'), kitTree.set(swatch, 'color', 'accent 1'),
+            kitTree.set(swatch, 'color', '1 2 x'), kitTree.set(swatch, 'color', 'accent 1.5'),
+            kitTree.set(swatch, 'color', 'accent -2'), kitTree.set(swatch, 'color', 'accent '),
+            kitTree.set(swatch, 'color', 'accent  0.5'), kitTree.set(swatch, 'color', 'accent 0.5 0.5'),
+            kitTree.set(swatch, 'color', 'accent x'), kitTree.set(swatch, 'color', 'nope 0.5'),
+            kitTree.set(swatch, 'color', '#fff 0.5'),
             kitTree.set(swatch, 'size', '-1'), kitTree.set(swatch, 'size', 'md'),
             kitTree.listen(panel, 'click', true), kitTree.listen(selectable, 'change', true),
             kitTree.listen(header, 'click', true), kitTree.listen(swatch, 'click', true),
         ].filter(Boolean).length;
     )JS");
-    CHECK(scripted.number("taken") == 11);
+    CHECK(scripted.number("taken") == 13);
     CHECK(scripted.number("refused") == 0);
 }

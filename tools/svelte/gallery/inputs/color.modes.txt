@@ -1,0 +1,64 @@
+# extent 1100x1600
+# The picker's tabs, and the planes that they choose: OKLCH, with its strips, and the ramp, with its tones. The field
+# beside the picker shows each edit.
+settle
+move 158 433
+settle
+screenshot tab-hover
+click 158 433
+settle
+screenshot oklch
+move 120 520
+down 120 520
+settle
+screenshot oklch-press
+move 200 480
+settle
+screenshot oklch-drag
+move 300 400
+settle
+screenshot oklch-past-corner
+up 300 400
+settle
+screenshot oklch-released
+move 254 500
+down 254 500
+settle
+move 254 580
+settle
+screenshot oklch-hue-drag
+up 254 580
+settle
+click 280 520
+settle
+screenshot oklch-alpha
+move 240 433
+settle
+click 240 433
+settle
+screenshot ramp
+move 100 600
+down 100 600
+settle
+screenshot ramp-press
+move 200 500
+settle
+screenshot ramp-drag
+up 200 500
+settle
+screenshot ramp-released
+move 69 695
+settle
+screenshot tone-hover
+click 69 695
+settle
+screenshot tone-light
+click 253 695
+settle
+screenshot tone-dark
+click 77 433
+settle
+screenshot hsv
+click 240 433
+settle
+screenshot ramp-again

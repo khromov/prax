@@ -1,0 +1,35 @@
+# extent 1100x1600
+# The picker in the frame that routes each move of a drag, with no frame after it: the plane, a strip and the fields
+# follow the pointer in that frame. Each screenshot is the picker alone, since the field beside it follows a frame
+# later (color.shared-frame). The last is the section whole, two frames after the drag's last move.
+settle
+move 100 520
+down 100 520
+frame
+screenshot press 24 410 270 340
+move 140 560
+frame
+screenshot move-1 24 410 270 340
+move 180 600
+frame
+screenshot move-2 24 410 270 340
+move 200 640
+frame
+screenshot move-3 24 410 270 340
+up 200 640
+frame
+screenshot release 24 410 270 340
+move 254 500
+down 254 500
+frame
+move 254 540
+frame
+screenshot hue-move-1 24 410 270 340
+move 254 580
+frame
+screenshot hue-move-2 24 410 270 340
+frame
+screenshot hue-settled
+up 254 580
+frame
+screenshot hue-release

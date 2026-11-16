@@ -1,0 +1,85 @@
+# extent 1100x1600
+# The fields of the picker: a coordinate that the arrow keys step and a drag scrubs, the hex value typed over, a hex
+# value that is no color, and the focus that Tab moves through the fields to the color field.
+settle
+click 75 673
+settle
+screenshot hue-focus
+key ArrowUp
+settle
+screenshot hue-up
+key ArrowDown shift
+settle
+screenshot hue-down-shift
+key Tab
+settle
+screenshot saturation-focus
+key ArrowUp
+key ArrowUp
+settle
+screenshot saturation-up
+key Tab
+key ArrowDown
+settle
+screenshot value-down
+move 127 735
+down 127 735
+frame 2
+move 160 735
+frame 2
+move 200 730
+settle
+screenshot green-scrub
+up 200 730
+settle
+screenshot green-scrubbed
+move 255 735
+down 255 735
+frame 2
+move 215 735
+frame 2
+move 175 740
+settle
+up 175 740
+settle
+screenshot alpha-scrubbed
+click 175 704
+settle
+screenshot hex-focus
+key a super
+settle
+screenshot hex-selected
+text #ff88
+settle
+screenshot hex-partial
+text 00
+settle
+screenshot hex-typed
+key Enter
+settle
+screenshot hex-entered
+key a super
+text 12345
+settle
+screenshot hex-refused
+key Enter
+settle
+screenshot hex-refused-entered
+key a super
+text #2060C080
+key Tab
+settle
+screenshot hex-with-alpha
+key Tab
+key Tab
+key Tab
+key Tab
+settle
+screenshot tab-alpha
+key Tab
+settle
+screenshot tab-field
+key Tab shift
+key ArrowUp
+settle
+screenshot back-alpha-up

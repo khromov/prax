@@ -1,0 +1,15 @@
+# extent 560x700
+# A viewport narrower than the names of the widest icons, which their cells clip, and shorter than the section, which
+# the page scrolls.
+settle
+screenshot top
+move 280 400
+scroll 280 400 0 300
+settle
+screenshot scrolled
+scroll 280 400 0 2000
+settle
+screenshot end
+scroll 280 400 0 -150
+settle
+screenshot back

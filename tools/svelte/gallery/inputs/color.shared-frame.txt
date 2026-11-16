@@ -1,0 +1,16 @@
+# extent 1100x1600
+# known: a script hears a drag's edit after the round that made it, so the field shows the picker's edit a frame late
+#
+# The example gives the picker and the field one color, so the field shows a drag on the picker's plane in the frame
+# that routes the pointer's move. The binding gives each control a color of its own, and the script copies an edit
+# from one to the other as it hears of it, which is after the round. The context runs a second round in a frame that
+# routes a press or a release, and none in a frame that routes a move, so the field shows the edit in the next frame.
+# The screenshot is the field alone, in the frame of a move. color.drag-frame holds the picker in that frame, and
+# color.picker the two together once a frame has passed.
+settle
+move 100 520
+down 100 520
+frame
+move 180 600
+frame
+screenshot field 299 446 220 22

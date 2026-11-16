@@ -1,0 +1,79 @@
+# extent 1100x1600
+# The pickers of the three gamuts: a drag on each plane, which keeps its color apart from the others, a strip of hues,
+# the tabs of one, and its fields.
+settle
+move 120 1000
+down 120 1000
+settle
+screenshot srgb-press
+move 200 920
+settle
+screenshot srgb-drag
+up 200 920
+settle
+screenshot srgb-released
+move 400 1040
+down 400 1040
+settle
+move 480 900
+settle
+screenshot p3-drag
+move 560 860
+settle
+up 560 860
+settle
+screenshot p3-past-corner
+move 700 1000
+down 700 1000
+settle
+move 740 890
+settle
+up 740 890
+settle
+screenshot rec2020-released
+move 254 900
+down 254 900
+settle
+move 254 1060
+settle
+screenshot srgb-hue-drag
+up 254 1060
+settle
+click 518 1040
+settle
+screenshot p3-hue
+click 605 866
+settle
+screenshot rec2020-hsv
+move 640 950
+down 640 950
+settle
+move 700 1000
+settle
+up 700 1000
+settle
+screenshot rec2020-hsv-drag
+click 768 866
+settle
+screenshot rec2020-ramp
+click 687 866
+settle
+screenshot rec2020-oklch
+click 339 1106
+key ArrowDown
+key ArrowDown
+settle
+screenshot p3-lightness-down
+click 439 1137
+key a super
+text #00FF00
+key Enter
+settle
+screenshot p3-hex
+click 75 1168
+key ArrowUp shift
+settle
+screenshot srgb-red-up
+move 900 1000
+settle
+screenshot rest

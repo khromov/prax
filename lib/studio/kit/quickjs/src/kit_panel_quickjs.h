@@ -21,12 +21,17 @@ Span<const JsKitKind> jsKitPanelKinds();
 struct JsKitColorValue {
     JsKitColor named;               // JsKitColor_None if the color is `own`
     PrColor own;                    // in sRGB, with straight alpha, as the palette's colors are
+
+    // The share of white that a named color is mixed with, from 0 to 1, or the share of black, negated. The mix is of
+    // the color's red, green and blue channels in sRGB, and keeps its alpha.
+    float shade;
 };
 
 // Reads a color, or with `reset` writes transparent black. A color is one of three forms: the name of a color of the
-// palette (jsKitColors); `#` and three, four, six or eight hexadecimal digits (css-color-4/#hex-notation); or three or
-// four numbers separated by spaces, which are the red, green, blue and alpha channels, where 1 is a channel's full
-// value and alpha is 1 if it is left out. Returns false, and writes nothing, for any other text.
+// palette (jsKitColors), and after it, if the color is shaded, a space and its shade, a number from -1 to 1; `#` and
+// three, four, six or eight hexadecimal digits (css-color-4/#hex-notation); or three or four numbers separated by
+// spaces, which are the red, green, blue and alpha channels, where 1 is a channel's full value and alpha is 1 if it is
+// left out. Returns false, and writes nothing, for any other text.
 bool jsKitSetColorValue(PrStringView value, bool reset, JsKitColorValue* out);
 
 // Returns the color that `value` stands for in the kit's theme.

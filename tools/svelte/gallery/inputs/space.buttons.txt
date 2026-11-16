@@ -1,0 +1,45 @@
+# extent 1100x800
+# The buttons at each control height: hover, press, release, a press that leaves the button, and focus by key.
+settle
+move 715 137
+settle
+screenshot hover-xs
+down 715 137
+settle
+screenshot press-xs
+up 715 137
+settle
+screenshot released-xs
+move 717 175
+settle
+screenshot hover-sm
+click 721 213
+settle
+screenshot clicked-md
+move 723 251
+down 723 251
+settle
+screenshot press-lg
+move 900 300
+settle
+screenshot press-lg-outside
+up 900 300
+settle
+screenshot released-outside
+key Tab
+settle
+screenshot tab-1
+key Tab
+settle
+screenshot tab-2
+key Enter
+settle
+screenshot enter
+key Tab shift
+settle
+screenshot shift-tab
+key Tab
+key Tab
+key Tab
+settle
+screenshot tab-4

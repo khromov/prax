@@ -1,0 +1,47 @@
+# extent 1100x1600
+# The picker's HSV plane and its strips of hues and of alpha: a press, a drag, a drag past the edge and a release of
+# each. The field beside the picker shows the same color.
+settle
+move 100 520
+settle
+screenshot plane-hover
+down 100 520
+settle
+screenshot plane-press
+move 180 600
+settle
+screenshot plane-drag
+move 300 700
+settle
+screenshot plane-past-corner
+up 300 700
+settle
+screenshot plane-released
+click 60 470
+settle
+screenshot plane-click
+move 254 480
+down 254 480
+settle
+screenshot hue-press
+move 254 620
+settle
+screenshot hue-drag
+move 400 300
+settle
+up 400 300
+settle
+screenshot hue-past-top
+move 280 560
+down 280 560
+settle
+screenshot alpha-press
+move 284 610
+settle
+screenshot alpha-drag
+up 284 610
+settle
+screenshot alpha-released
+move 700 500
+settle
+screenshot rest

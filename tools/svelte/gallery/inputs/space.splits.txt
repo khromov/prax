@@ -1,0 +1,52 @@
+# extent 1100x800
+# The two splits: a band under the pointer, a drag of each band, a drag past a split's edge, and a second drag of a
+# band that an earlier one moved.
+settle
+move 550 491
+settle
+screenshot hover-band
+down 550 491
+frame
+move 600 493
+frame
+move 700 495
+frame
+screenshot dragging
+up 700 495
+settle
+screenshot two-right
+move 291 587
+down 291 587
+frame
+move 200 587
+frame
+move 120 580
+frame
+up 120 580
+settle
+screenshot three-first-left
+move 807 587
+down 807 587
+frame
+move 1000 587
+frame
+move 1090 600
+frame
+screenshot three-second-past-edge
+up 1090 600
+settle
+screenshot three-second-right
+move 700 491
+down 700 491
+frame
+move 400 491
+frame
+move 20 491
+frame
+screenshot two-past-start
+up 20 491
+settle
+screenshot two-left
+move 300 300
+settle
+screenshot rest
