@@ -1,5 +1,6 @@
 <!-- The gallery's sectionColor (examples/studio_gallery/section_foundations.cpp). -->
 <script>
+    import { sameFrame } from 'prax-svelte';
     import Card from '../parts/Card.svelte';
     import DemoPanel from '../parts/DemoPanel.svelte';
     import FillLabel from '../parts/FillLabel.svelte';
@@ -59,6 +60,12 @@
 
     // The color that the picker and the field edit together (gallery_state.h), as the channels of extended sRGB.
     let color = $state([0.42, 0.55, 0.78, 1]);
+
+    // The example gives the picker and the field one color, so each shows the other's edit in the frame that made it.
+    function share(event) {
+        color = event.values;
+        sameFrame();
+    }
 
     // The colors of the pickers in sRGB, Display P3 and Rec. 2020, each starting at P3's green primary in extended
     // sRGB, which lies past sRGB.
@@ -131,10 +138,10 @@
   </DemoPanel>
   <DemoPanel title="COLOR PICKER" tags="HSV . OKLCH . RAMP">
     <box direction="row" align="start" gap={space[8]}>
-      <color-picker value={color} gamut="display" onchange={(event) => (color = event.values)}></color-picker>
+      <color-picker value={color} gamut="display" onchange={share}></color-picker>
       <box gap={space[3]}>
         <label {...text.bodySecondary}>The same color in a field, which opens the picker in a popover:</label>
-        <color-field value={color} width={220} flex="fixed" onchange={(event) => (color = event.values)}></color-field>
+        <color-field value={color} width={220} flex="fixed" onchange={share}></color-field>
       </box>
     </box>
   </DemoPanel>

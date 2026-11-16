@@ -362,7 +362,7 @@ bool nativeFrom(PrStringView name, Content& content) {
 // The number of frames that a headless run gives the kit's transitions to end, a sixtieth of a second apart.
 constexpr uint32_t kSettleFrames = 60;
 
-// The most times that a headless frame is declared again for what the script changed in answer to it.
+// The most times that a headless frame is declared again because the script asked for it in answer to the frame.
 constexpr uint32_t kAnswerFrames = 2;
 
 // A kit with a context and a tree of its own, which nothing shows. Its frames declare a root panel on the application's
@@ -438,12 +438,12 @@ void headlessFrame(Headless& headless, Content& content) {
     };
     prUiFrame(headless.ui, &desc, PR_SCOPED_CALLBACK(round));
 
-    // What the script changed in answer to the frame's last round is declared before the frame is shown, as a program
-    // that declares its own widgets shows what its input changed in the frame that routed it. The frame's time stands
-    // still for it, so nothing that moves with time moves twice.
+    // What the script changed in answer to the frame is declared before the frame is shown, if the script asked for
+    // that, as a program that declares its own widgets shows a value in the widgets that it declares after the one that
+    // changed it. The frame's time stands still for it, so nothing that moves with time moves twice.
     desc.delta = 0;
     for (uint32_t again = 0; again < kAnswerFrames && content.native == Native_None &&
-            prJsKitTreeIsChanged(content.script.tree); ++again)
+            prJsKitTreeTakeRoundRequest(content.script.tree); ++again)
         prUiFrame(headless.ui, &desc, PR_SCOPED_CALLBACK(round));
 }
 

@@ -16,6 +16,7 @@
 //   kitTree.setText(node, text)            sets the text that the node's widget shows, if its kind shows text
 //   kitTree.listen(node, type, listening)  starts or stops queuing a node's events of a type
 //   kitTree.onevent(node, type, detail)    the script's function, which dispatching calls with each queued event
+//   kitTree.requestRound()                 asks the host to declare the tree again before it shows the frame
 //
 // A kind is one of the kit's widgets, named as an element is: `box`, `label`, `button`. Each of the kit's headers has a
 // source in this layer that defines its kinds, and says what attributes each takes and what events it queues. Every
@@ -79,6 +80,13 @@ bool prJsKitTreeDispatch(PrJsKitTree* tree);
 // Returns true if the script edited the tree since it was last declared, so that another round would show something
 // different. A host that dispatched a round's events asks for a frame if so.
 bool prJsKitTreeIsChanged(const PrJsKitTree* tree);
+
+// Returns true if the script called `kitTree.requestRound` since the last call, and forgets that it did. A script calls
+// it as it answers an event whose change other widgets are to show in the frame of the event, as a program that
+// declares its own widgets shows a value in every widget that it declares after the one that changed it. A host that
+// can declares the tree once more, in a frame whose time stands still, before it shows the frame. A host that cannot
+// shows the change in its next frame, as it shows any other.
+bool prJsKitTreeTakeRoundRequest(PrJsKitTree* tree);
 
 #if defined(__cplusplus)
 }

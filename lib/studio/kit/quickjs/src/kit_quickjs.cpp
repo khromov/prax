@@ -19,6 +19,7 @@ namespace {
 struct JsKitBinding {
     JsKitNodeTree* tree;
     JSContext* PR_NULLABLE ctx;
+    bool roundRequested;            // the script asked for the tree to be declared again before the frame is shown
 };
 
 JSClassID kitTreeClass;
@@ -133,6 +134,14 @@ JSValue listenMethod(JSContext* ctx, JSValueConst treeObject, int argc, JSValueC
     return JS_NewBool(ctx, jsKitNodeListen(tree, node, type, JS_ToBool(ctx, argv[2]) > 0));
 }
 
+JSValue requestRoundMethod(JSContext* ctx, JSValueConst treeObject, int, JSValueConst*) {
+    JsKitBinding* binding = static_cast<JsKitBinding*>(JS_GetOpaque2(ctx, treeObject, kitTreeClass));
+    if (binding == nullptr)
+        return JS_EXCEPTION;
+    binding->roundRequested = true;
+    return JS_UNDEFINED;
+}
+
 constexpr JSCFunctionListEntry kTreeFunctions[] = {
     JS_CFUNC_DEF("create", 1, JsCallScoped<createMethod>::call),
     JS_CFUNC_DEF("destroy", 1, JsCallScoped<destroyMethod>::call),
@@ -141,6 +150,7 @@ constexpr JSCFunctionListEntry kTreeFunctions[] = {
     JS_CFUNC_DEF("set", 3, JsCallScoped<setMethod>::call),
     JS_CFUNC_DEF("setText", 2, JsCallScoped<setTextMethod>::call),
     JS_CFUNC_DEF("listen", 3, JsCallScoped<listenMethod>::call),
+    JS_CFUNC_DEF("requestRound", 0, JsCallScoped<requestRoundMethod>::call),
 };
 
 // Returns what an event tells the script beyond its node and its type, as an object.
@@ -250,4 +260,10 @@ bool prJsKitTreeDispatch(PrJsKitTree* tree) {
 
 bool prJsKitTreeIsChanged(const PrJsKitTree* tree) {
     return jsKitTreeIsChanged(tree->tree);
+}
+
+bool prJsKitTreeTakeRoundRequest(PrJsKitTree* tree) {
+    bool requested = tree->roundRequested;
+    tree->roundRequested = false;
+    return requested;
 }

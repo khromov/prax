@@ -257,3 +257,11 @@ TEST_CASE("a node tells where its widget was laid out, and is brought into view 
     CHECK(jsKitRendersAlike(scripted.fixture, direct));
     CHECK(scripted.number("count") == heard + 1);
 }
+
+TEST_CASE("a script's request for another round is told to the host once") {
+    JsKitScripted scripted;
+    CHECK(!prJsKitTreeTakeRoundRequest(scripted.tree));
+    scripted.run("kitTree.requestRound(); kitTree.requestRound();");
+    CHECK(prJsKitTreeTakeRoundRequest(scripted.tree));
+    CHECK(!prJsKitTreeTakeRoundRequest(scripted.tree));
+}
