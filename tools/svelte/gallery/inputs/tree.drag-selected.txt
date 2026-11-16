@@ -1,0 +1,40 @@
+# extent 1100x600
+# The whole viewport while the selected row is dragged, with the ghost that follows the pointer. The port's ghost names
+# the selected row, so it is the gallery's ghost when the dragged row is the selected one. tree.drag-ghost covers a drag
+# of another row.
+down 500 308
+frame
+move 500 316
+frame 2
+screenshot picked-up
+move 700 420
+frame 2
+screenshot carried-over-rows
+move 700 520
+frame 2
+screenshot carried-outside
+move 500 206
+frame 2
+screenshot after-environment
+up 500 206
+settle
+screenshot dropped
+
+# A selected row with a status has no icon, and neither has its ghost.
+click 300 440
+settle
+down 300 440
+frame
+move 320 430
+frame
+move 420 300
+frame 2
+screenshot status-row-carried
+key Escape
+settle
+screenshot cancelled
+up 420 300
+settle
+move 600 540
+settle
+screenshot released-after-cancel

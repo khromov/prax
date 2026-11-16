@@ -1,0 +1,32 @@
+# extent 1100x600
+# A click on a row's disclosure closes the row, which hides the rows under it and selects nothing.
+move 52 198
+settle
+screenshot hover-disclosure
+click 52 198
+settle
+screenshot environment-closed
+click 52 220
+settle
+screenshot player-closed
+click 52 198
+settle
+screenshot environment-open
+
+# Closing the root hides the selected row, which is still selected when the root opens again.
+click 40 176
+settle
+screenshot world-closed
+click 40 198
+settle
+screenshot changes-closed
+click 40 176
+settle
+screenshot world-open
+click 52 286
+settle
+click 40 396
+settle
+move 600 540
+settle
+screenshot all-open

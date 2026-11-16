@@ -1,0 +1,25 @@
+# extent 1100x600
+# The wheel scrolls the rows, and the view declares the rows that it reaches.
+scroll 500 300 0 30
+settle
+screenshot scrolled
+scroll 500 300 0 200
+settle
+screenshot scrolled-to-end
+click 300 440
+settle
+screenshot selected-at-end
+scroll 500 300 0 -400
+settle
+move 600 540
+settle
+screenshot scrolled-back
+
+# Closing a group leaves fewer rows than the view holds, so that it no longer scrolls.
+click 40 396
+settle
+scroll 500 300 0 200
+settle
+move 600 540
+settle
+screenshot all-rows-fit

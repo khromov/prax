@@ -1,0 +1,15 @@
+# extent 1100x460
+# Tab reaches the button beside the chips, the section's one control that takes focus, and Enter activates it, which
+# leaves the chips as they are, as a click on it does.
+key Tab
+settle
+screenshot focus-button
+key Enter
+settle
+screenshot activated
+key Tab
+settle
+screenshot tab-again
+key Tab shift
+settle
+screenshot tab-back

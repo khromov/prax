@@ -1,0 +1,27 @@
+# extent 1100x600
+# A row shows its eye while the pointer is over it, and a hidden row always shows it.
+move 600 220
+settle
+screenshot hover-light
+move 1062 220
+settle
+screenshot hover-eye
+
+# A click on the eye hides the row's node, and selects nothing.
+click 1062 220
+settle
+screenshot light-hidden
+move 600 540
+settle
+screenshot light-hidden-pointer-away
+click 1062 264
+settle
+screenshot fog-shown
+click 1062 308
+settle
+screenshot selected-hidden
+click 1062 220
+settle
+move 600 540
+settle
+screenshot light-shown

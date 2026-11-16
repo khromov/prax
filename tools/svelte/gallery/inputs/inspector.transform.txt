@@ -1,0 +1,54 @@
+# extent 1100x1240
+# A drag across a component scrubs it, a step for each px.
+move 300 241
+settle
+screenshot hover-position-x
+down 300 241
+frame
+move 310 241
+frame
+move 340 241
+frame
+screenshot scrubbing-position-x
+up 340 241
+settle
+screenshot scrubbed-position-x
+
+# A scrub to the left of the scale's minimum stops at zero.
+down 900 301
+frame
+move 850 301
+frame
+move 700 301
+frame
+up 700 301
+settle
+screenshot scale-z-at-minimum
+
+# A click edits a component as text, and Enter takes what was typed.
+click 600 271
+settle
+screenshot editing-rotation-y
+key a super
+text 45.25
+settle
+screenshot typed-rotation-y
+key Enter
+settle
+screenshot entered-rotation-y
+
+# Up and Down step the component that has focus, by ten steps, or by one with Shift.
+key ArrowUp
+settle
+screenshot stepped-up
+key ArrowDown shift
+key ArrowDown shift
+settle
+screenshot stepped-down
+key Tab
+settle
+screenshot next-component
+key Escape
+move 900 1220
+settle
+screenshot after

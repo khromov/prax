@@ -1,0 +1,19 @@
+# extent 1100x1240
+# known: an asset chip starts its drag below the kit (prUiDragStart on a button), and the binding has no kind that
+# makes a widget the source of a payload, so the port's chips do not drag: no ghost follows the pointer, the mesh field
+# is not marked, and the drop gives it no asset.
+
+# Carries the third chip to the mesh field, which is marked while the chip is over it, and drops it there.
+down 370 991
+frame
+move 380 985
+frame
+move 600 700
+frame 2
+screenshot carried
+move 600 352
+frame 2
+screenshot over-mesh
+up 600 352
+settle
+screenshot dropped

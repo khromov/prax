@@ -22,7 +22,8 @@
 //   settle                      runs the frames that let the kit's transitions end
 //   move <x> <y>                queues the pointer's move to a point
 //   down <x> <y>                queues a press of the primary button, or its release with `up`
-//   click <x> <y>               queues a move, a press and a release, and runs a frame
+//   click <x> <y> [modifier]... queues a move, a press and a release, with shift, control, alt or super held, and runs
+//                               a frame
 //   secondary <x> <y>           queues a move, and a press and a release of the secondary button, and runs a frame
 //   scroll <x> <y> <dx> <dy>    queues a scroll of px at a point
 //   key <name> [modifier]...    queues a key's press and release, by its name in UI Events, with shift, control, alt or
@@ -452,10 +453,15 @@ void headlessPush(Headless& headless, PrAppEvent event) {
     prUiPushEvent(headless.ui, kPrUiViewportMain, &event);
 }
 
-void headlessClick(Headless& headless, PrVec2 at) {
-    headlessPush(headless, {.kind = PrAppEventKind_PointerMove, .pointer = {.position = at}});
-    headlessPush(headless, {.kind = PrAppEventKind_PointerDown, .pointer = {.position = at, .clicks = 1}});
-    headlessPush(headless, {.kind = PrAppEventKind_PointerUp, .pointer = {.position = at}});
+// Queues a move to `at`, a press and a release there, with `modifiers` held.
+void headlessClick(Headless& headless, PrVec2 at, PrAppModifierFlags modifiers = 0) {
+    headlessPush(headless, {.kind = PrAppEventKind_PointerMove, .modifiers = modifiers, .pointer = {.position = at}});
+    headlessPush(headless, {
+        .kind = PrAppEventKind_PointerDown,
+        .modifiers = modifiers,
+        .pointer = {.position = at, .clicks = 1},
+    });
+    headlessPush(headless, {.kind = PrAppEventKind_PointerUp, .modifiers = modifiers, .pointer = {.position = at}});
 }
 
 // Renders the tree as the last frame laid it out, on the CPU, over the color that a window would clear to, and writes
@@ -627,7 +633,10 @@ bool headlessAct(Headless& headless, Content& content, PrStringView line, PrStri
         return true;
     }
     if (action == "click" && takePoint(line, &at)) {
-        headlessClick(headless, at);
+        PrAppModifierFlags modifiers = 0;
+        if (!takeModifiers(line, &modifiers))
+            return false;
+        headlessClick(headless, at, modifiers);
         headlessFrame(headless, content);
         return true;
     }

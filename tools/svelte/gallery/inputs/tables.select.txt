@@ -1,0 +1,45 @@
+# extent 1100x600
+# The pointer over a row, and a click that selects it alone.
+move 300 264
+settle
+screenshot hover-row
+click 300 264
+settle
+screenshot selected-fourth
+
+# The arrows move the selection, and Shift extends it from the anchor.
+key ArrowDown
+settle
+screenshot down
+key ArrowUp
+key ArrowUp
+settle
+screenshot up-twice
+key ArrowDown shift
+key ArrowDown shift
+settle
+screenshot extended-down
+key End
+settle
+screenshot end
+key Home shift
+settle
+screenshot all-to-home
+key a super
+settle
+screenshot select-all
+
+# Sorting keeps the selected assets selected where they land.
+click 300 198
+settle
+key ArrowDown shift
+settle
+screenshot two-selected
+click 930 176
+settle
+screenshot two-selected-by-size
+click 300 242
+settle
+move 600 520
+settle
+screenshot selected-after-sort

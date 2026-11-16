@@ -1,0 +1,58 @@
+# extent 1100x1240
+# The buttons in the mesh field's gutter, which the gallery does not answer.
+move 1023 352
+settle
+screenshot hover-browse
+click 1023 352
+settle
+screenshot browsed
+click 1041 352
+settle
+screenshot located
+click 1059 352
+settle
+screenshot cleared
+click 600 378
+settle
+screenshot clicked-material
+
+# The checkboxes.
+move 138 466
+settle
+screenshot hover-cast-shadows
+click 138 466
+settle
+screenshot cast-shadows-off
+click 138 496
+settle
+screenshot receive-shadows-off
+click 138 466
+settle
+screenshot cast-shadows-on
+
+# The lighting's segments.
+move 219 524
+settle
+screenshot hover-mixed
+click 219 524
+settle
+screenshot lighting-mixed
+click 277 524
+settle
+screenshot lighting-baked
+key ArrowLeft
+settle
+screenshot lighting-by-key
+click 161 524
+settle
+move 900 1220
+settle
+screenshot lighting-realtime
+
+# The button under the groups.
+move 550 581
+settle
+screenshot hover-add-component
+click 550 581
+settle
+screenshot clicked-add-component

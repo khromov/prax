@@ -1,0 +1,46 @@
+# extent 1100x340
+# Snapping and the grid, each a button that stays selected.
+click 270 126
+settle
+screenshot snap-on
+click 298 126
+settle
+screenshot grid-off
+click 270 126
+click 298 126
+settle
+move 600 300
+settle
+screenshot snap-off-grid-on
+
+# The transport: play becomes pause, step changes nothing, and stop ends playing.
+move 1000 126
+settle
+screenshot hover-play
+click 1000 126
+settle
+screenshot playing
+click 1028 126
+settle
+screenshot stepped
+click 1000 126
+settle
+screenshot paused
+click 1000 126
+settle
+click 1056 126
+settle
+screenshot stopped
+click 1056 126
+settle
+move 600 300
+settle
+screenshot stopped-again
+
+# A cell of the sizes, which is shown selected and takes clicks that change nothing.
+move 142 198
+settle
+screenshot hover-cell
+click 188 196
+settle
+screenshot pressed-cell

@@ -1,0 +1,41 @@
+# extent 1100x600
+# Command with a click toggles a row, and leaves the other rows as they are.
+click 300 264 super
+settle
+screenshot toggled-on
+click 300 220 super
+settle
+screenshot toggled-off
+
+# Shift with a click selects the rows from the anchor to the row, in place of the selection.
+click 300 308 shift
+settle
+screenshot range-from-anchor
+click 300 286
+settle
+click 300 242 shift
+settle
+screenshot range-upward
+
+# Command and Shift with a click add the rows from the anchor to the row.
+click 300 198 super
+settle
+screenshot toggled-first
+click 300 308 control
+settle
+click 300 286 shift super
+settle
+screenshot range-added
+
+# The selected assets stay selected where a sort puts them, and a plain click selects one row again.
+click 760 176
+settle
+screenshot sorted-by-type
+click 300 198 super
+settle
+screenshot toggled-after-sort
+click 300 242
+settle
+move 600 540
+settle
+screenshot selected-one

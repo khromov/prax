@@ -1,0 +1,60 @@
+# extent 1100x600
+# The pointer over a row, and a click that selects it.
+move 300 242
+settle
+screenshot hover-row
+click 300 242
+settle
+screenshot selected-sky-dome
+click 300 418
+settle
+screenshot selected-world-scene
+
+# Up and Down walk the rows, and Home and End reach the first and the last, which the view scrolls to.
+key ArrowUp
+settle
+screenshot up
+key ArrowDown
+key ArrowDown
+settle
+screenshot down-twice
+key End
+settle
+screenshot end
+key Home
+settle
+screenshot home
+
+# Right steps into an open row and opens a closed one, and Left closes an open row and climbs to a row's parent.
+key ArrowRight
+settle
+screenshot right-into-world
+key ArrowRight
+key ArrowRight
+settle
+screenshot right-twice
+key ArrowLeft
+settle
+screenshot left-to-parent
+key ArrowLeft
+settle
+screenshot left-closes
+key ArrowRight
+settle
+screenshot right-opens
+move 600 540
+settle
+screenshot after
+
+# The tree holds one selected node, which a click with Command or Shift moves to its row too.
+click 300 286 super
+settle
+screenshot command-click
+click 300 352 shift
+settle
+screenshot shift-click
+key ArrowUp shift
+settle
+move 600 540
+settle
+screenshot shift-up

@@ -1,0 +1,65 @@
+# extent 1100x1240
+# A click on the tint opens its picker.
+move 143 406
+settle
+screenshot hover-tint
+click 143 406
+settle
+screenshot picker-open
+
+# A drag on the picker's plane edits the tint, which the material's field and the asset reference below show too. They
+# take the color from the script, which the frame after the picker's edit declares.
+down 270 500
+frame
+move 240 520
+frame
+move 200 560
+frame 2
+screenshot plane-dragging
+up 200 560
+settle
+screenshot plane-dragged
+
+# The hue, and then the alpha.
+click 350 580
+settle
+screenshot hue-chosen
+click 377 560
+settle
+screenshot alpha-chosen
+
+# The picker's other planes.
+click 256 435
+settle
+screenshot oklch
+click 337 435
+settle
+screenshot ramp
+click 174 435
+settle
+screenshot hsv
+
+# A hex value typed into the picker's field.
+click 270 706
+settle
+key a super
+text #40C080
+key Enter
+settle
+screenshot hex-typed
+key Escape
+settle
+screenshot picker-closed
+
+# The emissive color, whose picker a press outside it closes.
+click 143 436
+settle
+screenshot emissive-open
+click 250 600
+settle
+screenshot emissive-edited
+click 800 466
+settle
+move 900 1220
+settle
+screenshot emissive-closed

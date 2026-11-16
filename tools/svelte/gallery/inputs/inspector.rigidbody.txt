@@ -1,0 +1,82 @@
+# extent 1100x1240
+# Opens the group, whose rows the gallery declares only while it is open.
+click 74 549
+settle
+screenshot open
+
+# The mass scrubs, and stops at its minimum.
+down 400 575
+frame
+move 420 575
+frame
+move 450 575
+frame
+up 450 575
+settle
+screenshot mass-scrubbed
+
+# The slider and the field beside it edit one value.
+move 500 605
+settle
+screenshot hover-slider
+down 500 605
+frame
+screenshot slider-pressed
+move 640 605
+frame
+move 780 605
+# The field takes the slider's value from the script, which the frame after the slider's edit declares.
+frame 2
+screenshot slider-dragging
+up 780 605
+settle
+screenshot slider-dragged
+down 1030 605
+frame
+move 1010 605
+frame
+move 980 605
+frame
+up 980 605
+settle
+screenshot drag-field-scrubbed
+click 1030 605
+settle
+key a super
+text 0.5
+key Enter
+settle
+screenshot drag-field-typed
+click 300 605
+settle
+key ArrowRight
+key ArrowRight
+settle
+screenshot slider-by-keys
+key End
+settle
+screenshot slider-at-end
+key Home
+settle
+screenshot slider-at-home
+
+# The switch.
+move 144 635
+settle
+screenshot hover-gravity
+click 144 635
+settle
+screenshot gravity-off
+click 144 635
+settle
+move 900 1220
+settle
+screenshot gravity-on
+
+# Closing the group and opening it again keeps what its rows edited.
+click 74 549
+settle
+screenshot closed
+click 74 549
+settle
+screenshot opened-again

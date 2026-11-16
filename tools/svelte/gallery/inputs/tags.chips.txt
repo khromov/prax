@@ -1,0 +1,39 @@
+# extent 1100x460
+# The pointer over a chip's remove control, then over the button beside the chips.
+move 161 287
+settle
+screenshot hover-remove
+move 372 287
+settle
+screenshot hover-add
+
+# Removes the second chip, so the chips after it take its place.
+click 161 287
+settle
+screenshot removed-second
+
+# The button, which adds a chip and removes it again in the gallery, so the chips stay as they are.
+click 300 287
+settle
+screenshot added
+click 300 287
+settle
+move 600 380
+settle
+screenshot added-again
+
+# Removes the last chip and then the first, and then the one that is left.
+click 250 287
+settle
+screenshot removed-last
+click 85 287
+settle
+screenshot removed-first
+click 87 287
+settle
+move 600 380
+settle
+screenshot removed-all
+click 60 287
+settle
+screenshot added-to-none

@@ -1,0 +1,25 @@
+# extent 1100x1240
+# The entity's name: a click puts the caret in it, and typing edits it.
+move 490 184
+settle
+screenshot hover-name
+click 490 184
+settle
+screenshot focus-name
+text  One
+settle
+screenshot typed
+key Backspace
+key Backspace
+settle
+screenshot erased
+key a super
+text Enemy
+settle
+screenshot replaced
+key Enter
+settle
+screenshot entered
+key Tab
+settle
+screenshot left-name

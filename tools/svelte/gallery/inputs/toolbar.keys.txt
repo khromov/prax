@@ -1,0 +1,55 @@
+# extent 1100x340
+# Tab walks the toolbar's controls, and Enter activates the one that has focus.
+key Tab
+settle
+screenshot focus-first
+key Enter
+settle
+screenshot activated-first
+key Tab
+key Tab
+settle
+screenshot focus-third
+key Enter
+settle
+screenshot activated-third
+key Tab
+key Tab
+settle
+screenshot focus-local
+
+# The arrows move through the segments, and choose the one that they reach.
+key ArrowRight
+settle
+screenshot arrow-right
+key ArrowLeft
+settle
+screenshot arrow-left
+
+# Snapping, two controls on.
+key Tab
+key Tab
+settle
+key Enter
+settle
+screenshot snap-by-key
+key Tab shift
+key Tab shift
+settle
+screenshot focus-back
+
+# The transport by its keys: play, four controls on, and stop, two more.
+key Tab
+key Tab
+key Tab
+key Tab
+settle
+key Enter
+settle
+screenshot playing-by-key
+key Tab
+key Tab
+settle
+key Enter
+settle
+screenshot stopped-by-key

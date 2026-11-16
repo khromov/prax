@@ -1,0 +1,29 @@
+# extent 1100x600
+# The table of columns wider than itself: a row under the pointer, and a click, which selects nothing.
+move 200 405
+settle
+screenshot hover-row
+click 200 427
+settle
+screenshot clicked-row
+
+# The wheel scrolls its rows, and scrolls its columns with their headings.
+scroll 200 420 0 30
+settle
+screenshot scrolled-down
+scroll 200 420 150 0
+settle
+screenshot scrolled-right
+scroll 200 420 600 200
+settle
+screenshot scrolled-to-corner
+scroll 200 420 -1000 -1000
+settle
+move 600 540
+settle
+screenshot scrolled-back
+
+# The first table's rows all fit in it, so the wheel over it scrolls nothing.
+scroll 500 250 0 40
+settle
+screenshot wheel-over-first

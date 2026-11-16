@@ -1,0 +1,11 @@
+# extent 1100x600
+# known: the gallery's ghost names the dragged row, which it reads from the payload in flight (prUiDragging), below the
+# kit. A tree view tells a script which row was dragged only once it is dropped, and a drag-ghost shows the text that it
+# has for any payload, so the port's ghost names the selected row, here MainCamera, while Sky Dome is dragged.
+down 500 242
+frame
+move 500 250
+frame
+move 600 330
+frame 2
+screenshot carried

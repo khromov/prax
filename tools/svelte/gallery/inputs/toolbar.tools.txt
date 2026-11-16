@@ -1,0 +1,33 @@
+# extent 1100x340
+# The pointer rests on a tool, which shows its tip, and a click chooses the tool.
+move 44 126
+settle
+screenshot tip-select
+click 44 126
+settle
+screenshot chose-select
+move 100 126
+settle
+screenshot tip-rotate
+click 100 126
+settle
+screenshot chose-rotate
+click 128 126
+settle
+screenshot chose-scale
+click 72 126
+settle
+move 600 300
+settle
+screenshot chose-move
+
+# The space that the gizmo works in.
+move 173 126
+settle
+screenshot hover-local
+click 173 126
+settle
+screenshot chose-local
+click 224 126
+settle
+screenshot chose-world

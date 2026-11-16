@@ -1,0 +1,33 @@
+# extent 1100x600
+# A click on the sorted heading reverses its order, and the selection stays with its asset.
+move 50 176
+settle
+screenshot hover-name
+click 50 176
+settle
+screenshot name-descending
+
+# Each other heading sorts by its column, ascending first.
+click 760 176
+settle
+screenshot type-ascending
+click 760 176
+settle
+screenshot type-descending
+click 930 176
+settle
+screenshot size-ascending
+click 930 176
+settle
+screenshot size-descending
+click 990 176
+settle
+screenshot modified-ascending
+click 990 176
+settle
+screenshot modified-descending
+click 50 176
+settle
+move 600 520
+settle
+screenshot name-ascending

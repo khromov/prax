@@ -1,0 +1,51 @@
+# extent 1100x1240
+# The telemetry rows take no input.
+move 300 697
+settle
+screenshot hover-telemetry
+
+# The asset fields of each state: the pointer over a field and over the buttons in its gutter, and their clicks, which
+# the gallery does not answer.
+move 200 814
+settle
+screenshot hover-field
+move 449 814
+settle
+screenshot hover-browse
+click 449 814
+settle
+screenshot browsed
+click 467 840
+settle
+screenshot located-material
+click 485 866
+settle
+screenshot cleared-audio
+move 467 892
+settle
+screenshot hover-missing
+click 485 892
+settle
+screenshot cleared-missing
+move 200 918
+settle
+screenshot hover-empty
+click 485 918
+settle
+screenshot browsed-empty
+
+# The asset chips under the pointer and under a press that does not move.
+move 100 991
+settle
+screenshot hover-chip
+down 240 991
+frame 2
+screenshot chip-pressed
+up 240 991
+settle
+screenshot chip-released
+click 500 991
+settle
+move 900 1220
+settle
+screenshot chip-clicked

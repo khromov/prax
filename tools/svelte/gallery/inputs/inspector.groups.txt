@@ -1,0 +1,34 @@
+# extent 1100x1240
+# A group's header folds its rows away, and unfolds them as they were.
+move 74 215
+settle
+screenshot hover-transform
+click 74 215
+settle
+screenshot transform-closed
+click 88 238
+settle
+screenshot mesh-closed
+click 74 261
+settle
+screenshot rigidbody-open
+click 74 215
+settle
+screenshot transform-open
+click 88 328
+settle
+move 900 1220
+settle
+screenshot all-open
+
+# The header's keys: Tab reaches it, and Enter folds it.
+click 490 184
+key Tab
+settle
+screenshot focus-transform
+key Enter
+settle
+screenshot transform-closed-by-key
+key Enter
+settle
+screenshot transform-open-by-key
