@@ -1,8 +1,8 @@
 // Studio Kit's QuickJS binding: the tree that a script edits declares what the same calls to the kit declare, and a
 // widget's input reaches the script between rounds.
 
-#include "pr/kit_box.h"
 #include "pr/format.h"
+#include "pr/kit_box.h"
 #include "pr/kit_button.h"
 #include "pr/kit_text.h"
 
