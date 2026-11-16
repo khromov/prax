@@ -1,0 +1,54 @@
+# extent 1100x480
+# The pointer over a segment, then a click on each segment of the view modes, which chooses it.
+settle
+move 65 232
+settle
+screenshot hover-wireframe
+click 65 232
+settle
+screenshot wireframe
+click 182 232
+settle
+screenshot textured
+click 241 232
+settle
+screenshot pbr
+# Left and Right move focus to the neighboring segment, which is then chosen.
+key ArrowLeft
+settle
+screenshot left-textured
+key ArrowLeft
+key ArrowLeft
+key ArrowLeft
+settle
+screenshot left-at-first
+key ArrowRight
+settle
+screenshot right-solid
+# The segments of icons and the three sizes of two segments are bound to one choice. Its third value is no segment of
+# the sizes.
+move 331 232
+settle
+screenshot hover-sphere
+click 331 232
+settle
+screenshot sphere
+click 365 232
+settle
+screenshot light
+click 62 309
+settle
+screenshot xs-local
+click 224 309
+settle
+screenshot sm-world
+click 285 309
+settle
+screenshot md-local
+click 112 309
+key ArrowRight
+settle
+screenshot xs-world-right
+key ArrowLeft
+settle
+screenshot xs-left

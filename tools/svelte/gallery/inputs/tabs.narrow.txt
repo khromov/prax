@@ -1,0 +1,32 @@
+# extent 400x520
+# In a frame narrower than the section, the strip's last tab and the last row's caption run past the panels.
+settle
+screenshot whole
+# A click on the part of the last tab that shows selects it. Right selects nothing past it, and Left the tab before it.
+click 360 156
+settle
+screenshot last-tab
+key ArrowRight
+settle
+screenshot right-at-last
+key ArrowLeft
+settle
+screenshot left-animator
+# A drag of the second tab to the end of what shows, which makes it the last tab and selects it.
+down 113 156
+frame
+move 130 157
+frame
+move 250 157
+frame
+move 380 157
+frame
+settle
+screenshot dragging
+up 380 157
+settle
+screenshot dropped
+click 365 263
+click 335 340
+settle
+screenshot segments

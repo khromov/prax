@@ -1,0 +1,72 @@
+# extent 1100x800
+# A primary press that opens the next overlay lands outside the open one, and closes it. The secondary press that opens
+# the context menu leaves the bar's menu open.
+settle
+click 74 391
+settle
+screenshot popover
+click 145 250
+settle
+screenshot select
+click 118 180
+settle
+screenshot menu
+secondary 150 460
+settle
+screenshot context-menu
+click 97 659
+settle
+screenshot palette
+# The palette is modal: a press on a trigger under its scrim closes the palette and opens nothing.
+click 74 391
+settle
+screenshot palette-closed
+# The frame of a press shows what the native section shows in it, and so does the frame after.
+click 42 180
+screenshot menu-at-once
+key Escape
+frame
+screenshot menu-escaped-at-once
+click 145 250
+screenshot select-at-once
+click 100 333
+screenshot option-at-once
+frame
+screenshot option-next-frame
+key ArrowDown
+frame
+screenshot step-at-once
+frame
+screenshot step-next-frame
+click 74 391
+screenshot popover-at-once
+click 53 504
+screenshot checkbox-at-once
+key Escape
+frame
+secondary 37 470
+screenshot context-menu-at-once
+click 72 602
+screenshot tag-at-once
+click 73 504
+screenshot verb-at-once
+frame
+screenshot verb-next-frame
+click 322 468
+screenshot button-at-once
+click 97 659
+screenshot palette-at-once
+frame 3
+screenshot palette-after-three
+text view
+frame
+screenshot query-at-once
+frame
+screenshot query-next-frame
+key Enter
+frame
+screenshot entered-at-once
+frame
+screenshot entered-next-frame
+settle
+screenshot settled

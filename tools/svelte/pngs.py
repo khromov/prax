@@ -76,7 +76,11 @@ def write(path, width, height, rgba):
 def differences(first, second, marked=None):
     """Compares two PNGs. Returns None if they hold the same pixels, and otherwise what differs: the number of pixels,
     and the box that holds them all, as (count, left, top, right, bottom), or a string if their sizes differ. Writes
-    the first image to `marked`, if a path is given, dimmed, with each differing pixel in red."""
+    the first image to `marked`, if a path is given, dimmed, with each differing pixel in red. Files of the same bytes
+    hold the same pixels, and are not decoded."""
+    with open(first, "rb") as a_file, open(second, "rb") as b_file:
+        if a_file.read() == b_file.read():
+            return None
     a_width, a_height, a = read(first)
     b_width, b_height, b = read(second)
     if (a_width, a_height) != (b_width, b_height):

@@ -1,0 +1,65 @@
+# extent 1100x800
+# The pointer over a select, a click that opens its menu, and a click on an option, which chooses it. The disabled
+# select shows the same choice.
+settle
+move 145 250
+settle
+screenshot hover
+click 145 250
+settle
+screenshot types-open
+move 100 333
+settle
+screenshot hover-collider
+click 100 333
+settle
+screenshot collider
+# The select has focus once its menu closes, and Down and Up step its value, which stops at the list's ends.
+key ArrowDown
+settle
+screenshot step-rigidbody
+key ArrowUp
+key ArrowUp
+key ArrowUp
+key ArrowUp
+key ArrowUp
+settle
+screenshot step-first
+key ArrowDown
+frame
+key ArrowDown
+frame
+key ArrowDown
+frame
+key ArrowDown
+frame
+key ArrowDown
+frame
+key ArrowDown
+frame
+key ArrowDown
+frame
+key ArrowDown
+settle
+screenshot step-last
+# The menu opens with the chosen option checked. Its keys move focus between the options, and Enter chooses one.
+click 145 250
+settle
+screenshot types-open-camera
+key ArrowUp
+key ArrowUp
+settle
+screenshot types-up-twice
+key Enter
+settle
+screenshot types-entered
+# Escape closes the menu and chooses nothing.
+click 145 250
+settle
+key Escape
+settle
+screenshot escaped
+# A disabled select takes no input.
+click 145 314
+settle
+screenshot disabled-clicked

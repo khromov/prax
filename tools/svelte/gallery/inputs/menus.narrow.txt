@@ -1,0 +1,54 @@
+# extent 480x620
+# In a frame narrower and shorter than the section, a menu that would pass the frame's right edge is moved inside it.
+settle
+screenshot whole
+click 267 211
+settle
+screenshot help-open
+key Escape
+settle
+# The page scrolls, and each overlay places itself from where its trigger stands now.
+move 300 300
+frame
+scroll 300 300 0 220
+settle
+screenshot scrolled
+click 145 111
+settle
+screenshot clips-open
+click 100 300
+settle
+screenshot clip-chosen
+click 74 226
+settle
+screenshot popover-open
+click 53 309
+settle
+screenshot popover-gizmos-off
+# An open popover follows its trigger as the page scrolls.
+move 300 500
+frame
+scroll 300 500 0 -120
+settle
+screenshot popover-scrolled
+scroll 300 500 0 220
+settle
+key Escape
+settle
+screenshot popover-escaped
+# The context menu opens above the pointer if it has no room below, and the palette is as wide as the frame allows.
+secondary 240 420
+settle
+screenshot context-open
+click 300 250
+settle
+screenshot context-paste
+click 97 497
+settle
+screenshot palette-open
+text gizmo
+settle
+screenshot palette-query
+key Enter
+settle
+screenshot palette-entered

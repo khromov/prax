@@ -1,0 +1,102 @@
+# extent 1100x800
+# A primary click on the zone opens nothing. A secondary click opens the menu at the pointer.
+settle
+click 145 525
+settle
+screenshot primary-click
+secondary 37 470
+settle
+screenshot open
+move 73 530
+settle
+screenshot hover-copy
+# A click on a verb closes the menu, and the readout names the verb.
+click 73 530
+settle
+screenshot copy
+# A click on a tag chooses it and leaves the menu open. The readout's swatch takes the tag's color.
+secondary 37 470
+settle
+move 72 602
+settle
+screenshot hover-tag
+click 72 602
+settle
+screenshot tag-success
+click 132 602
+settle
+screenshot tag-axis
+click 52 602
+settle
+screenshot tag-accent
+# The check item flips the flag that the readout shows, and is checked when the menu next opens.
+click 95 630
+settle
+screenshot wrap-on
+secondary 37 470
+settle
+screenshot open-checked
+# Down and Up move focus between the items, and Enter activates the one that has focus.
+key ArrowDown
+frame
+key ArrowDown
+settle
+screenshot down-twice
+key Enter
+settle
+screenshot entered-paste
+secondary 37 470
+settle
+key ArrowUp
+frame
+key ArrowUp
+settle
+screenshot up-twice
+key Enter
+settle
+screenshot entered-rename
+# The check item again, and the destructive verb.
+secondary 37 470
+settle
+click 95 630
+settle
+screenshot wrap-off
+secondary 37 470
+settle
+move 73 718
+settle
+screenshot hover-delete
+click 73 718
+settle
+screenshot delete
+# Escape closes the menu.
+secondary 37 470
+settle
+key Escape
+settle
+screenshot escaped
+# A press outside the menu closes it, and reaches the button that it lands on.
+secondary 37 470
+settle
+click 322 468
+settle
+screenshot pressed-button
+click 322 468
+settle
+screenshot pressed-button-again
+# A secondary click elsewhere on the zone moves the menu there. One outside the zone closes it.
+secondary 37 470
+settle
+secondary 240 460
+settle
+screenshot moved
+secondary 700 300
+settle
+screenshot secondary-outside
+# A menu that is opened low in the frame stays inside it.
+secondary 200 590
+settle
+screenshot opened-low
+click 700 300
+settle
+screenshot closed

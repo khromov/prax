@@ -1,0 +1,28 @@
+# extent 1100x400
+# The pointer over a toggle, then clicks on a switch and on a label. The knob eases along its track, so the frames
+# just after a click show it on its way.
+settle
+move 755 166
+settle
+screenshot hover
+click 755 166
+frame 2
+screenshot snap-easing
+settle
+screenshot snap-on
+click 820 134
+frame 3
+screenshot physics-easing
+settle
+screenshot physics-off
+click 755 198
+click 755 166
+settle
+screenshot gizmos-off-snap-off
+# Tab moves focus from the toggle that was clicked, and Enter flips the one that has focus.
+key Tab
+key Enter
+frame 2
+screenshot gizmos-easing
+settle
+screenshot gizmos-on

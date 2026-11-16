@@ -1,0 +1,66 @@
+# extent 1100x800
+# The pointer over an item of the bar, a click that opens the item's menu, and the pointer over the menu's items.
+settle
+move 42 180
+settle
+screenshot hover-file
+click 42 180
+settle
+screenshot file-open
+move 90 255
+settle
+screenshot hover-open-scene
+move 90 307
+settle
+screenshot hover-disabled
+# While a menu is open, the pointer over another item of the bar opens that item's menu instead.
+move 118 180
+settle
+screenshot view-open
+move 267 180
+settle
+screenshot help-open
+# Down and Up move focus between the menu's items, and Enter activates the one that has focus, which closes the menu.
+key ArrowDown
+settle
+screenshot down-once
+key ArrowDown
+key ArrowDown
+key ArrowDown
+settle
+screenshot down-four
+key ArrowUp
+settle
+screenshot up-once
+key Enter
+settle
+screenshot entered
+# Escape closes the open menu.
+click 162 180
+settle
+screenshot build-open
+key Escape
+settle
+screenshot escaped
+# A click on an item closes the menu, and a click on a disabled item does nothing.
+click 215 180
+settle
+screenshot window-open
+click 250 281
+settle
+screenshot window-save
+click 78 180
+settle
+click 120 307
+settle
+screenshot edit-disabled-clicked
+# A press outside the menu closes it.
+click 700 500
+settle
+screenshot pressed-outside
+# A click on the item whose menu is open closes it.
+click 42 180
+settle
+click 42 180
+settle
+screenshot file-closed

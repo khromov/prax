@@ -23,6 +23,7 @@
 //   move <x> <y>                queues the pointer's move to a point
 //   down <x> <y>                queues a press of the primary button, or its release with `up`
 //   click <x> <y>               queues a move, a press and a release, and runs a frame
+//   secondary <x> <y>           queues a move, and a press and a release of the secondary button, and runs a frame
 //   scroll <x> <y> <dx> <dy>    queues a scroll of px at a point
 //   key <name> [modifier]...    queues a key's press and release, by its name in UI Events, with shift, control, alt or
 //                               super held
@@ -627,6 +628,15 @@ bool headlessAct(Headless& headless, Content& content, PrStringView line, PrStri
     }
     if (action == "click" && takePoint(line, &at)) {
         headlessClick(headless, at);
+        headlessFrame(headless, content);
+        return true;
+    }
+    if (action == "secondary" && takePoint(line, &at)) {
+        // The secondary button is button 1 (pointerevents3/#the-button-property).
+        PrAppPointerEvent press{.position = at, .button = 1, .clicks = 1};
+        headlessPush(headless, {.kind = PrAppEventKind_PointerMove, .pointer = {.position = at}});
+        headlessPush(headless, {.kind = PrAppEventKind_PointerDown, .pointer = press});
+        headlessPush(headless, {.kind = PrAppEventKind_PointerUp, .pointer = {.position = at, .button = 1}});
         headlessFrame(headless, content);
         return true;
     }

@@ -1,0 +1,35 @@
+# extent 1100x400
+# A press shows on the control that it lands on. A release away from the control activates nothing, and a release on it
+# activates it.
+settle
+down 42 166
+frame
+screenshot checkbox-pressed
+settle
+screenshot checkbox-held
+move 300 300
+frame
+up 300 300
+settle
+screenshot checkbox-released-away
+down 395 134
+settle
+screenshot radio-held
+up 395 134
+settle
+screenshot radio-released
+down 755 166
+settle
+screenshot toggle-held
+move 755 300
+frame
+up 755 300
+settle
+screenshot toggle-released-away
+down 810 166
+frame
+up 810 166
+frame
+screenshot toggle-released
+settle
+screenshot toggle-on

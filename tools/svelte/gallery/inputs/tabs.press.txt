@@ -1,0 +1,41 @@
+# extent 1100x480
+# A press shows on the tab or the segment that it lands on. A release away from it chooses nothing, and a release on it
+# chooses it.
+settle
+down 113 125
+frame
+screenshot tab-pressed
+settle
+screenshot tab-held
+up 113 125
+settle
+screenshot tab-released
+down 274 125
+frame
+move 274 300
+frame
+up 274 300
+settle
+screenshot tab-released-below
+down 182 232
+settle
+screenshot segment-held
+move 182 400
+frame
+up 182 400
+settle
+screenshot segment-released-away
+down 365 232
+frame
+screenshot icon-segment-pressed
+up 365 232
+frame
+screenshot icon-segment-released
+settle
+screenshot icon-segment-chosen
+down 418 125
+settle
+screenshot close-held
+up 418 125
+settle
+screenshot close-released

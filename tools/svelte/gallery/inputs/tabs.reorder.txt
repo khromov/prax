@@ -1,0 +1,55 @@
+# extent 1100x480
+# A drag of the first tab to a place after the third: the caret marks where it will go, and the drop moves it there.
+settle
+down 54 125
+frame
+move 70 126
+frame
+move 120 126
+frame
+move 180 126
+frame
+move 232 126
+frame
+settle
+screenshot dragging-scene
+up 232 126
+settle
+screenshot scene-third
+# A tab keeps its body wherever it stands: the first tab is now Game.
+click 40 125
+settle
+screenshot game-first
+# A drag of the last tab to the front.
+down 365 125
+frame
+move 340 126
+frame
+move 200 126
+frame
+move 60 126
+frame
+move 28 126
+frame
+settle
+screenshot dragging-shader-graph
+up 28 126
+settle
+screenshot shader-graph-first
+# A drag that is let go outside the strip moves nothing.
+down 274 125
+frame
+move 300 140
+frame
+move 400 300
+frame
+settle
+screenshot dragging-outside
+up 400 300
+settle
+screenshot dropped-outside
+# The arrow keys follow the strip's order.
+click 274 125
+key ArrowRight
+settle
+screenshot right-of-animator

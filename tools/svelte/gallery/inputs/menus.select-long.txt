@@ -1,0 +1,51 @@
+# extent 1100x800
+# The select of a list longer than its room opens with the chosen option in view, and a click on an option chooses it.
+settle
+click 145 282
+settle
+screenshot clips-open
+move 100 449
+settle
+screenshot hover-option
+click 100 449
+settle
+screenshot chosen
+# Down and Up step the value while the menu is closed.
+key ArrowDown
+settle
+screenshot stepped-down
+key ArrowUp
+frame
+key ArrowUp
+settle
+screenshot stepped-up
+# The menu opens again with the new choice in view. Focus is on its first option, which Enter chooses, and Up steps no
+# further than that option.
+click 145 282
+settle
+screenshot reopened
+key Enter
+settle
+screenshot first
+key ArrowUp
+settle
+screenshot stepped-before-first
+click 145 282
+settle
+screenshot first-open
+# Up moves focus from the first option around to the last, and Down steps no further than that option.
+key ArrowUp
+settle
+screenshot focus-last
+key Enter
+settle
+screenshot last
+key ArrowDown
+settle
+screenshot stepped-past-last
+click 145 282
+settle
+screenshot last-open
+key Escape
+settle
+screenshot escaped

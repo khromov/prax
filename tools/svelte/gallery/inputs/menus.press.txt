@@ -1,0 +1,71 @@
+# extent 1100x800
+# A press shows on the trigger that it lands on, and the trigger's overlay opens as the native section opens it: on
+# the press or on the release.
+settle
+down 42 180
+frame
+screenshot bar-item-pressed
+settle
+screenshot bar-item-held
+up 42 180
+settle
+screenshot bar-item-released
+# A press on a menu's item that is let go away from the item activates nothing.
+down 90 281
+settle
+screenshot item-held
+move 600 500
+frame
+up 600 500
+settle
+screenshot item-released-away
+key Escape
+settle
+down 145 250
+frame
+screenshot select-pressed
+settle
+screenshot select-held
+up 145 250
+settle
+screenshot select-released
+down 100 359
+settle
+screenshot option-held
+up 100 359
+settle
+screenshot option-released
+down 74 391
+settle
+screenshot popover-trigger-held
+up 74 391
+settle
+screenshot popover-trigger-released
+down 53 444
+settle
+screenshot popover-checkbox-held
+up 53 444
+settle
+screenshot popover-checkbox-released
+key Escape
+settle
+down 322 468
+settle
+screenshot button-held
+move 322 600
+frame
+up 322 600
+settle
+screenshot button-released-away
+down 97 659
+settle
+screenshot palette-trigger-held
+up 97 659
+settle
+screenshot palette-trigger-released
+down 400 219
+settle
+screenshot command-held
+up 400 219
+settle
+screenshot command-released

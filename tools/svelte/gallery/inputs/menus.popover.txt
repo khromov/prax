@@ -1,0 +1,51 @@
+# extent 1100x800
+# The pointer over the trigger, a click that opens its popover, and clicks on the checkboxes in it, which stays open.
+settle
+move 74 391
+settle
+screenshot hover
+click 74 391
+settle
+screenshot open
+move 53 474
+settle
+screenshot hover-gizmos
+click 53 444
+settle
+screenshot shadows-off
+click 90 504
+settle
+screenshot children-on
+# A click on the trigger closes the popover, and the next opens it with the flags as they were left.
+click 74 391
+settle
+screenshot closed
+click 74 391
+settle
+screenshot reopened
+# Escape closes it, and so does a press outside it.
+key Escape
+settle
+screenshot escaped
+click 74 391
+settle
+click 700 520
+settle
+screenshot pressed-outside
+# The trigger has focus after a click on it, and Enter activates it.
+click 74 391
+settle
+key Enter
+settle
+screenshot enter-closed
+key Enter
+settle
+screenshot enter-opened
+# The popover does not hold the keyboard: Tab moves focus on from the trigger to the next button of the page, which
+# Enter activates while the popover stays open.
+key Tab
+settle
+screenshot tab-to-button
+key Enter
+settle
+screenshot enter-on-button

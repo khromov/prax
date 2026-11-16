@@ -1,0 +1,26 @@
+# extent 1100x400
+# The pointer over a radio, then clicks on a ring and on a label, each of which chooses its radio.
+settle
+move 395 134
+settle
+screenshot hover
+click 395 134
+settle
+screenshot unlit
+click 424 212
+settle
+screenshot toon
+# The arrow keys along the group's column move focus to the neighboring radio, which is then chosen.
+key ArrowUp
+settle
+screenshot up-standard
+key ArrowUp
+key ArrowUp
+settle
+screenshot up-unlit
+key ArrowUp
+settle
+screenshot up-at-first
+key ArrowDown
+settle
+screenshot down-lambert

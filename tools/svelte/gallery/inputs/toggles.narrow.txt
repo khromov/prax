@@ -1,0 +1,9 @@
+# extent 420x500
+# In a frame narrower than the section, the columns share the width and their labels run past them.
+settle
+screenshot whole
+click 296 197
+click 172 197
+click 42 261
+settle
+screenshot clicked

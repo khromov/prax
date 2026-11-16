@@ -1,0 +1,31 @@
+# extent 1100x400
+# The pointer over a checkbox, then a click on a box and clicks on labels, each of which flips its flag.
+settle
+move 42 166
+settle
+screenshot hover
+click 42 166
+settle
+screenshot occlusion-on
+click 95 134
+settle
+screenshot shadows-off
+click 80 198
+click 76 230
+settle
+screenshot three-on
+click 42 166
+settle
+screenshot occlusion-off
+# Tab moves focus from the checkbox that was clicked to the next, and Enter flips the one that has focus.
+key Tab
+settle
+screenshot focus-children
+key Enter
+settle
+screenshot children-off
+key Tab shift
+key Tab shift
+key Enter
+settle
+screenshot shadows-on

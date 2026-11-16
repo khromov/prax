@@ -1,0 +1,92 @@
+# extent 1100x800
+# The pointer over the trigger, and a click that opens the palette over the page.
+settle
+move 97 659
+settle
+screenshot hover
+click 97 659
+settle
+screenshot open
+move 400 243
+settle
+screenshot hover-undo
+# Down and Up move the selection.
+key ArrowDown
+frame
+key ArrowDown
+settle
+screenshot down-twice
+key ArrowUp
+settle
+screenshot up-once
+# Typing edits the query, and the list holds the commands whose label or category it matches, whatever its case.
+text ed
+settle
+screenshot query-ed
+text IT
+settle
+screenshot query-edit
+key ArrowDown
+settle
+screenshot query-down
+# Enter activates the selected command, which closes the palette. The query is there when it next opens, with the caret
+# before it.
+key Enter
+settle
+screenshot entered
+click 97 659
+settle
+screenshot reopened
+key Delete
+frame
+key Delete
+frame
+key Delete
+frame
+key Delete
+settle
+screenshot query-cleared
+text zzz
+settle
+screenshot no-match
+# Escape closes the palette.
+key Escape
+settle
+screenshot escaped
+# A press outside the palette's card closes it.
+click 97 659
+settle
+key Delete
+frame
+key Delete
+frame
+key Delete
+frame
+text Build
+settle
+screenshot query-build
+click 900 600
+settle
+screenshot pressed-outside
+# A click on a command activates it, which closes the palette.
+click 97 659
+settle
+key Delete
+frame
+key Delete
+frame
+key Delete
+frame
+key Delete
+frame
+key Delete
+settle
+move 400 195
+settle
+screenshot hover-second
+click 400 195
+settle
+screenshot clicked
+click 97 659
+settle
+screenshot open-again

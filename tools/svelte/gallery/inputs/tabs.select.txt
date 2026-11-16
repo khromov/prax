@@ -1,0 +1,40 @@
+# extent 1100x480
+# The pointer over a tab, then a click on each tab, which selects it and shows its body.
+settle
+move 113 125
+settle
+screenshot hover-game
+click 113 125
+settle
+screenshot game
+# A click on a tab's badge selects the tab.
+click 212 125
+settle
+screenshot profiler
+click 274 125
+settle
+screenshot animator
+click 365 125
+settle
+screenshot shader-graph
+# The close control of the last tab, which nothing answers.
+click 54 125
+move 418 125
+settle
+screenshot hover-close
+click 418 125
+settle
+screenshot close
+# Left and Right select the neighboring tab of the one that has focus.
+click 177 125
+key ArrowRight
+settle
+screenshot right-animator
+key ArrowLeft
+key ArrowLeft
+settle
+screenshot left-game
+key ArrowLeft
+key ArrowLeft
+settle
+screenshot left-past-first
