@@ -27,7 +27,9 @@
 //   key <name> [modifier]...    queues a key's press and release, by its name in UI Events, with shift, control, alt or
 //                               super held
 //   text <characters>           queues typed text, the rest of the line
-//   screenshot <name>           writes what the last frame shows to <name>.png in the directory of --out
+//   screenshot <name> [<x> <y> <width> <height>]
+//                               writes what the last frame shows to <name>.png in the directory of --out, or only the
+//                               part of it in a rectangle of the viewport, in px
 //
 // A line that is empty or begins with # is skipped. Queued input is routed by the frames that follow it.
 
@@ -445,8 +447,9 @@ void headlessClick(Headless& headless, PrVec2 at) {
 }
 
 // Renders the tree as the last frame laid it out, on the CPU, over the color that a window would clear to, and writes
-// it to `path` as a PNG. Returns false if it cannot.
-bool headlessScreenshot(Headless& headless, const char* path) {
+// it to `path` as a PNG: all of it, or the part of it in `crop`, a rectangle of the viewport in target pixels, if one
+// is given. Returns false if it cannot, or if the rectangle is empty or reaches past the viewport.
+bool headlessScreenshot(Headless& headless, const char* path, const PrIRect* PR_NULLABLE crop = nullptr) {
     PrCompressCodec* compress = prCompressCodecCreate(PrCompressCodecBackend_Default);
     PrImageCodec* images = prImageCodecCreate(PrImageCodecBackend_Default, compress);
     PrDrawGlyphDecoder* glyphs = prDrawGlyphBitmapCreate(images);
@@ -476,8 +479,20 @@ bool headlessScreenshot(Headless& headless, const char* path) {
             rgba[i] = clear[i % 4];
         size_t stride = size_t(headless.extent.x) * 4;
         PrPixels pixels{rgba.data(), stride, headless.extent};
-        written = prDrawRendererRenderPixels(renderer, list, pixels, PrPixelFormat_Rgba8) == PrStatus_Ok &&
-            harnessWritePng(path, PrPixelView{rgba.data(), stride, headless.extent});
+        PrPixelView shown{rgba.data(), stride, headless.extent};
+        bool inside = true;
+        if (crop != nullptr) {
+            inside = crop->left >= 0 && crop->top >= 0 && crop->left < crop->right && crop->top < crop->bottom &&
+                uint32_t(crop->right) <= headless.extent.x && uint32_t(crop->bottom) <= headless.extent.y;
+            if (inside) {
+                shown = PrPixelView{
+                    rgba.data() + size_t(crop->top) * stride + size_t(crop->left) * 4, stride,
+                    {uint32_t(crop->right - crop->left), uint32_t(crop->bottom - crop->top)},
+                };
+            }
+        }
+        written = inside && prDrawRendererRenderPixels(renderer, list, pixels, PrPixelFormat_Rgba8) == PrStatus_Ok &&
+            harnessWritePng(path, shown);
         prDrawListRelease(list);
         prDrawRendererDestroy(renderer);
     }
@@ -634,7 +649,16 @@ bool headlessAct(Headless& headless, Content& content, PrStringView line, PrStri
         path.append(name);
         path.append(".png");
         path.append(PrStringView{"\0", 1});
-        return headlessScreenshot(headless, path.data());
+        PrStringView rest = line;
+        if (takeWord(rest).size == 0)
+            return headlessScreenshot(headless, path.data());
+        PrVec2 origin{};
+        PrVec2 size{};
+        if (!takePoint(line, &origin) || !takePoint(line, &size) || origin.x < 0 || origin.y < 0 || size.x <= 0 ||
+                size.y <= 0)
+            return false;
+        PrIRect crop{int32_t(origin.x), int32_t(origin.y), int32_t(origin.x + size.x), int32_t(origin.y + size.y)};
+        return headlessScreenshot(headless, path.data(), &crop);
     }
     return false;
 }
