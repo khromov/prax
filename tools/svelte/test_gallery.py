@@ -8,6 +8,10 @@ calls and once running the application's bundle, and each screenshot that the fi
 both. A file's first line may give the viewport, as `# extent 1100x900`. A section has the cases that its files give
 it, so a section with no file is not tested.
 
+A case that cannot match yet says why in a line `# known: <reason>`, which is for what the binding cannot express, never
+for a port that is merely unfinished. Such a case is expected to fail, and fails the run once it matches, so that the
+line is removed when its reason is gone.
+
 The runs' screenshots are kept under the build's svelte/gallery directory, with an image that marks where a pair
 differs, for whoever reads a failure."""
 
@@ -79,8 +83,20 @@ class GalleryTests(unittest.TestCase):
         self.assertEqual(failures, [])
 
 
+def known(path):
+    """Returns the reason that an input file gives for its case not matching yet, or None."""
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            named = re.match(r"#\s*known:\s*(\S.*)$", line)
+            if named:
+                return named.group(1).strip()
+    return None
+
+
 def case_test(case):
-    return lambda self: self.compare(case)
+    def test(self):
+        self.compare(case)
+    return unittest.expectedFailure(test) if known(case) else test
 
 
 for _case in sorted(INPUTS.glob("*.txt")):
