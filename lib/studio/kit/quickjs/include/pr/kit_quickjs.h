@@ -24,6 +24,11 @@
 // `max-height`, `margin`, `flex`, `align-self` and `weight`. A node under another is declared under the other's widget,
 // which is how a box holds its content and a menu its items.
 //
+// Every node has a key of its own, which keeps its widget's state wherever the script moves it. A node of any kind
+// takes `key`, a name, which gives it the key of that name in the tree instead (prUiKey). Two nodes that are declared
+// with one name share a key, which is a script's error, as it is a caller's: layout makes the second without the key,
+// and lib/ui outlines both.
+//
 // A node of any kind but one whose kind declares no widget of its own, as an overlay's does not, also takes `reveal`,
 // and queues `bounds`. Setting `reveal`, to any value, scrolls the containers around the widget in the next round by
 // the least that brings it into view (prUiReveal), once; setting it to another value does so again. `bounds` tells

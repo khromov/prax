@@ -50,6 +50,7 @@ struct JsKitNode {
     JsKitNodeIndex next;
 
     PrRawString text;
+    PrRawString key;                // the name that the script gave the node's key, or null for a key of its own
     PrKitPlace place;
     bool placed;                    // the script set an attribute of `place`
     bool revealPending;             // the script set `reveal`, and no round has brought the widget into view since
@@ -291,6 +292,7 @@ void freeNode(JsKitNodeTree* tree, JsKitNodeIndex index) {
         node.kind->destroy(node.data);
     prMemoryFree(node.data);
     prRawStringReset(&node.text);
+    prRawStringReset(&node.key);
     node = JsKitNode{};
     tree->free.push(index);
 }
@@ -622,6 +624,9 @@ bool jsKitNodeIsPlaced(const JsKitNodeTree* tree, JsKitNodeIndex node) {
 // Rounds
 
 PrUiKey jsKitNodeKey(const JsKitRound& round, JsKitNodeIndex node, uint32_t part) {
+    const PrRawString& named = round.tree->nodes.data[node].key;
+    if (part == 0 && !prRawStringIsNull(&named))
+        return prUiKey(round.kit->ui, round.base, prRawStringView(&named));
     if (part == 0)
         return prUiKeyIndex(round.kit->ui, round.base, node);
     return prUiKeyIndex2(round.kit->ui, round.base, node, part);
@@ -701,6 +706,7 @@ void jsKitTreeDestroy(JsKitNodeTree* tree) {
             node.kind->destroy(node.data);
         prMemoryFree(node.data);
         prRawStringReset(&node.text);
+        prRawStringReset(&node.key);
     }
     tree->nodes.reset();
     tree->free.reset();
@@ -793,6 +799,12 @@ bool jsKitNodeSet(JsKitNodeTree* tree, JsKitNodeIndex node, PrStringView name, P
     JsKitNode& changed = tree->nodes.data[node];
     if (node == 0)
         return false;
+    if (name == "key") {
+        jsKitSetString(value, reset, &changed.key);
+        tree->changed = true;
+        ++tree->version;
+        return true;
+    }
     if (name == "reveal") {
         changed.revealPending = !reset;
         tree->changed = true;

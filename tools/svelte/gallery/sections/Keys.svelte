@@ -1,8 +1,5 @@
-<!-- The gallery's sectionKeys (examples/studio_gallery/section_feedback.cpp).
-
-     The example gives its third row the first row's key (prUiKey) while the toggle is on, and lib/ui outlines the two
-     rows. A node of the binding has a key of its own, which no attribute names, so the rows here never share one and
-     the toggle changes nothing but itself. -->
+<!-- The gallery's sectionKeys (examples/studio_gallery/section_feedback.cpp). Each row names its key, and while the
+     toggle is on the third names the first's, which lib/ui outlines. -->
 <script>
     import DemoPanel from '../parts/DemoPanel.svelte';
     import SectionFrame from '../parts/SectionFrame.svelte';
@@ -28,8 +25,11 @@
       Give the third row the first row's key
     </toggle>
     <box gap={space[2]}>
-      {#each rows as row (row.name)}
-        <panel background="raised" padding="{space[3]} {space[4]}"><label>{row.label}</label></panel>
+      {#each rows as row, index (row.name)}
+        <panel key={index === 2 && duplicate ? rows[0].name : row.name} background="raised"
+            padding="{space[3]} {space[4]}">
+          <label>{row.label}</label>
+        </panel>
       {/each}
     </box>
   </DemoPanel>
