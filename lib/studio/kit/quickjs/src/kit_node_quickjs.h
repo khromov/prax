@@ -164,8 +164,8 @@ struct JsKitDetail {
 };
 
 // Returns the node's key, which is the same in every round, wherever the script moves the node: a key of the node's
-// own, or the key of the name that the script gave it with `key`, which two nodes may share by the script's error. `part` tells the keys
-// of a kind that declares several keyed nodes apart, and is 0 for its widget.
+// own, or the key of the name that the script gave it with `key`, which two nodes may share by the script's error.
+// `part` tells the keys of a kind that declares several keyed nodes apart, and is 0 for its widget.
 PrUiKey jsKitNodeKey(const JsKitRound& round, JsKitNodeIndex node, uint32_t part = 0);
 
 // Returns true if the script listens for the event at index `event` of the kind's events on the node.
