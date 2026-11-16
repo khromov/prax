@@ -63,6 +63,14 @@ bool jsKitSetString(PrStringView value, bool reset, PrRawString* out);
 // Reads an icon of the kit's set by its name (prKitIconName), or with `reset` writes no icon.
 bool jsKitSetIcon(PrStringView value, bool reset, PrKitIconKind* out);
 
+// Reads a color by its channels, for an attribute that takes any color rather than one of the palette by name. The
+// value has one of two forms. The first is the hex value that prKitColorParseHex takes, `#RRGGBB` or `#RRGGBBAA`. The
+// second is three or four numbers separated by spaces: the red, green and blue channels of extended sRGB, and the
+// alpha, which is 1 if it is left out. A number may have an exponent, as a script's conversion of a small number to a
+// string gives it. A channel may lie outside 0 to 1, which is how a color past sRGB is given. With `reset`, writes
+// transparent black.
+bool jsKitSetColor(PrStringView value, bool reset, PrColor* out);
+
 // The keywords that the kit's kinds share: a text's role and tone, where a box puts its children or a widget sits
 // across its parent's axis, and the height of a control.
 Span<const JsKitKeyword> jsKitRoles();

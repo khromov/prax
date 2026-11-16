@@ -6,7 +6,10 @@
 #include "pr/alloc.h"
 #include "pr/assert.h"
 #include "pr/count_of.h"
+#include "pr/float.h"
+#include "pr/float_convert.h"
 #include "pr/kit_button.h"
+#include "pr/kit_color.h"
 #include "pr/kit_text.h"
 #include "pr/mem.h"
 #include "pr/memory.h"
@@ -439,6 +442,37 @@ bool jsKitSetIcon(PrStringView value, bool reset, PrKitIconKind* out) {
         }
     }
     return false;
+}
+
+bool jsKitSetColor(PrStringView value, bool reset, PrColor* out) {
+    if (reset) {
+        *out = PrColor{};
+        return true;
+    }
+    if (prKitColorParseHex(value, out))
+        return true;
+    float channels[4] = {0, 0, 0, 1};
+    uint32_t count = 0;
+    size_t at = 0;
+    while (at < value.size) {
+        if (value.data[at] == ' ') {
+            ++at;
+            continue;
+        }
+        size_t end = at;
+        while (end < value.size && value.data[end] != ' ')
+            ++end;
+        double channel = 0;
+        if (count == 4 || prF64ParsePrefix(PrStringView{value.data + at, end - at}, &channel) != end - at ||
+                !prF64IsFinite(channel))
+            return false;
+        channels[count++] = float(channel);
+        at = end;
+    }
+    if (count < 3)
+        return false;
+    *out = PrColor{channels[0], channels[1], channels[2], channels[3]};
+    return true;
 }
 
 Span<const JsKitKeyword> jsKitRoles() {
