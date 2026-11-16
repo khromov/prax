@@ -69,7 +69,8 @@ if (PR_JS)
     )
     target_link_libraries(pr_studio_kit_quickjs PUBLIC prax::studio_kit prax::quickjs
                                                 PRIVATE prax::core_quickjs_cpp prax::ui prax::ui_cpp prax::layout
-                                                        prax::color prax::app prax::draw prax::geom prax::path)
+                                                        prax::color prax::app prax::draw prax::geom prax::json
+                                                        prax::path)
     if (PR_DEVELOP)
         pr_module_tests(studio_kit_quickjs
             kit/quickjs/tests/test_kit_quickjs.cpp
