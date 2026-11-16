@@ -233,7 +233,7 @@ class KitRendererTests(unittest.TestCase):
             source = root / "odd"
             source.mkdir()
             (source / "App.svelte").write_text(
-                '<box padding="16"><label role="enormous" tone="accent">kept</label><table></table></box>',
+                '<box padding="16"><label role="enormous" tone="accent">kept</label><marquee></marquee></box>',
                 encoding="utf-8")
             (source / "main.js").write_text(
                 "import { mount } from 'prax-svelte';\nimport App from './App.svelte';\nmount(App);\n",
@@ -246,7 +246,7 @@ class KitRendererTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr.splitlines(), [
             'prax-svelte: <label> takes no role="enormous"',
-            "prax-svelte: there is no <table>, which is declared as a <box>",
+            "prax-svelte: there is no <marquee>, which is declared as a <box>",
         ])
         self.assertEqual(odd, plain)
 
